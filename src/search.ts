@@ -1,5 +1,4 @@
 import type { Birthday, Task } from './db';
-import type { Note } from './notes';
 import { nextOccurrence, toLatinDigits } from './format';
 
 const ZWNJ_OR_MARK = /[‌‍ً-ٰٟـ]/; // half-space, joiners, vowel marks, tatweel
@@ -31,21 +30,11 @@ export function findMatch(text: string, q: string): [number, number] | null {
   return at < 0 ? null : [map[at], map[at + query.length - 1] + 1];
 }
 
-/** A short piece of `text` around the first match (or its start), with "…" where it was cut. */
-export function snippet(text: string, q: string, width = 70) {
-  const flat = text.replace(/\s+/g, ' ').trim();
-  const m = findMatch(flat, q);
-  const from = m ? Math.max(0, m[0] - 20) : 0;
-  const part = flat.slice(from, from + width);
-  return `${from > 0 ? '…' : ''}${part}${from + width < flat.length ? '…' : ''}`;
-}
+export type Results = { tasks: Task[]; birthdays: { b: Birthday; inDays: number | null }[] };
 
-export type Results = { notes: Note[]; tasks: Task[]; birthdays: { b: Birthday; inDays: number | null }[] };
-
-export function searchAll(q: string, data: { notes: Note[]; tasks: Task[]; birthdays: Birthday[] }, today: string, off: number): Results {
+export function searchAll(q: string, data: { tasks: Task[]; birthdays: Birthday[] }, today: string, off: number): Results {
   const has = (...fields: (string | undefined)[]) => fields.some((f) => f && findMatch(f, q));
   return {
-    notes: data.notes.filter((n) => has(n.title, n.text, ...n.tags)).sort((a, b) => b.updatedAt - a.updatedAt),
     tasks: data.tasks.filter((t) => has(t.title, t.description)).sort((a, b) => a.title.localeCompare(b.title, 'fa')),
     birthdays: data.birthdays
       .filter((b) => has(b.name))
@@ -55,7 +44,7 @@ export function searchAll(q: string, data: { notes: Note[]; tasks: Task[]; birth
 }
 
 // ---- recent searches (device-local, a handful) ----
-const RECENT = 'recent-searches';
+const RECENT = 'halgheh:recent-searches';
 const MAX_RECENT = 6;
 
 export const loadRecents = (): string[] => {
@@ -86,5 +75,4 @@ export const clearRecents = () => {
 };
 
 /** The search screen remembers its query while you open a result and come back; cleared on cancel. */
-export const lastSearch = { q: '', filter: 'all' as 'all' | 'notes' | 'tasks' | 'birthdays' };
-
+export const lastSearch = { q: '', filter: 'all' as 'all' | 'tasks' | 'birthdays' };

@@ -7,7 +7,6 @@ import { ask } from './confirm';
 import { Icon } from './Icon';
 import { Choice } from './Choice';
 import { shareText } from './native';
-import { useSettings } from './settings';
 
 // avatar colour (p0..p2 in the stylesheet), picked by name so a person keeps the same colour
 const paletteOf = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
@@ -18,7 +17,8 @@ const congrats = (name: string) => `تولدت مبارک ${name} 🎂`;
 const smsHref = (phone: string, name: string) => `sms:${phone}?body=${encodeURIComponent(congrats(name))}`;
 
 export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: string | null; onFocused?: () => void; openSearch: () => void }) {
-  const { cal: mainCal, hijriOffset: off } = useSettings();
+  const mainCal: Cal = 'persian';
+  const off = 0;
   const t = today();
   const bdays = useLiveQuery(() => db.birthdays.toArray(), []) ?? [];
   const [f, setF] = useState(() => empty(mainCal, parts(t, mainCal, off).m));

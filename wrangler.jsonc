@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "taghvim",
+  "name": "halgheh",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
   "assets": {
@@ -11,8 +11,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "taghvim",
-      "database_id": "7510d38b-73eb-452a-93b0-72530630ec10",
+      "database_name": "halgheh",
+      "database_id": "bde97c8a-c256-4eb7-b83e-58a0e0784786",
       "migrations_dir": "migrations"
     }
   ]

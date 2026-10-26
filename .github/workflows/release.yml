@@ -95,34 +95,18 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASS: ${{ secrets.KEY_PASSWORD || secrets.KEYSTORE_PASSWORD }}
         run: |
-          mkdir -p android
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "Using repository secrets for APK signing..."
-            echo "$KEYSTORE_BASE64" | base64 --decode > android/release.keystore
-            cat <<EOF > android/keystore.properties
-storeFile=release.keystore
-storePassword=${STORE_PASS:-rooznegar123}
-keyAlias=${KEY_ALIAS:-taghvim}
-keyPassword=${KEY_PASS:-rooznegar123}
-EOF
-          else
-            echo "No custom keystore secret detected. Generating CI release keystore..."
-            keytool -genkeypair -v \
-              -keystore android/release.keystore \
-              -alias taghvim \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storepass rooznegar123 \
-              -keypass rooznegar123 \
-              -dname "CN=Rooznegar, OU=App, O=Rooznegar, L=Tehran, ST=Tehran, C=IR"
-            cat <<EOF > android/keystore.properties
-storeFile=release.keystore
-storePassword=rooznegar123
-keyAlias=taghvim
-keyPassword=rooznegar123
-EOF
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$STORE_PASS" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASS" ]; then
+            echo "::error::Release keystore secrets are not configured (RELEASE_KEYSTORE_BASE64, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD)."
+            exit 1
           fi
+          mkdir -p android
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/release.keystore
+          cat <<EOF > android/keystore.properties
+storeFile=release.keystore
+storePassword=${STORE_PASS}
+keyAlias=${KEY_ALIAS}
+keyPassword=${KEY_PASS}
+EOF
 
       - name: Build Release APK with Gradle
         run: |
@@ -141,32 +125,32 @@ EOF
             exit 1
           fi
 
-          cp "$APK_SOURCE" "dist-release/rooznegar-${TAG}.apk"
+          cp "$APK_SOURCE" "dist-release/halgheh-${TAG}.apk"
           ls -la dist-release/
 
       - name: Upload APK Artifact to GitHub Actions
         uses: actions/upload-artifact@v4
         with:
-          name: rooznegar-${{ steps.vars.outputs.tag }}-apk
-          path: dist-release/rooznegar-${{ steps.vars.outputs.tag }}.apk
+          name: halgheh-${{ steps.vars.outputs.tag }}-apk
+          path: dist-release/halgheh-${{ steps.vars.outputs.tag }}.apk
           retention-days: 30
 
       - name: Create GitHub Release & Upload Assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
-          name: "روزنگار ${{ steps.vars.outputs.tag }}"
+          name: "حلقه ${{ steps.vars.outputs.tag }}"
           files: |
-            dist-release/rooznegar-${{ steps.vars.outputs.tag }}.apk
+            dist-release/halgheh-${{ steps.vars.outputs.tag }}.apk
           draft: ${{ github.event.inputs.draft == true }}
           prerelease: ${{ github.event.inputs.prerelease == true }}
           generate_release_notes: true
           body: |
-            ## 📱 روزنگار (Rooznegar) - نسخه ${{ steps.vars.outputs.tag }}
+            ## 📱 حلقه (Halgheh) - نسخه ${{ steps.vars.outputs.tag }}
 
             تقویم فارسی، آفلاین و سبک برای اندروید (نسخه ۸ به بالا).
 
             ### دانلود
-            - 📥 **[rooznegar-${{ steps.vars.outputs.tag }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.vars.outputs.tag }}/rooznegar-${{ steps.vars.outputs.tag }}.apk)**
+            - 📥 **[halgheh-${{ steps.vars.outputs.tag }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.vars.outputs.tag }}/halgheh-${{ steps.vars.outputs.tag }}.apk)**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

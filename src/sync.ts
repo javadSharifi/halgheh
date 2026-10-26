@@ -1,12 +1,11 @@
 import { liveQuery } from 'dexie';
 import { TABLES, type TableName, db } from './db';
-import { normalizeNote } from './notes';
 
 /** Sync is opt-in: without a saved config none of this runs and the app never touches the network. */
 export type SyncCfg = { url: string; key: string; since: number; at: number; email?: string }; // since = server clock we have pulled up to, at = last success
 
 export const DEFAULT_URL: string = import.meta.env.VITE_SYNC_URL ?? '';
-const LS = 'sync';
+const LS = 'halgheh:sync';
 const BATCH = 200; // must match the Worker's MAX_CHANGES
 const STALE_MS = 10 * 60_000; // on resume, sync only if the last one is older than this
 
@@ -38,7 +37,7 @@ async function call<T>(cfg: SyncCfg, path: string, body: unknown): Promise<T> {
 /** The account key: email and password stretched into 32 bytes. Same email + password on any phone gives the same key. */
 export async function deriveKey(email: string, password: string) {
   const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(`rooznegar|${email.trim().toLowerCase()}`), iterations: 200_000 }, base, 256);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(`halgheh|${email.trim().toLowerCase()}`), iterations: 200_000 }, base, 256);
   return btoa(String.fromCharCode(...new Uint8Array(bits))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
@@ -83,8 +82,7 @@ async function applyRemote(changes: Remote[]) {
         continue;
       }
       const parsed = c.data ? JSON.parse(c.data) : null;
-      const row = c.tbl === 'notes' ? normalizeNote(parsed) : parsed; // another device may still send the old note shape
-      if (row?.id === c.id) await db[c.tbl].put(row);
+      if (parsed?.id === c.id) await db[c.tbl].put(parsed);
     }
   });
 }

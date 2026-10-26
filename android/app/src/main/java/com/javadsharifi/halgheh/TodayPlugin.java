@@ -1,6 +1,5 @@
-package com.paliz.taghvim;
+package com.javadsharifi.halgheh;
 
-import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -9,18 +8,6 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 @CapacitorPlugin(name = "Today")
 public class TodayPlugin extends Plugin {
-    @PluginMethod
-    public void set(PluginCall call) {
-        String days = call.getString("days");
-        if (days == null) {
-            call.reject("days is required");
-            return;
-        }
-        Today.save(getContext(), days, Boolean.TRUE.equals(call.getBoolean("ongoing", false)));
-        Today.refresh(getContext());
-        call.resolve();
-    }
-
     /** The status and gesture bars show the window background: paint it like the page so no white strips appear. */
     @PluginMethod
     public void setBars(PluginCall call) {
@@ -48,13 +35,13 @@ public class TodayPlugin extends Plugin {
     public void biometricAvailable(PluginCall call) {
         boolean ok = false;
         try {
-        if (android.os.Build.VERSION.SDK_INT >= 30) {
-            android.hardware.biometrics.BiometricManager m = getContext().getSystemService(android.hardware.biometrics.BiometricManager.class);
-            ok = m != null && m.canAuthenticate(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK) == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS;
-        } else if (android.os.Build.VERSION.SDK_INT >= 28) {
-            android.content.pm.PackageManager pm = getContext().getPackageManager();
-            ok = pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_FINGERPRINT);
-        }
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.hardware.biometrics.BiometricManager m = getContext().getSystemService(android.hardware.biometrics.BiometricManager.class);
+                ok = m != null && m.canAuthenticate(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK) == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS;
+            } else if (android.os.Build.VERSION.SDK_INT >= 28) {
+                android.content.pm.PackageManager pm = getContext().getPackageManager();
+                ok = pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_FINGERPRINT);
+            }
         } catch (RuntimeException e) {
             ok = false; // a phone that refuses the question simply gets PIN-only
         }
@@ -70,7 +57,7 @@ public class TodayPlugin extends Plugin {
         getActivity().runOnUiThread(() -> {
             java.util.concurrent.Executor ex = androidx.core.content.ContextCompat.getMainExecutor(getContext());
             android.hardware.biometrics.BiometricPrompt.Builder b = new android.hardware.biometrics.BiometricPrompt.Builder(getContext())
-                .setTitle("باز کردن روزنگار")
+                .setTitle("باز کردن حلقه")
                 .setNegativeButton("استفاده از پین", ex, (d, w) -> call.resolve(new JSObject().put("ok", false)));
             b.build().authenticate(new android.os.CancellationSignal(), ex, new android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
                 @Override
@@ -96,14 +83,5 @@ public class TodayPlugin extends Plugin {
             else w.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
             call.resolve();
         });
-    }
-
-    @PluginMethod
-    public void takeToggles(PluginCall call) {
-        try {
-            call.resolve(new JSObject().put("toggles", new JSArray(Today.takeToggles(getContext()))));
-        } catch (org.json.JSONException e) {
-            call.reject("bad toggle queue");
-        }
     }
 }

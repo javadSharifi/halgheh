@@ -1,15 +1,13 @@
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Birthday, type Task, db } from './db';
 import { CAL_NAMES, fa, label, today } from './cal';
-import { faDigits, firstRun, isTime } from './format';
+import { faDigits, isTime } from './format';
 import { Icon } from './Icon';
-import type { Note } from './notes';
-import { clearRecents, findMatch, lastSearch, loadRecents, saveRecent, searchAll, snippet } from './search';
-import { useSettings } from './settings';
+import { clearRecents, findMatch, lastSearch, loadRecents, saveRecent, searchAll } from './search';
 
-type Filter = 'all' | 'notes' | 'tasks' | 'birthdays';
-const FILTERS: [Filter, string][] = [['all', 'همه'], ['notes', 'یادداشت‌ها'], ['tasks', 'کارها'], ['birthdays', 'تولدها']];
+type Filter = 'all' | 'tasks' | 'birthdays';
+const FILTERS: [Filter, string][] = [['all', 'همه'], ['tasks', 'کارها'], ['birthdays', 'تولدها']];
 const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
 /** Text with the matched part marked. */
@@ -28,23 +26,20 @@ function Hl({ text, q }: { text: string; q: string }) {
 type Props = {
   initialFilter?: Filter;
   onClose: () => void;
-  openNote: (n: Note) => void;
   openTask: (id: string) => void;
   openBirthday: (id: string) => void;
 };
 
-export function SearchPage({ initialFilter, onClose, openNote, openTask, openBirthday }: Props) {
-  const { cal, hijriOffset: off } = useSettings();
+export function SearchPage({ initialFilter, onClose, openTask, openBirthday }: Props) {
   const [q, setQ] = useState(lastSearch.q);
   const [filter, setFilter] = useState<Filter>(initialFilter ?? lastSearch.filter);
   const [recents, setRecents] = useState(loadRecents);
   const t = today();
 
-  const notes = useLiveQuery(() => db.notes.toArray(), []) ?? [];
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
   const birthdays = useLiveQuery(() => db.birthdays.toArray(), []) ?? [];
-  const res = useMemo(() => searchAll(q, { notes, tasks, birthdays }, t, off), [q, notes, tasks, birthdays, t, off]);
-  const total = res.notes.length + res.tasks.length + res.birthdays.length;
+  const res = useMemo(() => searchAll(q, { tasks, birthdays }, t, 0), [q, tasks, birthdays, t]);
+  const total = res.tasks.length + res.birthdays.length;
   const searching = q.trim() !== '';
 
   const set = (v: string) => {
@@ -70,12 +65,11 @@ export function SearchPage({ initialFilter, onClose, openNote, openTask, openBir
   };
 
   const show = (k: Filter) => filter === 'all' || filter === k;
-  const dayLabel = (d: string, long = true) => label(d, cal, off, long ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long' });
+  const dayLabel = (d: string) => label(d, 'persian', 0, { weekday: 'long', day: 'numeric', month: 'long' });
 
   const taskSub = (x: Task) => {
     if (x.active === false) return 'متوقف';
-    const d = x.on ?? firstRun(x.mask, t);
-    return `${d ? dayLabel(d) : ''}${isTime(x.time) ? ` · ${faDigits(x.time)}` : ''}`;
+    return `${x.on ? dayLabel(x.on) : 'بدون تاریخ'}${isTime(x.time) ? ` · ${faDigits(x.time)}` : ''}`;
   };
   const bdaySub = (b: Birthday, inDays: number | null) => {
     if (inDays === null) return CAL_NAMES[b.cal];
@@ -90,8 +84,8 @@ export function SearchPage({ initialFilter, onClose, openNote, openTask, openBir
       <form className="search-top" onSubmit={(e) => { e.preventDefault(); remember(); }} role="search">
         <label className="search-field">
           <Icon name="search" size={20} stroke={1.9} />
-          <span className="sr-only">جستجو در یادداشت‌ها، کارها و تولدها</span>
-          <input type="search" autoFocus value={q} placeholder="جستجو در یادداشت‌ها، کارها و تولدها" onChange={(e) => set(e.target.value)} />
+          <span className="sr-only">جستجو در کارها و تولدها</span>
+          <input type="search" autoFocus value={q} placeholder="جستجو در کارها و تولدها" onChange={(e) => set(e.target.value)} />
           {q && <button type="button" className="clear" aria-label="پاک کردن جستجو" onClick={() => set('')}><span><Icon name="close" size={12} stroke={3} /></span></button>}
         </label>
         <button type="button" className="text-btn big" onClick={close}>انصراف</button>
@@ -111,7 +105,7 @@ export function SearchPage({ initialFilter, onClose, openNote, openTask, openBir
           </div>
         </section>
       )}
-      {!searching && recents.length === 0 && <p className="hint search-hint">برای یافتن یادداشت‌ها، کارها و تولدها تایپ کنید.</p>}
+      {!searching && recents.length === 0 && <p className="hint search-hint">برای یافتن کارها و تولدها تایپ کنید.</p>}
 
       {searching && (
         <div className="results">
@@ -138,21 +132,6 @@ export function SearchPage({ initialFilter, onClose, openNote, openTask, openBir
                   <span className="tile blue sq" aria-hidden="true"><Icon name="listChecks" size={18} stroke={1.9} /></span>
                   <div><b><Hl text={x.title} q={q} /></b><span>{taskSub(x)}</span></div>
                   <Icon name="chevronLeft" size={16} stroke={2} />
-                </button>
-              ))}
-            </section>
-          )}
-
-          {show('notes') && res.notes.length > 0 && (
-            <section className="glass res-group" aria-label="یادداشت‌ها">
-              <span className="g-label purple">یادداشت‌ها</span>
-              {res.notes.map((n) => (
-                <button key={n.id} className="res-row note" onClick={open(() => openNote(n))}>
-                  <span className="tile purple sq" aria-hidden="true"><Icon name="note" size={18} stroke={1.9} /></span>
-                  <div>
-                    <div className="res-top"><b><Hl text={n.title || 'بدون عنوان'} q={q} /></b><small>{dayLabel(n.date, false)}</small></div>
-                    {n.text.trim() && <span><Fragment><Hl text={snippet(n.text, q)} q={q} /></Fragment></span>}
-                  </div>
                 </button>
               ))}
             </section>

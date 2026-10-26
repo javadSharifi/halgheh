@@ -10,8 +10,8 @@ export default defineConfig({
       includeAssets: ['apple-touch-icon.png'],
       workbox: { globPatterns: ['**/*.{js,css,html,woff2,png}'] }, // fonts are precached too; woff fallback is skipped (every PWA browser has woff2)
       manifest: {
-        name: 'روزنگار',
-        short_name: 'روزنگار',
+        name: 'حلقه',
+        short_name: 'حلقه',
         lang: 'fa',
         dir: 'rtl',
         display: 'standalone',

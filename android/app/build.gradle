@@ -5,10 +5,10 @@ def keystoreProps = new Properties()
 if (keystoreFile.exists()) keystoreFile.withInputStream { keystoreProps.load(it) }
 
 android {
-    namespace = "com.paliz.taghvim"
+    namespace = "com.javadsharifi.halgheh"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.paliz.taghvim"
+        applicationId "com.javadsharifi.halgheh"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 1

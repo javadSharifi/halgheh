@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Outbox, db, exportAll } from './db';
-import { addDays, fa, label, parts, today } from './cal';
+import { addDays, fa, label, today } from './cal';
 import { clock, formatBytes } from './format';
 import { ask } from './confirm';
 import { Icon, type IconName } from './Icon';
 import { useOnline } from './online';
-import { useSettings } from './settings';
 import { DEFAULT_URL, HttpError, connect, disableSync, getCfg, syncNow } from './sync';
 
 const errorText = (e: unknown) =>
@@ -18,8 +17,7 @@ const errorText = (e: unknown) =>
     : 'اتصال به سرور برقرار نشد. اینترنت را بررسی کنید.';
 
 const KIND: Record<Outbox['t'], { icon: IconName; tone: string; name: string }> = {
-  notes: { icon: 'note', tone: 'purple', name: 'یادداشت' },
-  tasks: { icon: 'repeat', tone: 'blue', name: 'کار تکراری' },
+  tasks: { icon: 'repeat', tone: 'blue', name: 'کار' },
   done: { icon: 'check', tone: 'blue', name: 'انجام کار' },
   birthdays: { icon: 'cake', tone: 'peach', name: 'تولد' },
 };
@@ -28,14 +26,14 @@ const SHOWN = 5; // pending rows listed before "and N more"
 
 type Pending = { o: Outbox; title: string };
 
-/** "امروز ۱۰:۴۲", "دیروز ۲۱:۳۰", or the date in the main calendar. */
-function when(ms: number, cal: ReturnType<typeof useSettings>['cal'], off: number) {
+/** "امروز ۱۰:۴۲", "دیروز ۲۱:۳۰", or the date in the Jalali calendar. */
+function when(ms: number) {
   const day = new Date(ms).toLocaleDateString('sv');
   const t = today();
   const hhmm = clock(ms);
   if (day === t) return `امروز ${hhmm}`;
   if (day === addDays(t, -1)) return `دیروز ${hhmm}`;
-  return `${label(day, cal, off, { day: 'numeric', month: 'long' })} ${hhmm}`;
+  return `${label(day, 'persian', 0, { day: 'numeric', month: 'long' })} ${hhmm}`;
 }
 
 async function loadPending(): Promise<Pending[]> {
@@ -56,7 +54,6 @@ async function loadPending(): Promise<Pending[]> {
 }
 
 export function SyncPage({ onBack }: { onBack: () => void }) {
-  const { cal, hijriOffset: off } = useSettings();
   const online = useOnline();
   const [, rerender] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -70,7 +67,6 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
   const cfg = getCfg();
   const pending = useLiveQuery(loadPending, []) ?? [];
   const data = useLiveQuery(async () => ({
-    notes: await db.notes.count(),
     tasks: await db.tasks.count(),
     birthdays: await db.birthdays.count(),
     bytes: new Blob([await exportAll()]).size,
@@ -106,7 +102,7 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
     text = `${fa(n)} تغییر آمادهٔ همگام‌سازی است.`;
   } else {
     title = 'همه‌چیز به‌روز است';
-    text = cfg.at ? `آخرین همگام‌سازی: ${when(cfg.at, cal, off)}` : 'هنوز همگام‌سازی نشده است.';
+    text = cfg.at ? `آخرین همگام‌سازی: ${when(cfg.at)}` : 'هنوز همگام‌سازی نشده است.';
   }
   const cloudOn = !!cfg && online;
 
@@ -144,7 +140,7 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
           {mode === 'register' && <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="تکرار رمز" dir="ltr" autoComplete="new-password" aria-label="تکرار رمز" />}
           {mode === 'register' && pw2 !== '' && pw !== pw2 && <p className="form-error">دو رمز یکی نیست.</p>}
           <button className="primary" disabled={busy || !formOk} onClick={() => run(() => connect(DEFAULT_URL, email, pw, mode))}>{mode === 'register' ? 'ساخت حساب و همگام‌سازی' : 'ورود و همگام‌سازی'}</button>
-          <p className="hint">ایمیل تأیید نمی‌شود و رمز روی سرور ذخیره نمی‌شود، پس رمز فراموش‌شده قابل بازیابی نیست. داده‌های روی گوشی در هر حال می‌مانند.</p>
+          <p className="hint">ایمیل تأیید نمی‌شود و رمز روی سرور ذخیره نمی‌شود، پس رمز فراموش‌شده قابل بازیابی نیست. داده‌ها روی سرور رمزنگاری نمی‌شوند. داده‌های روی گوشی در هر حال می‌مانند.</p>
         </section>
       )}
 
@@ -154,7 +150,7 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
           {data && <small>{formatBytes(data.bytes)} روی دستگاه</small>}
         </div>
         <div className="stats">
-          {([['یادداشت', data?.notes], ['کار تکراری', data?.tasks], ['تولد', data?.birthdays]] as const).map(([k, v]) => (
+          {([['کار', data?.tasks], ['تولد', data?.birthdays]] as const).map(([k, v]) => (
             <div key={k}><b>{fa(v ?? 0)}</b><span>{k}</span></div>
           ))}
         </div>
@@ -171,7 +167,7 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
                 <span className={`tile ${k.tone}`} aria-hidden="true"><Icon name={k.icon} size={17} stroke={1.9} /></span>
                 <div>
                   <b>{title ? `${k.name} «${title}»` : o.deleted ? `${k.name} حذف‌شده` : k.name}</b>
-                  <span>{OP[o.op ?? 'edit']} · {when(o.updatedAt, cal, off)}</span>
+                  <span>{OP[o.op ?? 'edit']} · {when(o.updatedAt)}</span>
                 </div>
               </div>
             );
@@ -185,7 +181,7 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
           <span className="tile green" aria-hidden="true"><Icon name="cloudCheck" size={17} stroke={1.9} /></span>
           <div>
             <b>پشتیبان ابری</b>
-            <span>{cfg.at ? `آخرین پشتیبان: ${label(new Date(cfg.at).toLocaleDateString('sv'), cal, off, { weekday: 'long', day: 'numeric', month: 'long' })}، ${clock(cfg.at)}` : 'هنوز پشتیبانی گرفته نشده است'}</span>
+            <span>{cfg.at ? `آخرین پشتیبان: ${label(new Date(cfg.at).toLocaleDateString('sv'), 'persian', 0, { weekday: 'long', day: 'numeric', month: 'long' })}، ${clock(cfg.at)}` : 'هنوز پشتیبانی گرفته نشده است'}</span>
           </div>
           <em className="chip-ok">خودکار</em>
         </section>

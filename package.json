@@ -1,5 +1,5 @@
 {
-  "name": "date-app",
+  "name": "halgheh",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -8,8 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "android:apk": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21 ANDROID_HOME=$HOME/Library/Android/sdk ./gradlew assembleDebug",
-    "android:release": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21 ANDROID_HOME=$HOME/Library/Android/sdk ./gradlew assembleRelease && mkdir -p ../release && cp app/build/outputs/apk/release/app-release.apk ../release/taghvim.apk",
-    "build:events": "node scripts/build-events.mjs"
+    "android:release": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21 ANDROID_HOME=$HOME/Library/Android/sdk ./gradlew assembleRelease && mkdir -p ../release && cp app/build/outputs/apk/release/app-release.apk ../release/halgheh.apk"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

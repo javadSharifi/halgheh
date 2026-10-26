@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, importAll } from './db';
-import { CALS, CAL_NAMES, type Cal, fa } from './cal';
+import { db, exportAll, importAll } from './db';
+import { fa } from './cal';
 import { Icon, type IconName } from './Icon';
 import { askNotifications, biometric, isNative, shareBackup } from './native';
 import { type Theme, type WeekStart, updateSettings, useSettings } from './settings';
@@ -27,43 +27,9 @@ const Switch = ({ on, label, onChange }: { on: boolean; label: string; onChange:
   <button className="switch" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)}><i /></button>
 );
 
-/** Choose which other calendars are shown small next to the main one. */
-function AuxSheet({ main, aux, onClose }: { main: Cal; aux: Cal[]; onClose: () => void }) {
-  return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <div className="glass sheet" role="dialog" aria-label="تقویم‌های کمکی">
-        <b className="sheet-title">تقویم‌های کمکی</b>
-        {CALS.filter((c) => c !== main).map((c) => (
-          <div key={c} className="set-row">
-            <span className="set-name">{CAL_NAMES[c]}</span>
-            <Switch on={aux.includes(c)} label={CAL_NAMES[c]} onChange={(v) => updateSettings({ aux: CALS.filter((x) => x !== main && (x === c ? v : aux.includes(x))) })} />
-          </div>
-        ))}
-        <div className="sheet-actions"><button onClick={onClose}>بستن</button></div>
-      </div>
-    </>
-  );
-}
-
 export function SettingsPage({ openSync }: { openSync: () => void }) {
-  const { name, cal, aux, weekStart, theme, remind, ongoing } = useSettings();
-  const [auxOpen, setAuxOpen] = useState(false);
+  const { weekStart, theme, remind } = useSettings();
   const lock = useLock();
-  // Sync is hidden: five quick taps on the title open it (and keep it listed afterwards); a connected account always lists it.
-  const [unlocked, setUnlocked] = useState(() => localStorage.getItem('syncUnlocked') === '1');
-  const taps = useRef({ n: 0, at: 0 });
-  const tapTitle = () => {
-    const t = taps.current;
-    t.n = Date.now() - t.at < 2000 ? t.n + 1 : 1;
-    t.at = Date.now();
-    if (t.n >= 5 && DEFAULT_URL) {
-      t.n = 0;
-      localStorage.setItem('syncUnlocked', '1');
-      setUnlocked(true);
-      openSync();
-    }
-  };
   const [pinFlow, setPinFlow] = useState<'set' | 'change' | 'off' | null>(null);
   const [canBio, setCanBio] = useState(false);
   useEffect(() => { biometric.available().then(setCanBio); }, []);
@@ -72,16 +38,16 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
   const cfg = getCfg();
   const online = navigator.onLine;
 
-  const toggle = (key: 'remind' | 'ongoing') => async (on: boolean) => {
+  const toggleRemind = async (on: boolean) => {
     if (on && !(await askNotifications())) return setMsg('اجازه نمایش اعلان داده نشد. از تنظیمات اندروید فعالش کنید.');
     setMsg('');
-    updateSettings({ [key]: on });
+    updateSettings({ remind: on });
   };
   const download = async () => {
     if (isNative) return shareBackup().catch(() => setMsg('ساخت پشتیبان ناموفق بود.'));
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([await (await import('./db')).exportAll()], { type: 'application/json' }));
-    a.download = `date-backup-${new Date().toLocaleDateString('sv')}.json`;
+    a.href = URL.createObjectURL(new Blob([await exportAll()], { type: 'application/json' }));
+    a.download = `halgheh-backup-${new Date().toLocaleDateString('sv')}.json`;
     a.click();
   };
   const upload = async (file?: File) => {
@@ -99,24 +65,11 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
 
   return (
     <>
-      <div className="page-head"><h1 onClick={tapTitle}>تنظیمات</h1></div>
+      <div className="page-head"><h1>تنظیمات</h1></div>
 
       <section>
-        <h2 className="sec-title">تقویم</h2>
+        <h2 className="sec-title">برنامه</h2>
         <div className="glass set-list">
-          <Row icon="note" tone="green" name="نام شما">
-            <input className="set-input" value={name} maxLength={40} placeholder="برای سلام صفحه‌ی امروز" onChange={(e) => updateSettings({ name: e.target.value })} />
-          </Row>
-          <Row icon="calendar" tone="blue" name="تقویم اصلی">
-            <span className="set-value">{CAL_NAMES[cal]}<Icon name="chevronLeft" size={16} stroke={2} />
-              <Choice className="pick-hit" label="تقویم اصلی" value={cal} options={CALS.map((c) => [c, CAL_NAMES[c]])} onChange={(c) => updateSettings({ cal: c })} />
-            </span>
-          </Row>
-          <button className="set-row as-btn" onClick={() => setAuxOpen(true)}>
-            <span className="tile purple" aria-hidden="true"><Icon name="calendarDays" size={17} stroke={1.9} /></span>
-            <span className="set-name">تقویم‌های کمکی</span>
-            <span className="set-value">{aux.length ? aux.map((c) => CAL_NAMES[c]).join('، ') : 'هیچ‌کدام'}<Icon name="chevronLeft" size={16} stroke={2} /></span>
-          </button>
           <Row icon="alignLeft" tone="green" name="شروع هفته">
             <span className="set-value">{WEEK_STARTS.find(([v]) => v === weekStart)?.[1]}<Icon name="chevronLeft" size={16} stroke={2} />
               <Choice className="pick-hit" label="شروع هفته" value={weekStart} options={WEEK_STARTS} onChange={(w) => updateSettings({ weekStart: w })} />
@@ -138,8 +91,7 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
         <section>
           <h2 className="sec-title">اعلان‌ها</h2>
           <div className="glass set-list">
-            <Row icon="bell" tone="blue" name="یادآوری کارها و تولدها"><Switch on={remind} label="یادآوری کارها و تولدها" onChange={toggle('remind')} /></Row>
-            <Row icon="pin" tone="purple" name="اعلان ثابت خلاصهٔ روز"><Switch on={ongoing} label="اعلان ثابت خلاصهٔ روز" onChange={toggle('ongoing')} /></Row>
+            <Row icon="bell" tone="blue" name="یادآوری کارها و تولدها"><Switch on={remind} label="یادآوری کارها و تولدها" onChange={toggleRemind} /></Row>
           </div>
         </section>
       )}
@@ -163,9 +115,9 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
       </section>
 
       <section>
-        <h2 className="sec-title">{cfg || unlocked ? 'داده و همگام‌سازی' : 'پشتیبان'}</h2>
+        <h2 className="sec-title">داده و همگام‌سازی</h2>
         <div className="glass set-list">
-          {(cfg || unlocked) && (
+          {DEFAULT_URL && (
             <button className="set-row as-btn" onClick={openSync}>
               <span className="tile blue" aria-hidden="true"><Icon name="refresh" size={17} stroke={1.9} /></span>
               <span className="set-name">همگام‌سازی</span>
@@ -182,7 +134,6 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
       </section>
 
       {pinFlow && <PinFlow mode={pinFlow} onClose={() => setPinFlow(null)} />}
-      {auxOpen && <AuxSheet main={cal} aux={aux} onClose={() => setAuxOpen(false)} />}
     </>
   );
 }

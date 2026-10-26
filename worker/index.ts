@@ -3,7 +3,7 @@ interface Env {
   DB: D1Database;
 }
 
-const TABLES = new Set(['notes', 'tasks', 'done', 'birthdays']);
+const TABLES = new Set(['tasks', 'done', 'birthdays']);
 const MAX_CHANGES = 200; // per request
 const MAX_ROW_BYTES = 20_000;
 const MAX_ROWS_PER_ACCOUNT = 20_000;

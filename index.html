@@ -7,16 +7,16 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="روزنگار" />
+    <meta name="apple-mobile-web-app-title" content="حلقه" />
     <script>
       // set the theme before the first paint so a dark phone never flashes light
       try {
-        var t = (JSON.parse(localStorage.getItem('settings')) || {}).theme;
+        var t = (JSON.parse(localStorage.getItem('halgheh:settings')) || {}).theme;
         var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
       } catch (e) {}
     </script>
-    <title>روزنگار</title>
+    <title>حلقه</title>
   </head>
   <body>
     <div id="root"></div>

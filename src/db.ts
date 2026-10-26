@@ -1,8 +1,5 @@
 import Dexie from 'dexie';
 import type { Cal } from './cal';
-import { type Note, normalizeNote } from './notes';
-
-export type { Note };
 
 // Every row has a client-made UUID id and updatedAt so sync can be added later without a migration.
 // mask bit = JS weekday. The optional fields were added later; a row without them means: active, no time, no reminder.
@@ -23,13 +20,12 @@ export type Task = {
 export type Done = { id: string; taskId: string; date: string; updatedAt: number; doneAt?: number }; // id = `${taskId}|${date}`; doneAt = when it was ticked (ms), missing on old rows
 export type Birthday = { id: string; name: string; cal: Cal; month: number; day: number; year?: number; phone?: string; updatedAt: number };
 
-export type TableName = 'notes' | 'tasks' | 'done' | 'birthdays';
-export const TABLES: TableName[] = ['notes', 'tasks', 'done', 'birthdays'];
+export type TableName = 'tasks' | 'done' | 'birthdays';
+export const TABLES: TableName[] = ['tasks', 'done', 'birthdays'];
 /** A local change not yet sent to the server (only used when sync is on). Latest change per row wins. */
 export type Outbox = { key: string; t: TableName; id: string; deleted: 0 | 1; updatedAt: number; op?: 'create' | 'edit' | 'delete' }; // op is for the sync screen only; missing on old entries
 
-export const db = new Dexie('date-app') as Dexie & {
-  notes: Dexie.Table<Note, string>;
+export const db = new Dexie('halgheh') as Dexie & {
   tasks: Dexie.Table<Task, string>;
   done: Dexie.Table<Done, string>;
   birthdays: Dexie.Table<Birthday, string>;
@@ -37,20 +33,10 @@ export const db = new Dexie('date-app') as Dexie & {
 };
 db.version(1).stores({ notes: 'id', tasks: 'id', done: 'id,date', birthdays: 'id' });
 db.version(2).stores({ outbox: 'key' });
-// v3: several notes per day. Notes keep their id (so synced copies stay the same row) and gain `date`, which is indexed.
-db.version(3)
-  .stores({ notes: 'id,date' })
-  .upgrade(async (tx) => {
-    const migrated: Outbox[] = [];
-    await tx.table('notes').toCollection().modify((row, ctx) => {
-      const n = normalizeNote(row);
-      if (!n || row.date) return; // unreadable, or already in the new shape
-      n.updatedAt = Date.now(); // newer than the server's copy, so the new shape wins there too
-      ctx.value = n;
-      migrated.push({ key: `notes|${n.id}`, t: 'notes', id: n.id, deleted: 0, updatedAt: n.updatedAt });
-    });
-    await tx.table('outbox').bulkPut(migrated);
-  });
+// v3: several notes per day. Kept as history; the notes feature is gone in v4.
+db.version(3).stores({ notes: 'id,date' });
+// v4: remove the daily-notes table; the people app stores notes with a person instead (P1).
+db.version(4).stores({ notes: null });
 
 /** Every user write goes through put/del so sync sees it. Sync's own writes bypass them. */
 export async function put(t: TableName, row: { id: string; updatedAt: number } & Record<string, unknown>) {
@@ -81,9 +67,6 @@ export async function importAll(json: string) {
   const d = JSON.parse(json);
   if (d?.v !== 1 || TABLES.some((t) => d[t] !== undefined && !Array.isArray(d[t]))) throw new Error('bad backup');
   for (const t of TABLES) {
-    for (const raw of d[t] ?? []) {
-      const row = t === 'notes' ? normalizeNote(raw) : raw; // backups from before multi-note days have the old shape
-      if (row) await put(t, row);
-    }
+    for (const row of d[t] ?? []) await put(t, row);
   }
 }
