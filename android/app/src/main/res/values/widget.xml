@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_desc">تاریخ شمسی، میلادی و قمری امروز و کارهای امروز</string>
+    <string name="widget_small_desc">روز و ماه امروز و تعداد کارهای مانده</string>
+    <string name="widget_mini_desc">تاریخ امروز بدون پس‌زمینه</string>
+    <string name="widget_mini_label">امروز · مینیمال</string>
+    <string name="widget_large_label">امروز · بزرگ</string>
+    <string name="widget_small_label">امروز · کوچک</string>
+    <color name="widget_bg">#EBFFFFFF</color>
+    <color name="widget_stroke">#CCFFFFFF</color>
+    <color name="widget_fg">#1A1C30</color>
+    <color name="widget_ink2">#2E3150</color>
+    <color name="widget_muted">#5A5E78</color>
+    <color name="widget_done">#62667F</color>
+    <color name="widget_accent">#4466E6</color>
+    <color name="widget_blue_ink">#3553C7</color>
+    <color name="widget_purple">#5944C2</color>
+    <color name="widget_ring_track">#1A282C5A</color>
+    <color name="widget_divider">#1A282C5A</color>
+</resources>

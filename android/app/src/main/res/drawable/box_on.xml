@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <gradient android:angle="315" android:startColor="#6C88FF" android:endColor="#3E63DD" />
+            <size android:width="18dp" android:height="18dp" />
+        </shape>
+    </item>
+    <item
+        android:drawable="@drawable/ic_check_white"
+        android:left="3.5dp"
+        android:top="3.5dp"
+        android:right="3.5dp"
+        android:bottom="3.5dp" />
+</layer-list>

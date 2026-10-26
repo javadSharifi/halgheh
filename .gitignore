@@ -1,0 +1,7 @@
+node_modules
+dist
+android/release.keystore
+android/keystore.properties
+release
+.wrangler
+.DS_Store
