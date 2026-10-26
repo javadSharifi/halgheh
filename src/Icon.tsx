@@ -45,6 +45,9 @@ const PATHS = {
   trash: "<path d=\"M3 6h18\"></path><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\"></path><path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"></path><path d=\"M10 11v6\"></path><path d=\"M14 11v6\"></path>",
   undo: "<path d=\"M9 14 4 9l5-5\"></path><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"></path>",
   wifiOff: "<path d=\"M12 20h.01\"></path><path d=\"M8.5 16.43a5 5 0 0 1 7 0\"></path><path d=\"M5 12.86a10 10 0 0 1 5.17-2.69\"></path><path d=\"M19 12.86a10 10 0 0 0-2.01-1.53\"></path><path d=\"M2 8.82a15 15 0 0 1 4.18-2.65\"></path><path d=\"M22 8.82a15 15 0 0 0-11.29-3.76\"></path><path d=\"m2 2 20 20\"></path>",
+  users: "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"></path><circle cx=\"9\" cy=\"7\" r=\"4\"></circle><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"></path><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"></path>",
+  image: "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"></rect><circle cx=\"9\" cy=\"9\" r=\"2\"></circle><path d=\"m21 15-5-5L5 21\"></path>",
+  archive: "<rect x=\"3\" y=\"4\" width=\"18\" height=\"4\" rx=\"1\"></rect><path d=\"M5 8v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8\"></path><path d=\"M10 12h4\"></path>",
 } as const;
 
 export type IconName = keyof typeof PATHS;

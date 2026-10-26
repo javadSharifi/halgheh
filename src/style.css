@@ -15,7 +15,7 @@
   --primary-shadow: 0 10px 20px -10px rgba(52, 82, 210, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.45);
   --select: linear-gradient(160deg, #6c88ff 0%, #3e63dd 100%);
   --select-shadow: 0 10px 18px -8px rgba(62, 99, 221, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  --nav-bg: rgba(255, 255, 255, 0.86); --nav-puck: rgba(255, 255, 255, 0.95);
+  --nav-bg: rgba(255, 255, 255, 0.86);
   --seg-on: #fff;
   --avatar-fg: #7a3418; --avatar-bg: linear-gradient(150deg, #fce2d2 0%, #f3b796 100%);
   --bday-bg: linear-gradient(115deg, rgba(255, 230, 214, 0.8) 0%, rgba(255, 255, 255, 0.55) 75%);
@@ -39,7 +39,7 @@
   --blue-tint: rgba(140, 165, 255, 0.16); --purple-tint: rgba(160, 130, 255, 0.16); --ok-tint: rgba(127, 217, 174, 0.14); --peach-tint: rgba(243, 183, 150, 0.16);
   --select-shadow: 0 4px 12px -4px rgba(90, 120, 255, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   --primary-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  --nav-bg: rgba(30, 33, 48, 0.88); --nav-puck: rgba(44, 48, 70, 0.96);
+  --nav-bg: rgba(30, 33, 48, 0.88);
   --seg-on: rgba(255, 255, 255, 0.16);
   --avatar-fg: #ffe6d8; --avatar-bg: linear-gradient(150deg, #c77e5e 0%, #6b3a2c 100%);
   --bday-bg: linear-gradient(115deg, rgba(120, 70, 55, 0.5) 0%, rgba(34, 37, 54, 0.55) 75%);
@@ -109,21 +109,17 @@ input[type='checkbox'] { appearance: none; -webkit-appearance: none; margin: 0; 
 /* ---- navigation: floating glass tab bar + round quick-add button ---- */
 .dock { position: fixed; left: 0; right: 0; bottom: 0; max-width: 560px; margin: 0 auto; padding: 0 14px calc(18px + env(safe-area-inset-bottom)); z-index: 20; pointer-events: none; }
 .dock > * { pointer-events: auto; }
-@property --x { syntax: '<percentage>'; inherits: true; initial-value: 50%; }
-.bar { position: relative; margin-top: 30px; transition: --x 0.35s cubic-bezier(0.3, 1.2, 0.5, 1); }
-/* the bar is cut out in a circle under the active tab; the .puck sits in the cut */
+.bar { position: relative; margin-top: 30px; }
 nav {
-  height: 66px; display: grid; grid-template-columns: repeat(6, 1fr); align-items: center; border-radius: 28px;
+  height: 68px; display: grid; grid-template-columns: 1fr 1fr 64px 1fr 1fr; align-items: center; border-radius: 28px;
   background: var(--nav-bg); border: 1px solid var(--edge); box-shadow: inset 0 1px 0 var(--hi);
   backdrop-filter: blur(26px) saturate(180%); -webkit-backdrop-filter: blur(26px) saturate(180%);
-  -webkit-mask: radial-gradient(circle 37px at calc(100% - var(--x)) 2px, transparent 36px, #000 37.5px); mask: radial-gradient(circle 37px at calc(100% - var(--x)) 2px, transparent 36px, #000 37.5px);
 }
 .bar::before { content: ''; position: absolute; inset: 4px 6px -6px; border-radius: 28px; box-shadow: 0 16px 30px -10px var(--sh); z-index: -1; }
-nav button { height: 58px; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--nav-ink); font-size: 10.5px; font-weight: 500; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; padding-bottom: 8px; backdrop-filter: none; -webkit-backdrop-filter: none; }
+nav button { height: 58px; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--nav-ink); font-size: 10.5px; font-weight: 500; padding: 8px 0 9px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; backdrop-filter: none; -webkit-backdrop-filter: none; }
 nav button.on { color: var(--blue-ink); font-weight: 700; background: none; border: 0; box-shadow: none; }
-nav button.on svg { opacity: 0; }
-.puck { position: absolute; top: -26px; right: var(--x); width: 54px; height: 54px; margin-right: -27px; border-radius: 27px; display: flex; align-items: center; justify-content: center; color: var(--blue-ink); background: var(--nav-puck); border: 1px solid var(--edge); box-shadow: 0 10px 22px -8px var(--sh), inset 0 1px 0 var(--hi); pointer-events: none; animation: puck-pop 0.35s cubic-bezier(0.3, 1.4, 0.5, 1); }
-@keyframes puck-pop { from { transform: translateY(14px) scale(0.7); opacity: 0.4; } }
+nav button.quick { width: 58px; height: 58px; min-height: 58px; padding: 0; margin-top: -30px; justify-self: center; align-self: center; border-radius: 29px; color: #fff; background: var(--primary); border: 1px solid rgba(255, 255, 255, 0.35); box-shadow: var(--primary-shadow); }
+nav button.quick:active { transform: scale(0.96); }
 .scrim { position: fixed; inset: 0; z-index: 15; }
 .icon-btn { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
 .list { padding: 6px; display: flex; flex-direction: column; }
@@ -421,6 +417,18 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .set-msg { margin: 8px 8px 0; }
 .sheet-title { font-size: 15px; font-weight: 700; padding: 2px 6px 4px; }
 .sheet .set-row { padding: 0 6px; }
+.quick-sheet { gap: 12px; align-items: stretch; }
+.quick-sheet > .tile { width: 46px; height: 46px; border-radius: 15px; margin: 2px 6px 0; }
+.quick-sheet .hint { margin: 0 6px 4px; line-height: 1.9; }
+.empty-state { margin-top: 8px; padding: 36px 22px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.empty-state .tile { width: 52px; height: 52px; border-radius: 18px; margin-bottom: 2px; }
+.empty-state b { font-size: 17px; color: var(--ink-strong); }
+.empty-state p { margin: 0; max-width: 310px; line-height: 1.9; }
+.about-card { margin-top: 8px; padding: 26px 22px; display: flex; flex-direction: column; align-items: center; gap: 11px; text-align: center; }
+.about-logo { width: 64px; height: 64px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--primary); box-shadow: var(--primary-shadow); }
+.about-card > b { font-size: 22px; font-weight: 800; color: var(--ink-strong); }
+.about-card p { margin: 0; max-width: 330px; line-height: 1.95; }
+.about-version { margin-top: 4px; font-size: 11.5px; font-weight: 600; color: var(--faint); }
 
 /* ---- sync page ---- */
 .head-spacer { width: 44px; }

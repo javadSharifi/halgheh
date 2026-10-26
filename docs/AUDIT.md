@@ -87,6 +87,6 @@ Section 2 says Jalali is primary while Gregorian and Hijri remain available; P3/
 1. **P1 migration** must add tables in a new Dexie version; never edit versions 1–4. Add each table to `TABLES` and the Worker allowlist.
 2. **Photos** need a picker plugin and a separate file pipeline; do not assume `exportAll` covers them.
 3. **Worker hardening** (B4) must add rate limiting, scoped CORS, request limits and possibly invites. Current smoke test proves behavior, not production safety.
-4. **App shell** is intermediate: four tabs now; Z1 changes to five tabs and must register every page in `__appBack`.
+4. **App shell** now has the five Z1 destinations (Today, People, +, Gallery, More); People and Gallery are empty states until P2/G1, and settings/account/archive/about live under More. Every new page must be registered in `__appBack`.
 5. **Keystore** is the single long-term signing identity. Losing it blocks updates to installed apps. Back up `~/.config/halgheh/` in two places.
 6. **Device behavior** (biometric prompt, notification permission/delivery, share sheet) still needs a physical-phone check before release; the shell itself was smoke-tested on an API 34 emulator.
