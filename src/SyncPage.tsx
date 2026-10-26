@@ -20,6 +20,10 @@ const KIND: Record<Outbox['t'], { icon: IconName; tone: string; name: string }> 
   tasks: { icon: 'repeat', tone: 'blue', name: 'کار' },
   done: { icon: 'check', tone: 'blue', name: 'انجام کار' },
   birthdays: { icon: 'cake', tone: 'peach', name: 'تولد' },
+  people: { icon: 'users', tone: 'blue', name: 'فرد' },
+  tags: { icon: 'tag', tone: 'purple', name: 'برچسب' },
+  personNotes: { icon: 'note', tone: 'green', name: 'یادداشت' },
+  interactions: { icon: 'history', tone: 'peach', name: 'تعامل' },
 };
 const OP = { create: 'ایجاد', edit: 'ویرایش', delete: 'حذف' } as const;
 const SHOWN = 5; // pending rows listed before "and N more"

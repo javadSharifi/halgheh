@@ -41,7 +41,7 @@ The fork is a working, buildable **Android-first Capacitor shell** for Halgheh. 
 ## What is only partly done or not covered
 
 - **Search is not section 6 yet.** It is a single normalized substring match over task title/description and birthday name. Word-by-word AND, skill-first ranking, evidence/trust/recency ordering, introducers and referral paths are later tasks.
-- **No people model.** Tables for people, tags, skills, relationships, interactions, person notes and photos do not exist.
+- **People model is data-only.** P1 added `people`, `tags`, `personNotes`, `interactions` and `birthdays.personId`, plus the single `isSelf` row. There is no people list, profile, note/interaction editor or linking UI yet (P2/P3). Skills, person-tags, ratings, relationships and photos still do not exist.
 - **Photos are not covered.** No picker, storage, upload or backup. `photos` will be metadata-only in Dexie; files stay local/remote object storage later.
 - **Sync is plaintext on the server.** The Worker stores row JSON as sent. The UI says so and says a forgotten password cannot be recovered. There is no password reset, email verification, invite check, login/register rate limit, or CORS restriction.
 - **Clock trust.** Last-write-wins uses the client `updatedAt`; a wrong phone clock can win a conflict. Accepted for now.
