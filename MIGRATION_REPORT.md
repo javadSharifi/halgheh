@@ -84,6 +84,8 @@
 | `09917e1` | `feat(ui): migrate person tabs action buttons to ui Button` | مهاجرت دکمه‌های افزودن و ناوبری در تب‌های فعالیت، ارزیابی و دادوستد فرد |
 | `8aba889` | `feat(ui): migrate Todos add and snooze buttons to ui Button` | مهاجرت دکمه افزودن کار و دکمه‌های آیکونی به تعویق انداختن یادآوری |
 | `4e16020` | `feat(ui): migrate BirthdayFields and occasion form to ui InputField` | مهاجرت ورودی‌های نام، تلفن و عنوان مناسبت به InputField با اعتبارسنجی |
+| `314acd0` | `feat(ui): migrate cadence and comparison pickers to ui Select` | مهاجرت انتخاب‌گرهای ریتم تماس و ستون‌های مقایسه دو کالا به Select |
+| `ab3787c` | `feat(ui): migrate CategorySheet action buttons to ui Button` | مهاجرت دکمه‌های بستن، جابه‌جایی و حذف دسته‌بندی‌ها به Button |
 
 *نکته: تمامی کامیت‌ها پس از اجرای موفقیت‌آمیز `pnpm verify` (بررسی تایپ‌اسکریپت و پاس شدن ۴۷ تست vitest) و `pnpm build` (بررسی بدون خطای i18n و خروجی باندل Vite/PWA) ثبت شده‌اند.*
 
