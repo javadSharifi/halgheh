@@ -5,6 +5,8 @@ import { normalize } from './search';
 import { Icon } from './Icon';
 import { locale, tx } from './i18n';
 
+import { InputField, Button } from './ui';
+
 const MAX_TAG = 30;
 
 /**
@@ -74,10 +76,14 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
 
       {open && (
         <div className="tag-add">
-          <label className="bf-name">
-            <span>{tx('برچسب تازه')}</span>
-            <input autoFocus value={text} maxLength={MAX_TAG} onChange={(e) => setText(e.target.value)} placeholder={tx('مثلاً همکار')} />
-          </label>
+          <InputField
+            label={tx('برچسب تازه')}
+            autoFocus
+            value={text}
+            maxLength={MAX_TAG}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={tx('مثلاً همکار')}
+          />
           {canCreate && <button className="mini-btn primary" disabled={busy} onClick={create}><Icon name="plus" size={14} stroke={2.4} />{tx('ساختن «')}{query}»</button>}
           {canReuse && <button className="mini-btn primary" disabled={busy} onClick={() => add(exists)}><Icon name="check" size={14} stroke={2.4} />{tx('افزودن «')}{exists.name}»</button>}
           {already && <p className="hint pe-hint">{tx('این برچسب از قبل روی این فرد هست.')}</p>}

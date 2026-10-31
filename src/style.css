@@ -2165,7 +2165,7 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 }
 .input-box-wrapper:focus-within {
   border-color: var(--blue);
-  box-shadow: 0 0 0 4px var(--blue-tint);
+  box-shadow: var(--focus-ring);
   background: var(--glass-strong);
 }
 .input-box-wrapper.has-error {
@@ -3242,6 +3242,10 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
   opacity: 0.5;
   cursor: not-allowed;
 }
+.ui-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
 
 /* Button Variants */
 .ui-btn-primary {
@@ -3407,6 +3411,12 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 }
 .ui-chip-action {
   cursor: pointer;
+}
+.ui-chip-action:focus-visible,
+.ui-chip-remove:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-full);
 }
 
 .ui-chip-remove {
