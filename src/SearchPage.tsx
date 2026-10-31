@@ -10,6 +10,7 @@ import { clearRecents, findMatch, lastSearch, loadRecents, saveRecent } from './
 import { Icon } from './Icon';
 import { STR } from './strings/rulebook';
 import { tx, tk } from './i18n';
+import { Card, Chip } from './ui';
 
 type Filter = 'all' | 'people' | 'notes' | 'todos' | 'photos' | 'birthdays' | 'rules' | 'exchanges';
 const FILTERS: [Filter, string][] = [
@@ -67,20 +68,23 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
   const [filter, setFilter] = useState<Filter>(initialFilter ?? (lastSearch.filter as Filter) ?? 'all');
   const [recents, setRecents] = useState(loadRecents);
   const t = today();
+  // the page opens with an empty box, so none of the tables are read until the user actually searches
+  const words = queryWords(q);
+  const active = words.length > 0;
 
-  const people = useLiveQuery(() => db.people.toArray(), []) ?? [];
-  const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
-  const birthdays = useLiveQuery(() => db.birthdays.toArray(), []) ?? [];
-  const notes = useLiveQuery(() => db.personNotes.toArray(), []) ?? [];
-  const interactions = useLiveQuery(() => db.interactions.toArray(), []) ?? [];
-  const tags = useLiveQuery(() => db.tags.toArray(), []) ?? [];
-  const personTags = useLiveQuery(() => db.personTags.toArray(), []) ?? [];
-  const photos = useLiveQuery(() => db.photos.toArray(), []) ?? [];
-  const skills = useLiveQuery(() => db.skills.toArray(), []) ?? [];
-  const personSkills = useLiveQuery(() => db.personSkills.toArray(), []) ?? [];
-  const ratings = useLiveQuery(() => db.ratings.toArray(), []) ?? [];
-  const rules = useLiveQuery(() => db.rules.toArray(), []) ?? [];
-  const exchanges = useLiveQuery(() => db.exchanges.toArray(), []) ?? [];
+  const people = useLiveQuery(() => (active ? db.people.toArray() : []), [active]) ?? [];
+  const tasks = useLiveQuery(() => (active ? db.tasks.toArray() : []), [active]) ?? [];
+  const birthdays = useLiveQuery(() => (active ? db.birthdays.toArray() : []), [active]) ?? [];
+  const notes = useLiveQuery(() => (active ? db.personNotes.toArray() : []), [active]) ?? [];
+  const interactions = useLiveQuery(() => (active ? db.interactions.toArray() : []), [active]) ?? [];
+  const tags = useLiveQuery(() => (active ? db.tags.toArray() : []), [active]) ?? [];
+  const personTags = useLiveQuery(() => (active ? db.personTags.toArray() : []), [active]) ?? [];
+  const photos = useLiveQuery(() => (active ? db.photos.toArray() : []), [active]) ?? [];
+  const skills = useLiveQuery(() => (active ? db.skills.toArray() : []), [active]) ?? [];
+  const personSkills = useLiveQuery(() => (active ? db.personSkills.toArray() : []), [active]) ?? [];
+  const ratings = useLiveQuery(() => (active ? db.ratings.toArray() : []), [active]) ?? [];
+  const rules = useLiveQuery(() => (active ? db.rules.toArray() : []), [active]) ?? [];
+  const exchanges = useLiveQuery(() => (active ? db.exchanges.toArray() : []), [active]) ?? [];
 
   const index = useMemo(
     () => buildIndex({ people, tasks, birthdays, notes, interactions, tags, personTags, photos, skills, personSkills, ratings, rules, exchanges }),
@@ -91,7 +95,6 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
     () => personFacts({ people, tasks, birthdays, notes, interactions, tags, personTags, photos, skills, personSkills, ratings }),
     [people, tasks, birthdays, notes, interactions, tags, personTags, photos, skills, personSkills, ratings],
   );
-  const words = queryWords(q);
   const hits = useMemo(() => runSearch(index, q), [index, q]);
   const byPerson = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
 
@@ -197,17 +200,21 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
         <section className="recents">
           <div><h2>{tx('جستجوهای اخیر')}</h2><button className="text-btn" onClick={() => { clearRecents(); setRecents([]); }}>{tx('پاک کردن')}</button></div>
           <div className="recent-chips">
-            {recents.map((r) => <button key={r} onClick={() => set(r)}><Icon name="history" size={14} stroke={1.9} />{r}</button>)}
+            {recents.map((r) => (
+              <Chip key={r} icon="history" onClick={() => set(r)}>
+                {r}
+              </Chip>
+            ))}
           </div>
         </section>
       )}
 
       {!searching && recents.length === 0 && (
-        <section className="glass empty-state search-empty">
+        <Card variant="glass" className="empty-state search-empty">
           <span className="tile blue" aria-hidden="true"><Icon name="search" size={24} stroke={1.8} /></span>
           <b>{tx('چه کسی را می‌خواهی پیدا کنی؟')}</b>
           <p className="hint">{tx('نام، شمارهٔ تلفن، شهر، شغل، برچسب یا بخشی از یک یادداشت را بنویس. همهٔ کلمه‌ها باید پیدا شوند.')}</p>
-        </section>
+        </Card>
       )}
 
       {searching && (
@@ -217,15 +224,15 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
           </span>
 
           {total === 0 && (
-            <section className="glass empty-state search-empty">
+            <Card variant="glass" className="empty-state search-empty">
               <span className="tile purple" aria-hidden="true"><Icon name="search" size={22} stroke={1.8} /></span>
               <b>{tx('چیزی پیدا نشد')}</b>
               <p className="hint">{tx('هجی را ساده‌تر کن یا فقط بخشی از نام را بنویس؛ ي/ك عربی و نیم‌فاصله اهمیتی ندارند.')}</p>
-            </section>
+            </Card>
           )}
 
           {order.filter((k) => show(k) && counts[k] > 0).map((kind) => (
-            <section key={kind} className="glass res-group" aria-label={KIND_NAME[kind]}>
+            <Card key={kind} variant="glass" className="res-group" aria-label={KIND_NAME[kind]}>
               <span className="g-label">{tx(KIND_PLURAL[kind] ?? '') || tx('{a1}ها', { a1: tx(KIND_NAME[kind]) })}</span>
               {sorted.filter((h) => h.doc.kind === kind).map((h) => {
                 const action = go(h);
@@ -261,7 +268,7 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
                   </Row>
                 );
               })}
-            </section>
+            </Card>
           ))}
         </div>
       )}
