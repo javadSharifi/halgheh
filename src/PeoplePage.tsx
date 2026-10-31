@@ -87,7 +87,7 @@ export function PeoplePage({
               <div className="person-row" key={p.id}>
                 <button className="person-open" onClick={() => openPerson(p.id)} aria-label={tx('باز کردن {a1}', { a1: p.displayName })}>
                   <span className={`avatar p${paletteOf(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
-                  <span className="person-name">{p.displayName}</span>
+                  <span className="person-name"><bdi>{p.displayName}</bdi></span>
                 </button>
                 <button className="icon-btn small" aria-label={tx('گزینه‌های {a1}', { a1: p.displayName })} aria-haspopup="dialog" onClick={() => setMenu(p)}>
                   <Icon name="moreHorizontal" size={19} stroke={2} />

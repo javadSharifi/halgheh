@@ -103,7 +103,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
       <section className="glass brief-hero">
         <span className={`avatar big p${PALETTE(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
         <div className="brief-who">
-          <b>{p.displayName}</b>
+          <b><bdi>{p.displayName}</bdi></b>
           <span>{[p.occupation, p.city].filter(Boolean).join(' · ') || tx(STR.brief.readOnly)}</span>
         </div>
       </section>
@@ -126,7 +126,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
                   <Icon name={x.type === 'call' ? 'phone' : x.type === 'message' ? 'note' : x.type === 'meeting' ? 'users' : 'history'} size={14} stroke={2} />
                 </span>
                 <span className="tl-body">
-                  <b>{x.summary}</b>
+                  <b><bdi>{x.summary}</bdi></b>
                   <span className="tl-meta">{tx(TYPE_NAME[x.type])} · {label(x.occurredAt, 'persian', 0, { day: 'numeric', month: 'long' })}</span>
                   {x.outcome && <span className="tl-out">{x.outcome}</span>}
                 </span>
@@ -157,7 +157,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
               <div key={task.id} className="set-row">
                 <span className="tile blue" aria-hidden="true"><Icon name="listChecks" size={16} stroke={1.9} /></span>
                 <span className="set-name">
-                  {task.title}
+                  <bdi>{task.title}</bdi>
                   <small className="set-sub">{task.on ? label(task.on, 'persian', 0, { day: 'numeric', month: 'long' }) : tx('بدون موعد')}</small>
                 </span>
                 <em className="chip-ok">{tx(STR.brief.todoOpen)}</em>
@@ -180,7 +180,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
                   <Icon name={e.direction === 'gave' ? 'upload' : 'download'} size={16} stroke={1.9} />
                 </span>
                 <span className="set-name">
-                  {e.title}
+                  <bdi>{e.title}</bdi>
                   <small className="set-sub">
                     {EXCHANGE_DIRECTION_LABEL[e.direction]}
                     {e.kind === 'money' && e.amount !== undefined ? ` · ${money(e.amount)}` : ''}
@@ -217,7 +217,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
           <h2 className="sec-title">{tx(STR.brief.notes)}</h2>
           <div className="glass brief-notes">
             {myNotes.map((n) => (
-              <p key={n.id} className={notesOpen ? undefined : 'clamp'}>{n.text}</p>
+              <p key={n.id} className={notesOpen ? undefined : 'clamp'}><bdi>{n.text}</bdi></p>
             ))}
             <button className="text-btn" onClick={() => setNotesOpen((x) => !x)}>
               {notesOpen ? tx(STR.brief.notesLess) : tx(STR.brief.notesMore)}
@@ -284,7 +284,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
                 <div key={b.id} className="set-row brief-break">
                   <span className="tile peach" aria-hidden="true"><Icon name="close" size={16} stroke={2.2} /></span>
                   <span className="set-name">
-                    {rule.title}
+                    <bdi>{rule.title}</bdi>
                     <small className="set-sub">{label(b.brokenOn, 'persian', 0, { day: 'numeric', month: 'long' })}{b.whatHappened ? ` · ${b.whatHappened}` : ''}</small>
                     {plan && <small className="set-sub brief-plan">{tx(STR.brief.plan)}: {plan}</small>}
                   </span>

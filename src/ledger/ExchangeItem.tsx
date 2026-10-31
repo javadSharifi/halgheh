@@ -108,7 +108,7 @@ export function ExchangeItem({
         </div>
 
         <div className="ledger-item-title-row">
-          <b className="ledger-item-title">{exchange.title}</b>
+          <b className="ledger-item-title"><bdi>{exchange.title}</bdi></b>
         </div>
 
         {/* Progress Bar for partial payments */}
@@ -124,7 +124,7 @@ export function ExchangeItem({
           </div>
         )}
 
-        {exchange.note && <p className="ledger-item-note">{exchange.note}</p>}
+        {exchange.note && <p className="ledger-item-note"><bdi>{exchange.note}</bdi></p>}
       </div>
 
       {/* Action Buttons */}

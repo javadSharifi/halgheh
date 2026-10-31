@@ -318,7 +318,7 @@ function MatrixSheet({ session, items, rules, checks, onClose }: {
               {rules.map((rule) => (
                 <tr key={rule.id}>
                   <th scope="row" className="mx-rule-col">
-                    {rule.title}
+                    <bdi>{rule.title}</bdi>
                     {rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}
                   </th>
                   {items.map((it) => {
@@ -429,7 +429,7 @@ function TwoSheet({ items, rules, checks, onClose }: {
           <div className="two-list">
             {diffs.map(({ rule, a: sa, b: sb }) => (
               <div key={rule.id} className="two-row">
-                <span className="two-rule">{rule.title}{rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}</span>
+                <span className="two-rule"><bdi>{rule.title}</bdi>{rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}</span>
                 <span className={`mx-state ${stateClass(sa)}`} aria-label={`${a?.name}: ${tx(STR.compare[sa === 'pass' ? 'pass' : sa === 'fail' ? 'fail' : 'unknown'])}`}>
                   <Icon name={stateIcon(sa)} size={15} stroke={2.4} />
                 </span>

@@ -45,7 +45,7 @@ export function ArchivePage() {
           {rows.map((p) => (
             <div className="person-row" key={p.id}>
               <span className={`avatar p${paletteOf(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
-              <span className="person-name">{p.displayName}</span>
+              <span className="person-name"><bdi>{p.displayName}</bdi></span>
               <div className="person-actions">
                 <button className="icon-btn small" aria-label={tx('بازگرداندن {a1}', { a1: p.displayName })} onClick={() => restore(p)}>
                   <Icon name="undo" size={18} stroke={2} />

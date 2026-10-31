@@ -161,7 +161,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
       <div className="tabs rule-cats" role="tablist" aria-label={tx(STR.feature.category)}>
         <button role="tab" aria-selected={cat === null} className={cat === null ? 'on' : ''} onClick={() => setCat(null)}>{tx(STR.feature.allCategories)}</button>
         {categories.map((c) => (
-          <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? 'on' : ''} onClick={() => setCat(c.id)}>{c.name}</button>
+          <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? 'on' : ''} onClick={() => setCat(c.id)}><bdi>{c.name}</bdi></button>
         ))}
       </div>
 
@@ -186,7 +186,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
                 <div key={rule.id} className={`check-rule state-${state}`}>
                   <div className="cr-head">
                     <span className="cr-title">
-                      {rule.title}
+                      <bdi>{rule.title}</bdi>
                       {rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}
                     </span>
                     <button

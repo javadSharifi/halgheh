@@ -94,7 +94,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               <Icon name="cake" size={24} stroke={2} />
             </div>
             <div className="bcc-text">
-              <b>{tx('امروز تولد {a1} است!', { a1: bdaysToday.map((x) => x.b.name).join(` ${tx('و')} `) })}</b>
+              <b><bdi>{tx('امروز تولد {a1} است!', { a1: bdaysToday.map((x) => x.b.name).join(` ${tx('و')} `) })}</bdi></b>
               <span>
                 {bdaysToday[0].b.year
                   ? tx('{a1} ساله می‌شود · تبریک یادت نره', { a1: fa(parts(t, bdaysToday[0].b.cal, 0).y - bdaysToday[0].b.year) })
@@ -242,7 +242,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                   {b.name.slice(0, 1)}
                 </span>
                 <div className="ub-info">
-                  <span className="ub-name">{b.name}</span>
+                  <span className="ub-name"><bdi>{b.name}</bdi></span>
                   <span className="ub-days">{inDays === 1 ? tx('فردا') : tx('{a1} روز دیگر', { a1: fa(inDays) })}</span>
                 </div>
               </div>
@@ -271,7 +271,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               </span>
               <div className="fc-details">
                 <span className="fc-name">{nameOf.get(x.personId) ?? tx('کسی')}</span>
-                <span className="fc-sub">{x.summary}</span>
+                <span className="fc-sub"><bdi>{x.summary}</bdi></span>
               </div>
               <em className="due-chip">{followUpLabel(x.followUpDate, t)}</em>
             </button>
@@ -306,7 +306,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                 <span className={`avatar p${PALETTE(p.displayName)}`} aria-hidden="true">
                   {p.displayName.slice(0, 1)}
                 </span>
-                <span>{p.displayName}</span>
+                <span><bdi>{p.displayName}</bdi></span>
               </button>
             ))}
           </div>

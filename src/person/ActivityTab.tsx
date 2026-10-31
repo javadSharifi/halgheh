@@ -43,7 +43,7 @@ export function ActivityTab({ askedTasks, askedDone, interactions, onTodo, onInt
                       <span className="circle">{done && <Icon name="check" size={13} stroke={3} />}</span>
                     </button>
                     <button className="t-body" onClick={() => onTodo(task.id)} aria-label={tx('ویرایش {a1}', { a1: task.title })}>
-                      <span className="t-title">{task.title}</span>
+                      <span className="t-title"><bdi>{task.title}</bdi></span>
                       <span className="t-sub">
                         {isOverdue(task, done) && <em className="late-chip">{tx('عقب‌افتاده')}</em>}
                         {join([
@@ -77,7 +77,7 @@ export function ActivityTab({ askedTasks, askedDone, interactions, onTodo, onInt
               <button key={x.id} className="tl-row" onClick={() => onInteraction(x)}>
                 <span className="tl-dot" aria-hidden="true"><Icon name={x.type === 'call' ? 'phone' : x.type === 'message' ? 'note' : x.type === 'meeting' ? 'users' : 'history'} size={14} stroke={2} /></span>
                 <span className="tl-body">
-                  <b>{x.summary}</b>
+                  <b><bdi>{x.summary}</bdi></b>
                   <span className="tl-meta">{tx(TYPE_NAME[x.type])} · {label(x.occurredAt, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                   {x.outcome && <span className="tl-out">{tx('نتیجه: {a1}', { a1: x.outcome })}</span>}
                   {x.followUpDate && <span className="tl-follow"><Icon name="bell" size={12} stroke={2} />{tx('پیگیری {a1}', { a1: label(x.followUpDate, 'persian', 0, { day: 'numeric', month: 'long' }) })}</span>}

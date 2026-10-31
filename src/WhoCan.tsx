@@ -112,7 +112,7 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
                 <span className="who-body">
                   <b>{s.specialist.displayName}</b>
                   <span className="ref-path">
-                    {s.pathWithTrades}
+                    <bdi>{s.pathWithTrades}</bdi>
                     {s.uncertain && <em className="c-dup">{tx('شاید')}</em>}
                   </span>
                   <span className="who-meta">

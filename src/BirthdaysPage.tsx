@@ -108,7 +108,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
           <span className="avatar xl" aria-hidden="true">{b.name.slice(0, 1)}</span>
           <div>
             <em>{tx('امروز')}</em>
-            <b>{b.year ? tx('{a1} · {a2} ساله', { a1: b.name, a2: age(b, t) }) : b.name}</b>
+            <b><bdi>{b.year ? tx('{a1} · {a2} ساله', { a1: b.name, a2: age(b, t) }) : b.name}</bdi></b>
             <span>{tx('{a1} · تقویم {a2}', { a1: label(t, b.cal, off, { day: 'numeric', month: 'long' }), a2: tx(CAL_NAMES[b.cal]) })}</span>
           </div>
           {b.phone
@@ -132,7 +132,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
                 <button className="bday-row" onClick={() => edit(b)} aria-label={tx('ویرایش {a1}', { a1: b.name })}>
                   <span className={`avatar p${paletteOf(b.name)}`} aria-hidden="true">{b.name.slice(0, 1)}</span>
                   <div>
-                    <b>{b.name}</b>
+                    <b><bdi>b.name</bdi></b>
                     <span>{next ? when(b, next.date) : tx(CAL_NAMES[b.cal])}</span>
                     {next && b.year && <span>{born(b, next.date)}</span>}
                   </div>

@@ -194,7 +194,7 @@ export function ExchangeSheet({
                       <span className={`avatar p${PALETTE(p.displayName)}`}>
                         {p.displayName.slice(0, 1)}
                       </span>
-                      <span>{p.displayName}</span>
+                      <span><bdi>{p.displayName}</bdi></span>
                     </button>
                   ))}
                 </div>

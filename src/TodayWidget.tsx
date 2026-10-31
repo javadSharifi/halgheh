@@ -57,7 +57,7 @@ function WidgetTaskItem({
         onClick={onOpen}
         aria-label={tx('مشاهده یا ویرایش {a1}', { a1: task.title })}
       >
-        <span className="widget-task-title">{task.title}</span>
+        <span className="widget-task-title"><bdi>{task.title}</bdi></span>
         <div className="widget-task-meta">
           {late && <span className="ti-chip late">{tx('عقب‌افتاده')}</span>}
           {isTime(task.time) && (

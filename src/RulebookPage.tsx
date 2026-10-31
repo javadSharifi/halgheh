@@ -113,7 +113,7 @@ export function RulebookPage({
         <Icon name={rule.archivedAt ? 'archive' : rule.strict ? 'target' : 'listChecks'} size={16} stroke={1.9} />
       </span>
       <span className="rule-body">
-        <b>{rule.title}</b>
+        <b><bdi>{rule.title}</bdi></b>
         <span className="rule-meta">
           {active === 'all' && <em className="rule-cat">{catName(rule.categoryId)}</em>}
           {rule.archivedAt ? tx(STR.feature.archivedRules) : dueLabel(rule.nextReviewOn, t)}
@@ -180,7 +180,7 @@ export function RulebookPage({
           </button>
           {ordered.map((c) => (
             <button key={c.id} role="tab" aria-selected={active === c.id} className={active === c.id ? 'on' : ''} onClick={() => setCat(c.id)}>
-              {c.name}
+              <bdi>{c.name}</bdi>
             </button>
           ))}
         </div>

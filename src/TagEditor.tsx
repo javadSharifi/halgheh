@@ -63,7 +63,7 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
           if (!t) return null;
           return (
             <button key={l.id} className="tag-chip on c1" onClick={() => remove(l.tagId)} aria-label={tx('برداشتن برچسب {a1}', { a1: t.name })}>
-              {t.name}
+              <bdi>{t.name}</bdi>
               <Icon name="close" size={13} stroke={2.4} />
             </button>
           );
@@ -84,7 +84,7 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
           {known.length > 0 && (
             <div className="tag-chips">
               {known.slice(0, 12).map((t) => (
-                <button key={t.id} className="tag-chip" disabled={busy} onClick={() => add(t)}>{t.name}</button>
+                <button key={t.id} className="tag-chip" disabled={busy} onClick={() => add(t)}><bdi>{t.name}</bdi></button>
               ))}
             </div>
           )}

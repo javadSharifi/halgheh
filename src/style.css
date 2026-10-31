@@ -58,6 +58,10 @@ body {
     var(--bg);
   background-attachment: fixed;
 }
+/* Arrows drawn for RTL (see FLIP in Icon.tsx) point the other way in an LTR layout. */
+[dir='ltr'] .i-flip { transform: scaleX(-1); }
+/* Vazirmatn is a Persian face; English reads better in the system font. */
+:root[lang='en'] body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 /* two blurred colour blobs behind everything, as in the design */
 body::before, body::after { content: ''; position: fixed; z-index: -1; border-radius: 50%; pointer-events: none; }
 body::before { top: 150px; left: -70px; width: 230px; height: 230px; background: var(--blob-a); filter: blur(var(--blob-a-blur)); opacity: var(--blob-a-o); }
@@ -290,7 +294,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .dd-head { display: flex; align-items: center; justify-content: space-between; height: 44px; margin-bottom: 14px; }
 .dd-head span { font-size: 16px; font-weight: 700; }
 .dd-head .icon-btn { margin: 0; }
-.dd-menu { position: fixed; z-index: 25; top: calc(64px + env(safe-area-inset-top)); left: 18px; min-width: 190px; padding: 6px; display: flex; flex-direction: column; border-radius: 22px; }
+.dd-menu { position: fixed; z-index: 25; top: calc(64px + env(safe-area-inset-top)); inset-inline-start: 18px; min-width: 190px; padding: 6px; display: flex; flex-direction: column; border-radius: 22px; }
 .dd-menu button { justify-content: flex-start; gap: 10px; border: 0; background: none; box-shadow: none; padding: 0 14px; font-weight: 600; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .dd-card { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; border-radius: 28px; }
 .dd-title { display: flex; align-items: center; justify-content: space-between; }
@@ -1903,8 +1907,8 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 /* Search Box */
 .ledger-search-box { position: relative; width: 100%; }
 .ledger-search-box input { width: 100%; height: 46px; border-radius: 23px; padding-inline-start: 42px; padding-inline-end: 38px; font-size: 13.5px; background: var(--field); border: 1px solid var(--edge); box-shadow: inset 0 1px 0 var(--hi); }
-.ledger-search-icon { position: absolute; right: 14px; top: 14px; color: var(--muted); pointer-events: none; }
-.ledger-search-clear { position: absolute; left: 8px; top: 9px; }
+.ledger-search-icon { position: absolute; inset-inline-end: 14px; top: 14px; color: var(--muted); pointer-events: none; }
+.ledger-search-clear { position: absolute; inset-inline-start: 8px; top: 9px; }
 
 /* Filter Tabs */
 .ledger-tabs { overflow-x: auto; flex-wrap: nowrap; gap: 6px; padding-bottom: 2px; }
@@ -2001,7 +2005,7 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 .ledger-person-picker-box { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 18px; background: var(--field); border: 1px solid var(--line-2); }
 .ledger-person-search { position: relative; display: flex; align-items: center; }
 .ledger-person-search input { width: 100%; height: 40px; padding-inline-start: 34px; font-size: 13px; border-radius: 12px; }
-.ledger-person-search svg { position: absolute; right: 10px; color: var(--muted); pointer-events: none; }
+.ledger-person-search svg { position: absolute; inset-inline-end: 10px; color: var(--muted); pointer-events: none; }
 .ledger-person-grid { display: flex; flex-wrap: wrap; gap: 6px; max-height: 140px; overflow-y: auto; overscroll-behavior: contain; }
 .ledger-person-pill-btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 18px; font-size: 12.5px; font-weight: 600; background: var(--card2); border: 1px solid var(--edge); min-height: 34px; cursor: pointer; }
 .ledger-person-pill-btn .avatar { width: 22px; height: 22px; border-radius: 11px; font-size: 11px; }
@@ -2032,8 +2036,8 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 .ledger-amount-section { background: var(--field); padding: 14px 16px; border-radius: 20px; border: 1px solid var(--line-2); }
 .ledger-amount-input-box { position: relative; display: flex; align-items: center; }
 .ledger-amount-input { width: 100%; height: 56px; font-size: 24px; font-weight: 900; padding-inline-start: 64px; padding-inline-end: 38px; text-align: end; border-radius: 16px; letter-spacing: 0.5px; color: var(--ink-strong); }
-.ledger-amount-currency { position: absolute; left: 16px; top: 18px; font-size: 13.5px; font-weight: 800; color: var(--muted); }
-.ledger-amount-clear { position: absolute; right: 10px; top: 13px; }
+.ledger-amount-currency { position: absolute; inset-inline-start: 16px; top: 18px; font-size: 13.5px; font-weight: 800; color: var(--muted); }
+.ledger-amount-clear { position: absolute; inset-inline-end: 10px; top: 13px; }
 .ledger-amount-words { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--blue-ink); margin-top: 6px; padding: 6px 12px; border-radius: 10px; background: var(--blue-tint); }
 .ledger-quick-amounts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .ledger-quick-amounts button { height: 32px; min-height: 0; padding: 0 11px; border-radius: 16px; font-size: 11.5px; font-weight: 600; background: var(--card2); border: 1px solid var(--edge); cursor: pointer; }
@@ -2161,7 +2165,7 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
   font-family: inherit;
 }
 .input-box-wrapper.has-icon .input-element {
-  padding-left: 40px; /* in RTL, left side has the icon */
+  padding-inline-start: 40px; /* the icon sits on the inline-start side */
 }
 .textarea-element {
   height: auto;
@@ -2173,7 +2177,7 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 }
 .input-icon-slot {
   position: absolute;
-  left: 12px;
+  inset-inline-start: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--faint);

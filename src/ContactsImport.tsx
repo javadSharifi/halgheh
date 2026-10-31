@@ -160,7 +160,7 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
                       >
                         <span className="c-check" aria-hidden="true">{on && <Icon name="check" size={13} stroke={3} />}</span>
                         <span className="c-body">
-                          <b>{p.displayName}</b>
+                          <b><bdi>{p.displayName}</bdi></b>
                           <span>{p.phones.length ? p.phones.slice(0, 2).join(' · ') : p.emails[0] ?? tx('بدون شماره')}</span>
                         </span>
                         {p.existing && <em className="c-dup">{tx('از قبل')}</em>}

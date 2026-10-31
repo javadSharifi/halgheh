@@ -234,7 +234,7 @@ function EditBreakSheet({ rule, row, onClose }: { rule: Rule; row: RuleBreak; on
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet break-sheet" role="dialog" aria-modal="true" aria-labelledby="edit-break-title">
         <div className="bf-head">
-          <span id="edit-break-title">{tx(STR.breaks.editTitle)} · {rule.title}</span>
+          <span id="edit-break-title">{tx(STR.breaks.editTitle)} · <bdi>{rule.title}</bdi></span>
           <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
         <div className="pe-scroll">

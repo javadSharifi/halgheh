@@ -72,7 +72,7 @@ export function SettleSheet({
           <div>
             <span className="sheet-main-title">{tx('تسویه و پرداخت')}</span>
             <small className="sheet-sub-title">
-              {exchange.title} ({personName})
+              <bdi>{exchange.title}</bdi> ({personName})
             </small>
           </div>
           <button className="text-btn" onClick={onClose}>

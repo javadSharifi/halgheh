@@ -16,7 +16,7 @@ export function PersonHero({ person: p, onEdit, openBrief }: { person: Person; o
         <div className="ph-top">
           <span className={`avatar xl p${paletteOf(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
           <div className="ph-main">
-            <b>{p.displayName}</b>
+            <b><bdi>{p.displayName}</bdi></b>
             <div className="ph-badges">
               {fullName(p) && <span className="ph-badge">{fullName(p)}</span>}
               {p.nickname && <span className="ph-badge ph-nick">{p.nickname}</span>}
