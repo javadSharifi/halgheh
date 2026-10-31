@@ -13,6 +13,8 @@ import { setBio, useLock } from './lockStore';
 import { Toggle as Switch } from './Toggle';
 import { LANGS, tx, tk } from './i18n';
 
+import { Card, Button } from './ui';
+
 const WEEK_STARTS: [WeekStart, string][] = [[6, tk('شنبه')], [0, tk('یکشنبه')], [1, tk('دوشنبه')]];
 const THEMES: [Theme, string, IconName][] = [['light', tk('روشن'), 'sun'], ['dark', tk('تیره'), 'moon'], ['auto', tk('خودکار'), 'contrast']];
 
@@ -27,7 +29,7 @@ function Row({ icon, tone, name, children }: { icon: IconName; tone: 'blue' | 'p
 }
 
 export function SettingsPage({ openSync }: { openSync: () => void }) {
-  const { weekStart, theme, remind, lang } = useSettings();
+  const { weekStart, theme, remind, hideNames, lang } = useSettings();
   const lock = useLock();
   const [pinFlow, setPinFlow] = useState<'set' | 'change' | 'off' | null>(null);
   const [canBio, setCanBio] = useState(false);
@@ -93,7 +95,7 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
 
       <section>
         <h2 className="sec-title">{tx('برنامه')}</h2>
-        <div className="glass set-list">
+        <Card variant="glass" className="set-list">
           <Row icon="alignLeft" tone="green" name={tx('شروع هفته')}>
             <span className="set-value">{WEEK_STARTS.find(([v]) => v === weekStart)?.[1]}<Icon name="chevronLeft" size={16} stroke={2} />
               <Choice className="pick-hit" label={tx('شروع هفته')} value={weekStart} options={WEEK_STARTS} onChange={(w) => updateSettings({ weekStart: w })} />
@@ -104,30 +106,33 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
               <Choice className="pick-hit" label={tx('زبان برنامه')} value={lang} options={LANGS} onChange={(l) => updateSettings({ lang: l })} />
             </span>
           </Row>
-        </div>
+        </Card>
       </section>
 
       <section>
         <h2 className="sec-title">{tx('ظاهر')}</h2>
-        <div className="glass theme-row" role="radiogroup" aria-label={tx('پوسته')}>
+        <Card variant="glass" className="theme-row" role="radiogroup" aria-label={tx('پوسته')}>
           {THEMES.map(([k, n, icon]) => (
             <button key={k} role="radio" aria-checked={theme === k} className={theme === k ? 'on' : ''} onClick={() => updateSettings({ theme: k })}><Icon name={icon} size={18} stroke={1.9} />{n}</button>
           ))}
-        </div>
+        </Card>
       </section>
 
       {isNative && (
         <section>
           <h2 className="sec-title">{tx('اعلان‌ها')}</h2>
-          <div className="glass set-list">
+          <Card variant="glass" className="set-list">
             <Row icon="bell" tone="blue" name={tx('یادآوری کارها و تولدها')}><Switch on={remind} label={tx('یادآوری کارها و تولدها')} onChange={toggleRemind} /></Row>
-          </div>
+            {remind && (
+              <Row icon="bell" tone="purple" name={tx('مخفی کردن نام‌ها در اعلان')}><Switch on={hideNames} label={tx('مخفی کردن نام‌ها در اعلان')} onChange={(v) => updateSettings({ hideNames: v })} /></Row>
+            )}
+          </Card>
         </section>
       )}
 
       <section>
         <h2 className="sec-title">{tx('امنیت')}</h2>
-        <div className="glass set-list">
+        <Card variant="glass" className="set-list">
           <Row icon="lock" tone="purple" name={tx('قفل برنامه')}><Switch on={!!lock} label={tx('قفل برنامه')} onChange={(on) => setPinFlow(on ? 'set' : 'off')} /></Row>
           {lock && (
             <>
@@ -139,13 +144,13 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
               {canBio && <Row icon="smartphone" tone="green" name={tx('باز کردن با اثر انگشت')}><Switch on={lock.bio} label={tx('باز کردن با اثر انگشت')} onChange={setBio} /></Row>}
             </>
           )}
-        </div>
+        </Card>
         <p className="hint set-msg">{tx('پین فقط روی همین گوشی می‌ماند. اگر فراموشش کنی راه بازیابی نیست، فقط پاک کردن دادهٔ برنامه.')}</p>
       </section>
 
       <section>
         <h2 className="sec-title">{tx('داده و همگام‌سازی')}</h2>
-        <div className="glass set-list">
+        <Card variant="glass" className="set-list">
           {DEFAULT_URL && (
             <button className="set-row as-btn" onClick={openSync}>
               <span className="tile blue" aria-hidden="true"><Icon name="refresh" size={17} stroke={1.9} /></span>
@@ -159,7 +164,7 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
             <button onClick={download}><Icon name="download" size={18} stroke={1.9} />{tx('فقط داده (JSON)')}</button>
             <label className="btn"><Icon name="upload" size={18} stroke={1.9} />{tx('بازیابی از فایل')}<input type="file" accept="application/json,.zip,application/zip" hidden onChange={(e) => upload(e.target.files?.[0])} /></label>
           </div>
-        </div>
+        </Card>
         {msg && <p className="hint set-msg" role="status">{msg}</p>}
       </section>
 
