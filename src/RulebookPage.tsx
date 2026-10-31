@@ -61,7 +61,7 @@ export function RulebookPage({
     return mostBroken ? orderByBreaks(shown, breaks) : orderRules(shown);
   }, [inScope, mostBroken, onlyBroken, breaks]);
   const archived = useMemo(() => inScope.filter((r) => r.archivedAt).sort((a, b) => (b.archivedAt ?? 0) - (a.archivedAt ?? 0)), [inScope]);
-  const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? '—';
+  const catName = (id: string) => tx(categories.find((c) => c.id === id)?.name ?? '—');
 
   // a rule opened from search arrives as an id; open its sheet once, then clear the request so back does not reopen it
   useEffect(() => {
@@ -180,7 +180,7 @@ export function RulebookPage({
           </button>
           {ordered.map((c) => (
             <button key={c.id} role="tab" aria-selected={active === c.id} className={active === c.id ? 'on' : ''} onClick={() => setCat(c.id)}>
-              <bdi>{c.name}</bdi>
+              <bdi>{tx(c.name)}</bdi>
             </button>
           ))}
         </div>
@@ -201,7 +201,7 @@ export function RulebookPage({
             <input
               value={quick}
               maxLength={200}
-              placeholder={`${tx(STR.feature.quickAddPlaceholder)} (${activeCategory.name})`}
+              placeholder={`${tx(STR.feature.quickAddPlaceholder)} (${tx(activeCategory.name)})`}
               aria-label={tx(STR.feature.addRule)}
               onChange={(e) => setQuick(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') void addQuick(); }}

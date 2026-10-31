@@ -53,7 +53,7 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
     }
     const n = countIn(cat.id);
     if (n === 0) {
-      const ok = await ask({ title: tx(STR.categories.deleteTitle(cat.name)), message: tx(STR.categories.deleteEmptyBody), confirm: tx(STR.categories.deleteConfirm) });
+      const ok = await ask({ title: tx(STR.categories.deleteTitle(tx(cat.name))), message: tx(STR.categories.deleteEmptyBody), confirm: tx(STR.categories.deleteConfirm) });
       if (ok) await deleteCategory(cat, [], { deleteRules: true });
       return;
     }
@@ -69,7 +69,7 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet cat-sheet" role="dialog" aria-modal="true" aria-labelledby="cat-sheet-title">
         <div className="bf-head">
-          <span id="cat-sheet-title">{pending ? tx(STR.categories.deleteTitle(pending.name)) : tx(STR.categories.manageTitle)}</span>
+          <span id="cat-sheet-title">{pending ? tx(STR.categories.deleteTitle(tx(pending.name))) : tx(STR.categories.manageTitle)}</span>
           <button className="text-btn" onClick={() => (pending ? setPending(null) : onClose())}>{pending ? tx(STR.feature.cancel) : tx(STR.feature.close)}</button>
         </div>
 
@@ -94,20 +94,20 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
                     </form>
                   ) : (
                     <button className="cat-name" onClick={() => setRenaming({ id: cat.id, name: cat.name })}>
-                      {cat.name}
+                      {tx(cat.name)}
                       <small className="set-sub">{tn('{n} قانون', countIn(cat.id))}</small>
                     </button>
                   )}
                   <span className="cat-compare" title={tx(STR.categories.compareToggle)}>
-                    <Toggle on={!!cat.compareEnabled} label={`${tx(STR.categories.compareToggle)} ${cat.name}`} onChange={(on) => void setCompareEnabled(cat, on)} />
+                    <Toggle on={!!cat.compareEnabled} label={`${tx(STR.categories.compareToggle)} ${tx(cat.name)}`} onChange={(on) => void setCompareEnabled(cat, on)} />
                   </span>
-                  <button className="icon-btn small" aria-label={`${tx(STR.categories.moveUp)} ${cat.name}`} disabled={i === 0} onClick={() => void moveCategory(categories, cat.id, -1)}>
+                  <button className="icon-btn small" aria-label={`${tx(STR.categories.moveUp)} ${tx(cat.name)}`} disabled={i === 0} onClick={() => void moveCategory(categories, cat.id, -1)}>
                     <Icon name="chevronDown" size={17} stroke={2} />
                   </button>
-                  <button className="icon-btn small" aria-label={`${tx(STR.categories.moveDown)} ${cat.name}`} disabled={i === categories.length - 1} onClick={() => void moveCategory(categories, cat.id, 1)}>
+                  <button className="icon-btn small" aria-label={`${tx(STR.categories.moveDown)} ${tx(cat.name)}`} disabled={i === categories.length - 1} onClick={() => void moveCategory(categories, cat.id, 1)}>
                     <Icon name="chevronDown" size={17} stroke={2} />
                   </button>
-                  <button className="icon-btn small danger" aria-label={`${tx(STR.feature.delete)} ${cat.name}`} onClick={() => void remove(cat)}>
+                  <button className="icon-btn small danger" aria-label={`${tx(STR.feature.delete)} ${tx(cat.name)}`} onClick={() => void remove(cat)}>
                     <Icon name="trash" size={16} stroke={2} />
                   </button>
                 </div>
@@ -127,12 +127,12 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
               <span className="tile blue" aria-hidden="true"><Icon name="tag" size={17} stroke={1.9} /></span>
               <span className="rf-name">{tx(STR.categories.deleteMoveTo)}</span>
               <span className="rf-value">
-                {others.find((c) => c.id === target)?.name ?? '—'}
+                {tx(others.find((c) => c.id === target)?.name ?? '—')}
                 <Choice
                   className="pick-hit"
                   label={tx(STR.categories.deleteMoveTo)}
                   value={target}
-                  options={others.map((c): [string, string] => [c.id, c.name])}
+                  options={others.map((c): [string, string] => [c.id, tx(c.name)])}
                   onChange={setTarget}
                 />
               </span>

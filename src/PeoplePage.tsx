@@ -5,6 +5,7 @@ import { type Person, db, del, put } from './db';
 import { fa } from './cal';
 import { Icon } from './Icon';
 import { locale, tx } from './i18n';
+import { personLabel } from './format';
 
 type Sort = 'name' | 'recent';
 const SORT_KEY = 'halgheh:people-sort';
@@ -87,7 +88,7 @@ export function PeoplePage({
               <div className="person-row" key={p.id}>
                 <button className="person-open" onClick={() => openPerson(p.id)} aria-label={tx('باز کردن {a1}', { a1: p.displayName })}>
                   <span className={`avatar p${paletteOf(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
-                  <span className="person-name"><bdi>{p.displayName}</bdi></span>
+                  <span className="person-name"><bdi>{personLabel(p)}</bdi></span>
                 </button>
                 <button className="icon-btn small" aria-label={tx('گزینه‌های {a1}', { a1: p.displayName })} aria-haspopup="dialog" onClick={() => setMenu(p)}>
                   <Icon name="moreHorizontal" size={19} stroke={2} />
@@ -103,7 +104,7 @@ export function PeoplePage({
           <div className="scrim dim" onClick={() => setMenu(null)} />
           <section className="sheet person-menu" role="dialog" aria-modal="true" aria-labelledby="person-menu-title">
             <div className="bf-head">
-              <span id="person-menu-title">{menu.displayName}</span>
+              <span id="person-menu-title">{personLabel(menu)}</span>
               <button className="text-btn" onClick={() => setMenu(null)}>{tx('بستن')}</button>
             </div>
             <button className="set-row as-btn" onClick={() => archive(menu)}>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { type Exchange, type Person } from '../db';
 import { today, addDays, wd, parts, label } from '../cal';
-import { formatToman, formatNumberFa, tomanWords, toLatinDigits } from '../format';
+import { formatToman, formatNumberFa, tomanWords, toLatinDigits, personLabel } from '../format';
 import { Icon } from '../Icon';
 import { DatePicker } from '../DatePicker';
 import { STR } from '../strings/rulebook';
@@ -164,7 +164,7 @@ export function ExchangeSheet({
                   {selectedPerson.displayName.slice(0, 1)}
                 </span>
                 <div className="ledger-selected-person-info">
-                  <b>{selectedPerson.displayName}</b>
+                  <b>{personLabel(selectedPerson)}</b>
                   <small>{tx('ضربه بزنید تا تغییر دهید')}</small>
                 </div>
                 <Icon name="chevronLeft" size={16} stroke={2.2} />
@@ -194,7 +194,7 @@ export function ExchangeSheet({
                       <span className={`avatar p${PALETTE(p.displayName)}`}>
                         {p.displayName.slice(0, 1)}
                       </span>
-                      <span><bdi>{p.displayName}</bdi></span>
+                      <span><bdi>{personLabel(p)}</bdi></span>
                     </button>
                   ))}
                 </div>

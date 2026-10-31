@@ -31,7 +31,7 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
     if (busy) return;
     setBusy(true);
     try {
-      const row = await addSession(category.id, title.trim() || tx('مقایسهٔ {a1}', { a1: category.name }));
+      const row = await addSession(category.id, title.trim() || tx('مقایسهٔ {a1}', { a1: tx(category.name) }));
       setTitle('');
       onOpen(row.id);
     } finally {
@@ -49,14 +49,14 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet compare-home" role="dialog" aria-modal="true" aria-labelledby="compare-home-title">
         <div className="bf-head">
-          <span id="compare-home-title">{tx(STR.compare.title)} · {category.name}</span>
+          <span id="compare-home-title">{tx(STR.compare.title)} · {tx(category.name)}</span>
           <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
 
         <div className="rf-row">
           <span className="tile purple" aria-hidden="true"><Icon name="contrast" size={17} stroke={1.9} /></span>
           <span className="rf-name">{tx(STR.categories.compareToggle)}</span>
-          <Toggle on={!!category.compareEnabled} label={`${tx(STR.categories.compareToggle)} ${category.name}`} onChange={(on) => void setCompareEnabled(category, on)} />
+          <Toggle on={!!category.compareEnabled} label={`${tx(STR.categories.compareToggle)} ${tx(category.name)}`} onChange={(on) => void setCompareEnabled(category, on)} />
         </div>
 
         {!category.compareEnabled && <p className="hint">{tx(STR.compare.compareDisabled)}</p>}

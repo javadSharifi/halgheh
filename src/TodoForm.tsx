@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { type Person, type Task, db, put, uid } from './db';
 import { fa, label, parts, today } from './cal';
-import { LEADS, faDigits, isTime, leadLabel } from './format';
+import { LEADS, faDigits, isTime, leadLabel, personLabel } from './format';
 import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { Icon } from './Icon';
@@ -370,7 +370,7 @@ function WhoAskedCard({ value, onChange }: { value: string; onChange: (id: strin
                     setOpen(false);
                   }}
                 >
-                  {p.displayName}
+                  {personLabel(p)}
                   {value === p.id && <Icon name="check" size={18} stroke={2.4} />}
                 </button>
               ))}

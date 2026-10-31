@@ -35,9 +35,13 @@ join([a, b && c])                                 // non-empty parts joined with
 
 ## Do not translate
 
-Text that is stored in the database, not shown as UI: seeded category names (`src/domain/rules/constants.ts`), the
-self row `'من'` (`src/db/index.ts`), the `'بدون نام'` contact fallback, and the Arabic→Persian letter table in
-`src/search.ts`. Translating them would split the data by language.
+Stored text is never rewritten, only translated where it is shown, so a language change cannot split the data:
+
+- seeded category names (`src/domain/rules/constants.ts`) are marked `tk(...)` and rendered with `tx(c.name)`. A
+  category the user renamed has no key, so it shows its own name.
+- the self row `'من'` and the `'بدون نام'` contact fallback go through `personLabel()` (`src/format.ts`), which picks
+  them by `isSelf` and by that exact string. Every other name is shown as typed.
+- the Arabic→Persian letter table in `src/search.ts` is normalisation, not copy.
 
 ## Add a language
 

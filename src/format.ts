@@ -14,6 +14,13 @@ export function daysText(mask: number) {
     : on.map((d) => wdName(d)).join(lang() === 'fa' ? '، ' : ', ');
 }
 
+/**
+ * A person's name for the screen. The self row is stored as "من" and a nameless contact as "بدون نام": both are data,
+ * so they are translated here and never written back.
+ */
+export const personLabel = (p: { displayName: string; isSelf?: 1 }) =>
+  p.isSelf ? tx('من') : p.displayName === 'بدون نام' ? tx('بدون نام') : p.displayName;
+
 /** What a task repeats on, for list subtitles. */
 export const kindText = (t: { mask: number; on?: string }) => (t.on ? tx('یک‌بار') : daysText(t.mask));
 

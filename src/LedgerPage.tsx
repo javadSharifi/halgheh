@@ -18,6 +18,7 @@ import { BalanceChips, ExchangeItem } from './ledger/ExchangeItem';
 import { ExchangeSheet } from './ledger/ExchangeSheet';
 import { SettleSheet } from './ledger/SettleSheet';
 import { locale, tn, tx } from './i18n';
+import { personLabel } from './format';
 
 export { money, BalanceChips };
 export { ExchangeSheet };
@@ -46,7 +47,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
   const [settling, setSettling] = useState<Exchange | null>(null);
   const t = today();
 
-  const nameOf = useMemo(() => new Map(people.map((p) => [p.id, p.displayName])), [people]);
+  const nameOf = useMemo(() => new Map(people.map((p) => [p.id, personLabel(p)])), [people]);
   const balances = useMemo(() => balancesByPerson(exchanges, settlements), [exchanges, settlements]);
 
   // Overall financial calculations

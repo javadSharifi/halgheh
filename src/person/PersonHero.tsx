@@ -4,6 +4,7 @@ import { normPhone } from '../phone';
 import { STR } from '../strings/rulebook';
 import { fullName, paletteOf, smsHref } from './shared';
 import { tx } from '../i18n';
+import { personLabel } from '../format';
 
 /** The avatar card plus the call/sms/email/brief row, both derived from the person alone. */
 export function PersonHero({ person: p, onEdit, openBrief }: { person: Person; onEdit: () => void; openBrief: () => void }) {
@@ -16,7 +17,7 @@ export function PersonHero({ person: p, onEdit, openBrief }: { person: Person; o
         <div className="ph-top">
           <span className={`avatar xl p${paletteOf(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
           <div className="ph-main">
-            <b><bdi>{p.displayName}</bdi></b>
+            <b><bdi>{personLabel(p)}</bdi></b>
             <div className="ph-badges">
               {fullName(p) && <span className="ph-badge">{fullName(p)}</span>}
               {p.nickname && <span className="ph-badge ph-nick">{p.nickname}</span>}

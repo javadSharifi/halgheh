@@ -5,6 +5,7 @@ import { Icon } from './Icon';
 import { CONFIDENCE_LABEL, REL_LABEL, REL_TYPES, findLink, isSymmetric, linkId, linkIds } from './relationships';
 import type { RelType } from './db';
 import { locale, tx } from './i18n';
+import { personLabel } from './format';
 
 /**
  * Add or edit one link from a person's profile (R3). A symmetric link is saved once with the pair in sorted order, so
@@ -106,7 +107,7 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
               <div className="rel-people">
                 {shown.slice(0, 40).map((p) => (
                   <button key={p.id} type="button" className={`tag-chip${otherId === p.id ? ' on c1' : ''}`} onClick={() => setOtherId(p.id)}>
-                    {p.displayName}
+                    {personLabel(p)}
                   </button>
                 ))}
                 {shown.length === 0 && others.length > 0 && <p className="hint pe-hint">{tx('کسی با این نام پیدا نشد.')}</p>}
@@ -143,7 +144,7 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
             <span className="rf-name">{tx('معرف')}</span>
             <select className="as-value" aria-label={tx('معرف')} value={introducedBy} onChange={(e) => setIntroducedBy(e.target.value)}>
               <option value="">{tx('مشخص نیست')}</option>
-              {others.map((p) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
+              {others.map((p) => <option key={p.id} value={p.id}>{personLabel(p)}</option>)}
             </select>
           </div>
           <label className="bf-name bf-name-top">

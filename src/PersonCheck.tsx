@@ -25,6 +25,7 @@ import {
 } from './ruleData';
 import { BreakSheet } from './BreakSheet';
 import { tx } from './i18n';
+import { personLabel } from './format';
 
 /**
  * Part 2: going through my rules for one person before doing something with them. Every non-archived rule is listed under
@@ -129,7 +130,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
           <button className="check-title" onClick={() => setRenaming(true)}>
             {check.title || tx(STR.personCheck.titlePlaceholder)}
             <small className="set-sub">
-              {(person as Person | undefined)?.displayName ?? ''}
+              {person ? personLabel(person as Person) : ''}
               {check.status === 'closed' ? ` · ${tx(STR.personCheck.closed)}` : ''}
               {check.closedAt ? ` · ${label(new Date(check.closedAt).toLocaleDateString('sv'), 'persian', 0, { day: 'numeric', month: 'long' })}` : ''}
             </small>
@@ -161,7 +162,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
       <div className="tabs rule-cats" role="tablist" aria-label={tx(STR.feature.category)}>
         <button role="tab" aria-selected={cat === null} className={cat === null ? 'on' : ''} onClick={() => setCat(null)}>{tx(STR.feature.allCategories)}</button>
         {categories.map((c) => (
-          <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? 'on' : ''} onClick={() => setCat(c.id)}><bdi>{c.name}</bdi></button>
+          <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? 'on' : ''} onClick={() => setCat(c.id)}><bdi>{tx(c.name)}</bdi></button>
         ))}
       </div>
 
@@ -178,7 +179,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
 
       {groups.map((g) => (
         <section key={g.category?.id ?? 'none'}>
-          <h2 className="sec-title">{g.category?.name ?? tx(STR.feature.category)}<small>{fa(g.rules.length)}</small></h2>
+          <h2 className="sec-title">{g.category ? tx(g.category.name) : tx(STR.feature.category)}<small>{fa(g.rules.length)}</small></h2>
           <div className="glass check-rule-list">
             {g.rules.map((rule) => {
               const state = stateOf(items, rule.id);

@@ -5,6 +5,7 @@ import { today } from './cal';
 import { Icon } from './Icon';
 import { DatePicker } from './DatePicker';
 import { locale, tx } from './i18n';
+import { personLabel } from './format';
 
 /** Edit a photo's metadata (G1): title, note, date, an optional person link and tags. G2 wires the same fields into search. */
 export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => void }) {
@@ -73,7 +74,7 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
             <span className="rf-name">{tx('شخص')}</span>
             <select className="as-value" aria-label={tx('شخص')} value={v.personId} onChange={(e) => set({ personId: e.target.value })}>
               <option value="">{tx('بدون شخص')}</option>
-              {sortedPeople.map((p: Person) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
+              {sortedPeople.map((p: Person) => <option key={p.id} value={p.id}>{personLabel(p)}</option>)}
             </select>
           </div>
 

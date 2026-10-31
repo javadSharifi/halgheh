@@ -8,6 +8,7 @@ import { REL_LABEL, closenessOf, linksOf } from '../relationships';
 import { STATUS_LABEL, STATUS_RANK, isStale, orderPersonSkills, staleText } from '../skills';
 import { STR } from '../strings/rulebook';
 import { join, tx } from '../i18n';
+import { personLabel } from '../format';
 
 /** Tab 3: the six independent ratings, skills, relationships, and the rule-check history. */
 export function EvaluationTab({ personId, personSkills, skills, ratings, relationships, everyone, checks, allRules, checkItems, onRate, onSkill, onRel, onNewCheck, openCheck }: {
@@ -30,7 +31,7 @@ export function EvaluationTab({ personId, personSkills, skills, ratings, relatio
   const myRatings = currentRatings(ratings);
   const myLinks = linksOf(relationships, personId);
   const skillName = (id: string) => skills.find((s) => s.id === id)?.name ?? '';
-  const personName = (id: string) => everyone.find((x) => x.id === id)?.displayName ?? tx('کسی');
+  const personName = (id: string) => { const x = everyone.find((p) => p.id === id); return x ? personLabel(x) : tx('کسی'); };
   const newestCheck = [...checks].sort((a, b) => b.updatedAt - a.updatedAt)[0];
 
   return (

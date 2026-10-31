@@ -4,6 +4,7 @@ import { normalize } from './search';
 import { queryWords } from './domain/search';
 import { STATUS_RANK, type EvidenceStatus } from './skills';
 import { findPaths, pathText, type Path } from './relationships';
+import { personLabel } from './format';
 
 /**
  * R4: "who do I know who can do X?" — section 6 of TASKS.md, deterministic, no AI and no single numeric score.
@@ -192,12 +193,12 @@ export function compareHits(a: Hit, b: Hit) {
 export function introducers(hits: Hit[], data: Input, links: Relationship[], maxDepth = 3): Suggestion[] {
   const self = data.people.find((p) => p.isSelf);
   if (!self) return [];
-  const names = new Map(data.people.map((p) => [p.id, p.displayName]));
+  const names = new Map(data.people.map((p) => [p.id, personLabel(p)]));
   const byId = new Map(data.people.map((p) => [p.id, p]));
   // "علی (مکانیک)" as section 6 asks for the path display
   const withTrade = (id: string) => {
     const p = byId.get(id);
-    const name = p?.displayName ?? tx('؟');
+    const name = p ? personLabel(p) : tx('؟');
     return p?.occupation ? `${name} (${p.occupation})` : name;
   };
   const out: Suggestion[] = [];

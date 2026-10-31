@@ -10,11 +10,11 @@ Check a new string against this list before adding it to `en.ts`.
 | حلقه | Halgheh | App name, never translated or lowercased. |
 | حلقه خالی است | Halgheh is empty | |
 
-## Money and deals
+## Money and exchanges
 
 | Persian | English | Note |
 |---|---|---|
-| دادوستد | deal | Always "deal", never "exchange" or "transaction". |
+| دادوستد | exchange | Always "exchange": the row can be money, an item or a favour, so "deal" and "transaction" read wrong. |
 | طلب | credit | What others owe me. |
 | بدهی | debt | What I owe others. |
 | تسویه | settle / settled | Verb "settle", state "settled". |

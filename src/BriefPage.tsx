@@ -5,7 +5,7 @@ import { fa, label, monthName, parts, today } from './cal';
 import { Icon } from './Icon';
 import { STR, EXCHANGE_DIRECTION_LABEL } from './strings/rulebook';
 import { normPhone } from './phone';
-import { nextOccurrence } from './format';
+import { nextOccurrence, personLabel } from './format';
 import { CRITERION_LABEL, RATING_CRITERIA, SCORES, isScore } from './ratings';
 import { TYPE_NAME } from './InteractionForm';
 import { doneKey, doneDateFor } from './todoFilters';
@@ -103,7 +103,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
       <section className="glass brief-hero">
         <span className={`avatar big p${PALETTE(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
         <div className="brief-who">
-          <b><bdi>{p.displayName}</bdi></b>
+          <b><bdi>{personLabel(p)}</bdi></b>
           <span>{[p.occupation, p.city].filter(Boolean).join(' · ') || tx(STR.brief.readOnly)}</span>
         </div>
       </section>

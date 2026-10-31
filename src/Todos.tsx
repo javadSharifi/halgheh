@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Task, db, del, put } from './db';
 import { fa, label, today } from './cal';
-import { faDigits, isTime } from './format';
+import { faDigits, isTime, personLabel } from './format';
 import { ask } from './confirm';
 import { Icon } from './Icon';
 import { counts, doneDateFor, doneKey, FILTERS, isOverdue, listTodos, overdue, type TodoFilter } from './todoFilters';
@@ -51,7 +51,7 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
   const n = useMemo(() => counts(tasks, dones, t), [tasks, dones, t]);
   const list = useMemo(() => listTodos(tasks, dones, filter, t), [tasks, dones, filter, t]);
   const late = useMemo(() => (filter === 'upcoming' ? overdue(tasks, dones, t) : []), [filter, tasks, dones, t]);
-  const nameOf = useMemo(() => new Map(people.map((p) => [p.id, p.displayName])), [people]);
+  const nameOf = useMemo(() => new Map(people.map((p) => [p.id, personLabel(p)])), [people]);
 
   const sub = (task: Task, done: boolean) => {
     const bits: string[] = [];

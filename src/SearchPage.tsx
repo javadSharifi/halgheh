@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Person, db } from './db';
 import { CAL_NAMES, fa, label, today } from './cal';
-import { faDigits, isTime } from './format';
+import { faDigits, isTime, personLabel } from './format';
 import { buildIndex, bdayIn, personFacts, queryWords, runSearch, type Doc } from './domain/search';
 import { STATUS_LABEL } from './skills';
 import { CRITERION_LABEL } from './ratings';
@@ -143,7 +143,7 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
       const meta = [p?.occupation, p?.city].filter(Boolean).join(' · ');
       return meta || tx('در دفترچهٔ آدم‌ها');
     }
-    if (d.kind === 'note' || d.kind === 'interaction') return byPerson.get(d.personId ?? '')?.displayName ?? '';
+    if (d.kind === 'note' || d.kind === 'interaction') { const p = byPerson.get(d.personId ?? ''); return p ? personLabel(p) : ''; }
     if (d.kind === 'todo') {
       const x = tasks.find((k) => k.id === d.id);
       return x ? `${x.on ? dayLabel(x.on) : tx('بدون تاریخ')}${isTime(x.time) ? ` · ${faDigits(x.time)}` : ''}` : '';
@@ -154,9 +154,9 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
       const inDays = bdayIn(b, t, 0);
       return inDays === null ? tx(CAL_NAMES[b.cal]) : inDays === 0 ? tx('{a1} · امروز', { a1: tx(CAL_NAMES[b.cal]) }) : tx('{a1} · {a2} روز دیگر', { a1: tx(CAL_NAMES[b.cal]), a2: fa(inDays) });
     }
-    if (d.kind === 'photo') return byPerson.get(d.personId ?? '')?.displayName ?? tx('در گالری');
+    if (d.kind === 'photo') { const p = byPerson.get(d.personId ?? ''); return p ? personLabel(p) : tx('در گالری'); }
     if (d.kind === 'rule') return tx(STR.feature.title);
-    if (d.kind === 'exchange') return byPerson.get(d.personId ?? '')?.displayName ?? tx(STR.ledger.title);
+    if (d.kind === 'exchange') { const p = byPerson.get(d.personId ?? ''); return p ? personLabel(p) : tx(STR.ledger.title); }
     return tx('برچسب');
   };
 

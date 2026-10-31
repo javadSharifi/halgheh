@@ -111,12 +111,12 @@ export function RuleSheet({ rule, categories, seedCategoryId, onClose }: { rule:
             <span className="tile purple" aria-hidden="true"><Icon name="tag" size={17} stroke={1.9} /></span>
             <span className="rf-name">{tx(STR.feature.category)}</span>
             <span className="rf-value">
-              {categories.find((c) => c.id === v.categoryId)?.name ?? '—'}
+              {tx(categories.find((c) => c.id === v.categoryId)?.name ?? '—')}
               <Choice
                 className="pick-hit"
                 label={tx(STR.feature.category)}
                 value={v.categoryId}
-                options={categories.map((c): [string, string] => [c.id, c.name])}
+                options={categories.map((c): [string, string] => [c.id, tx(c.name)])}
                 onChange={(id) => set({ categoryId: id })}
               />
             </span>

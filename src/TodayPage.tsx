@@ -12,6 +12,7 @@ import { STR } from './strings/rulebook';
 import { dueExchanges } from './domain/ledger';
 import { TodayWidget } from './TodayWidget';
 import { tn, tx } from './i18n';
+import { personLabel } from './format';
 
 const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
@@ -58,7 +59,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
 
   const due = useMemo(() => followUpsDue(interactions, t), [interactions, t]);
   const fresh = useMemo(() => recentPeople(people), [people]);
-  const nameOf = useMemo(() => new Map(people.map((p) => [p.id, p.displayName])), [people]);
+  const nameOf = useMemo(() => new Map(people.map((p) => [p.id, personLabel(p)])), [people]);
 
   const rulesDue = useMemo(() => dueCount(rules, t), [rules, t]);
   const pinned = useMemo(() => dueRules(rules.filter((r) => r.pinned), t, 3), [rules, t]);
@@ -306,7 +307,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                 <span className={`avatar p${PALETTE(p.displayName)}`} aria-hidden="true">
                   {p.displayName.slice(0, 1)}
                 </span>
-                <span><bdi>{p.displayName}</bdi></span>
+                <span><bdi>{personLabel(p)}</bdi></span>
               </button>
             ))}
           </div>

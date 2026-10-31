@@ -7,6 +7,7 @@ import { CRITERION_LABEL } from './ratings';
 import { STATUS_LABEL } from './skills';
 import { introducers, whoCan, type Hit } from './whoCanEngine';
 import { tn, tx } from './i18n';
+import { personLabel } from './format';
 
 const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
@@ -44,7 +45,7 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
     <button className="glass who-card" onClick={() => openPerson(hit.person.id)}>
       <span className={`avatar p${PALETTE(hit.person.displayName)}`} aria-hidden="true">{hit.person.displayName.slice(0, 1)}</span>
       <span className="who-body">
-        <b>{hit.person.displayName}</b>
+        <b>{personLabel(hit.person)}</b>
         {[hit.person.occupation, hit.person.city].filter(Boolean).length > 0 && (
           <span className="who-meta">{[hit.person.occupation, hit.person.city].filter(Boolean).join(' · ')}</span>
         )}
@@ -110,15 +111,15 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
               <button key={`${s.pathText}`} className="glass who-card ref-card" onClick={() => openPerson(s.person.id)}>
                 <span className={`avatar p${PALETTE(s.person.displayName)}`} aria-hidden="true">{s.person.displayName.slice(0, 1)}</span>
                 <span className="who-body">
-                  <b>{s.specialist.displayName}</b>
+                  <b>{personLabel(s.specialist)}</b>
                   <span className="ref-path">
                     <bdi>{s.pathWithTrades}</bdi>
                     {s.uncertain && <em className="c-dup">{tx('شاید')}</em>}
                   </span>
                   <span className="who-meta">
                                       {s.specialist.occupation
-                      ? tx('{a1} · از طریق {a2}', { a1: s.specialist.occupation, a2: s.person.displayName })
-                      : tx('از طریق {a1}', { a1: s.person.displayName })}
+                      ? tx('{a1} · از طریق {a2}', { a1: s.specialist.occupation, a2: personLabel(s.person) })
+                      : tx('از طریق {a1}', { a1: personLabel(s.person) })}
                   </span>
                 </span>
                 <Icon name="chevronLeft" size={16} stroke={2} />

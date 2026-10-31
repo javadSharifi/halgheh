@@ -1,5 +1,5 @@
 import type { Birthday, Exchange, Interaction, Person, PersonNote, PersonSkill, Photo, Rule, Skill, Tag, Task } from '../../db';
-import { nextOccurrence } from '../../format';
+import { nextOccurrence, personLabel } from '../../format';
 import { normPhone } from '../../phone';
 import { normalize } from '../../search';
 import { tx } from '../../i18n';
@@ -113,7 +113,7 @@ export function buildIndex(s: Snap): Index {
       for (const a of sk.aliases) push(fields, a);
       push(fields, ps.evidence);
     }
-    docs.push({ kind: 'person', id: p.id, title: p.displayName, fields, rank: p.isSelf ? 1 : 0 });
+    docs.push({ kind: 'person', id: p.id, title: personLabel(p), fields, rank: p.isSelf ? 1 : 0 });
   }
 
   for (const n of s.notes) {

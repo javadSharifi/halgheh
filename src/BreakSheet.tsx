@@ -10,6 +10,7 @@ import { STR } from './strings/rulebook';
 import { createBreak, deleteBreak } from './ruleData';
 import { breakCounts } from './domain/rules/breaks';
 import { tx } from './i18n';
+import { personLabel } from './format';
 
 /**
  * Part 1: record one time I broke a rule. Reached from the review session (the «یادم بود ولی رعایت نکردم» answer), from a
@@ -99,7 +100,7 @@ export function BreakSheet({ rule, seedPersonId, onClose, onSaved }: {
                 className="pick-hit"
                 label={tx(STR.breaks.person)}
                 value={v.personId}
-                options={[['', tx(STR.breaks.personNone)], ...live.map((p: Person): [string, string] => [p.id, p.displayName])]}
+                options={[['', tx(STR.breaks.personNone)], ...live.map((p: Person): [string, string] => [p.id, personLabel(p)])]}
                 onChange={(id) => set({ personId: id })}
               />
             </span>
@@ -187,5 +188,5 @@ export function BreakTimeline({ rule, breaks, onEdit, todayIso }: {
 function BreakPerson({ personId }: { personId: string }) {
   const person = useLiveQuery(() => db.people.get(personId), [personId]);
   if (!person) return null;
-  return <p className="break-person"><Icon name="users" size={12} stroke={2} />{person.displayName}</p>;
+  return <p className="break-person"><Icon name="users" size={12} stroke={2} />{personLabel(person)}</p>;
 }
