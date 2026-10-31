@@ -48,7 +48,13 @@ export function ExchangeItem({
 
   return (
     <div className={`ledger-item-card ${settled ? 'settled' : ''}`}>
-      <div className="ledger-item-main" onClick={onEdit} role="button" tabIndex={0}>
+      <div
+        className="ledger-item-main"
+        onClick={onEdit}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(); } }}
+        role="button"
+        tabIndex={0}
+      >
         <div className="ledger-item-top">
           <div className="ledger-item-badge-wrap">
             <span

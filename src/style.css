@@ -2072,6 +2072,7 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 /* Due Date */
 .ledger-due-header { display: flex; justify-content: space-between; align-items: center; }
 .ledger-due-badge-card { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 16px; background: var(--field); border: 1px solid var(--line-2); cursor: pointer; font-size: 13px; font-weight: 700; color: var(--blue-ink); }
+button.ledger-due-badge-card { width: 100%; font: inherit; text-align: start; }
 .ledger-due-badge-card small { font-size: 11px; color: var(--muted); font-weight: 400; }
 .ledger-due-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ledger-due-chips button { height: 34px; min-height: 0; padding: 0 12px; border-radius: 17px; font-size: 12px; font-weight: 600; background: var(--field); border: 1px solid var(--edge); cursor: pointer; }

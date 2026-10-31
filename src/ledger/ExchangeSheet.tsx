@@ -379,11 +379,11 @@ export function ExchangeSheet({
             </div>
 
             {dueOn ? (
-              <div className="ledger-due-badge-card" onClick={() => setPickingDue(true)}>
+              <button type="button" className="ledger-due-badge-card" onClick={() => setPickingDue(true)}>
                 <Icon name="calendar" size={17} stroke={2.2} />
                 <span>{tx('موعد: {a1}', { a1: label(dueOn, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' }) })}</span>
                 <small>{tx('(تغییر با کلیک)')}</small>
-              </div>
+              </button>
             ) : (
               <div className="ledger-due-chips">
                 <button type="button" onClick={() => setDuePreset('week')}>{tx('تا آخر هفته')}</button>
