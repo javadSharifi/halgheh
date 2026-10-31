@@ -7,6 +7,9 @@ type Props = {
   openAbout: () => void;
   openTasks: () => void;
   openBirthdays: () => void;
+  openRulebook: () => void;
+  openLedger: () => void;
+  openGallery: () => void;
 };
 
 function Row({ icon, tone, name, onClick }: { icon: IconName; tone: 'blue' | 'purple' | 'green'; name: string; onClick: () => void }) {
@@ -19,13 +22,14 @@ function Row({ icon, tone, name, onClick }: { icon: IconName; tone: 'blue' | 'pu
   );
 }
 
-export function MorePage({ openSettings, openSync, openArchive, openAbout, openTasks, openBirthdays }: Props) {
+export function MorePage({ openSettings, openSync, openArchive, openAbout, openTasks, openBirthdays, openRulebook, openLedger, openGallery }: Props) {
   return (
     <>
       <div className="page-head"><h1>بیشتر</h1></div>
 
       <section>
         <div className="glass set-list">
+          <Row icon="image" tone="purple" name="گالری" onClick={openGallery} />
           <Row icon="settings" tone="blue" name="تنظیمات" onClick={openSettings} />
           <Row icon="cloudCheck" tone="purple" name="حساب و پشتیبان" onClick={openSync} />
           <Row icon="archive" tone="green" name="افراد بایگانی‌شده" onClick={openArchive} />
@@ -34,8 +38,12 @@ export function MorePage({ openSettings, openSync, openArchive, openAbout, openT
       </section>
 
       <section>
-        <h2 className="sec-title">کارها و تولدها</h2>
+        <h2 className="sec-title">قانون‌ها و کارها</h2>
         <div className="glass set-list">
+          <Row icon="listChecks" tone="purple" name="قوانین من" onClick={openRulebook} />
+        </div>
+        <div className="glass set-list more-gap">
+          <Row icon="repeat" tone="green" name="دادوستدها" onClick={openLedger} />
           <Row icon="listChecks" tone="blue" name="همهٔ کارها" onClick={openTasks} />
           <Row icon="cakeCandles" tone="purple" name="تولدها" onClick={openBirthdays} />
         </div>

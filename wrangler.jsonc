@@ -8,6 +8,12 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
+  // B2b: photo files. The binding is listed here, but R2 must be enabled on the account first, so it is commented out
+  // until a bucket exists — an unknown bucket name makes `wrangler deploy` fail for the whole Worker.
+  // To enable: `npx wrangler r2 bucket create halgheh-photos`, then uncomment this block and deploy.
+  // "r2_buckets": [
+  //   { "binding": "PHOTOS", "bucket_name": "halgheh-photos" }
+  // ],
   "d1_databases": [
     {
       "binding": "DB",

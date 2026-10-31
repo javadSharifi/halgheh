@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import { taskOn } from './cal';
 import { taskNotifId, taskReminders } from './reminders';
 import { findMatch, normalize, searchAll } from './search';
-import { formatBytes, MASK_SAT_TO_WED, maxDay, nextOccurrence, toLatinDigits, YEAR_RANGE, MASK_WEEKEND, byTime, clock, daysText, faDigits, firstRun, leadLabel, leadText, greeting, isTime, nextBirthday, reminderAt } from './format';
+import { formatBytes, formatNumberFa, formatToman, tomanWords, MASK_SAT_TO_WED, maxDay, nextOccurrence, toLatinDigits, YEAR_RANGE, MASK_WEEKEND, byTime, clock, daysText, faDigits, firstRun, leadLabel, leadText, greeting, isTime, nextBirthday, reminderAt } from './format';
 
 const bit = (...days: number[]) => days.reduce((m, d) => m | (1 << d), 0); // JS weekdays: 0 Sun .. 6 Sat
 
@@ -150,3 +150,14 @@ test('task notification ids are stable, per occurrence and clear of the other ra
   expect(a).not.toBe(taskNotifId('t1', '2026-10-22'));
   expect(a >= 900_000_000 && a < 1_900_000_000).toBe(true);
 });
+
+test('Persian number, toman formatting and words', () => {
+  expect(formatNumberFa(0)).toBe('۰');
+  expect(formatNumberFa(1500000)).toBe('۱,۵۰۰,۰۰۰');
+  expect(formatToman(1500000)).toBe('۱,۵۰۰,۰۰۰ تومان');
+  expect(tomanWords(0)).toBe('صفر تومان');
+  expect(tomanWords(50000)).toBe('پنجاه هزار تومان');
+  expect(tomanWords(1500000)).toBe('یک میلیون و پانصد هزار تومان');
+  expect(tomanWords(25000000)).toBe('بیست و پنج میلیون تومان');
+});
+

@@ -104,3 +104,71 @@ export function formatBytes(n: number) {
   if (n < 1024 * 1024) return `${f(n / 1024)} کیلوبایت`;
   return `${f(n / 1024 / 1024)} مگابایت`;
 }
+
+/** Formats a number with 3-digit comma separators in Persian digits: 1500000 -> "۱,۵۰۰,۰۰۰" */
+export function formatNumberFa(n: number): string {
+  if (!Number.isFinite(n)) return '۰';
+  const rounded = Math.abs(Math.round(n));
+  const parts = String(rounded).split('');
+  const withCommas: string[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (i > 0 && (parts.length - i) % 3 === 0) withCommas.push(',');
+    withCommas.push(parts[i]);
+  }
+  const faString = withCommas.join('').replace(/\d/g, (c) => '۰۱۲۳۴۵۶۷۸۹'[+c]);
+  return n < 0 ? `-${faString}` : faString;
+}
+
+/** Formats an amount with commas and "تومان": 1500000 -> "۱,۵۰۰,۰۰۰ تومان" */
+export function formatToman(n: number | undefined): string {
+  if (n === undefined || n === null) return '';
+  return `${formatNumberFa(n)} تومان`;
+}
+
+const FA_UNITS = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
+const FA_TEENS = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
+const FA_TENS = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+const FA_HUNDREDS = ['', 'صد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
+const FA_SCALES = ['', 'هزار', 'میلیون', 'میلیارد', 'تریلیون'];
+
+function chunkToWords(num: number): string {
+  const parts: string[] = [];
+  const h = Math.floor(num / 100);
+  const rem = num % 100;
+  if (h > 0) parts.push(FA_HUNDREDS[h]);
+  if (rem >= 10 && rem < 20) {
+    parts.push(FA_TEENS[rem - 10]);
+  } else {
+    const t = Math.floor(rem / 10);
+    const u = rem % 10;
+    if (t > 0) parts.push(FA_TENS[t]);
+    if (u > 0) parts.push(FA_UNITS[u]);
+  }
+  return parts.join(' و ');
+}
+
+/** Converts an integer amount to readable Persian words: 1500000 -> "یک میلیون و پانصد هزار تومان" */
+export function tomanWords(n: number | undefined): string {
+  if (n === undefined || n === null || !Number.isFinite(n)) return '';
+  const val = Math.round(n);
+  if (val === 0) return 'صفر تومان';
+  const isNeg = val < 0;
+  let remaining = Math.abs(val);
+  const chunks: string[] = [];
+  let scaleIndex = 0;
+
+  while (remaining > 0 && scaleIndex < FA_SCALES.length) {
+    const chunk = remaining % 1000;
+    if (chunk > 0) {
+      const text = chunkToWords(chunk);
+      const scale = FA_SCALES[scaleIndex];
+      chunks.unshift(scale ? `${text} ${scale}` : text);
+    }
+    remaining = Math.floor(remaining / 1000);
+    scaleIndex++;
+  }
+
+  const result = chunks.join(' و ') + ' تومان';
+  return isNeg ? `منفی ${result}` : result;
+}
+

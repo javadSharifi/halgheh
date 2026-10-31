@@ -7,15 +7,20 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "android:apk": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21 ANDROID_HOME=$HOME/Library/Android/sdk ./gradlew assembleDebug",
-    "android:release": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21 ANDROID_HOME=$HOME/Library/Android/sdk ./gradlew assembleRelease && mkdir -p ../release && cp app/build/outputs/apk/release/app-release.apk ../release/halgheh.apk"
+    "verify": "tsc --noEmit && vitest run",
+    "android:apk": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=\"$(cd .. && node scripts/jdk.mjs)\" ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk} ./gradlew assembleDebug",
+    "android:release": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=\"$(cd .. && node scripts/jdk.mjs)\" ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk} ./gradlew assembleRelease && mkdir -p ../release && cp app/build/outputs/apk/release/app-release.apk ../release/halgheh.apk",
+    "version": "node -e \"const v=require('./package.json').version.split('.').map(Number);console.log(v[0]*10000+v[1]*100+v[2])\"",
+    "jdk": "node scripts/jdk.mjs"
   },
   "dependencies": {
+    "@capacitor-community/contacts": "8.0.0",
     "@capacitor/android": "^8.5.3",
     "@capacitor/core": "^8.5.3",
     "@capacitor/filesystem": "^8.1.5",
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/share": "^8.0.3",
+    "@capawesome/capacitor-file-picker": "8.1.1",
     "@fontsource/vazirmatn": "^5.3.0",
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",

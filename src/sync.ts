@@ -119,6 +119,9 @@ let running: Promise<void> | null = null;
 /** One sync at a time; callers share the same run. */
 export const syncNow = () => (running ??= run().finally(() => (running = null)));
 
+/** True when an account is configured; the photo queue uses this to stay silent on a local-only install. */
+export const isConnected = () => !!getCfg();
+
 /** Keeps data flowing while the app is open: after local edits, on resume and when the network returns. Returns the cleanup. */
 export function startSync() {
   let timer: ReturnType<typeof setTimeout>;

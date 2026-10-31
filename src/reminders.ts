@@ -15,9 +15,21 @@ export const taskNotifId = (taskId: string, date: string) =>
  */
 export function taskReminders(tasks: Task[], done: Set<string>, from: string, days: number, nowMs: number, cap: number): TaskReminder[] {
   const out: TaskReminder[] = [];
+  // A snoozed todo fires once at the snoozed time instead of its own reminder. It is stored on the row, so it survives the
+  // cancel-and-re-plan that runs on every change, on resume and after a reboot.
+  const snoozed = new Set(tasks.filter((t) => t.snoozeUntil && t.snoozeUntil > nowMs).map((t) => t.id));
+
+  for (const t of tasks) {
+    if (!t.snoozeUntil || t.snoozeUntil <= nowMs || t.active === false) continue;
+    const date = new Date(t.snoozeUntil).toLocaleDateString('sv');
+    if (done.has(`${t.id}|${date}`)) continue;
+    out.push({ id: taskNotifId(t.id, `snooze-${date}`), at: t.snoozeUntil, title: t.title, body: isTime(t.time) ? `ساعت ${faDigits(t.time)}` : 'یادآوری' });
+  }
+
   for (let i = 0; i < days; i++) {
     const date = addDays(from, i);
     for (const t of tasks) {
+      if (snoozed.has(t.id)) continue; // its reminder is the snoozed one, not the original
       if (!taskOn(t, date) || done.has(`${t.id}|${date}`)) continue;
       const at = reminderAt(t, date);
       if (!at || at.getTime() <= nowMs) continue;
@@ -26,6 +38,7 @@ export function taskReminders(tasks: Task[], done: Set<string>, from: string, da
   }
   // one-off tasks also remind N days ahead; they are not tied to the daily loop above
   for (const t of tasks) {
+    if (snoozed.has(t.id)) continue;
     if (!t.on || t.active === false || done.has(`${t.id}|${t.on}`)) continue;
     for (const d of t.before ?? []) {
       const at = new Date(`${addDays(t.on, -d)}T${isTime(t.time) ? t.time : '09:00'}:00`).getTime();

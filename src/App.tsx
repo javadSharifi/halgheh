@@ -1,29 +1,41 @@
 import { useEffect, useState } from 'react';
 import { ConfirmHost } from './confirm';
-import { RecurringForm } from './RecurringForm';
+import { TodoSheet } from './TodoSheet';
 import { TodayPage } from './TodayPage';
 import { Icon, type IconName } from './Icon';
 import { BirthdaysPage } from './BirthdaysPage';
-import { Tasks } from './Lists';
+import { Todos } from './Todos';
 import { LockScreen } from './Lock';
 import { AWAY_MS, getLock, useLock } from './lockStore';
 import { SettingsPage } from './SettingsPage';
 import { SearchPage } from './SearchPage';
 import { SyncPage } from './SyncPage';
 import { PeoplePage } from './PeoplePage';
-import { GalleryPage } from './GalleryPage';
+import { PersonPage } from './PersonPage';
+import { WhoCan } from './WhoCan';
+import { Gallery } from './Gallery';
 import { MorePage } from './MorePage';
 import { ArchivePage } from './ArchivePage';
+import { RulebookPage } from './RulebookPage';
+import { ReviewSession } from './ReviewSession';
+import { ReadThrough } from './ReadThrough';
+import { PersonCheckPage } from './PersonCheck';
+import { LedgerPage } from './LedgerPage';
+import { BriefPage } from './BriefPage';
 import { AboutPage } from './AboutPage';
-import { QuickAdd } from './QuickAdd';
-import { isNative, setSecure, watchNative } from './native';
-import { startSync } from './sync';
+import { PersonEditor } from './PersonEditor';
+import { watchKeyboard } from './keyboard';
+import { getWidgetAction, isNative, setSecure, watchNative } from './native';
+import { isConnected, startSync } from './sync';
+import { downloadMissingPhotos, uploadPendingPhotos } from './photoSync';
 import { useSettings } from './settings';
 import { useTheme } from './theme';
 
 type Page =
   | 'today'
   | 'people'
+  | 'person'
+  | 'whocan'
   | 'gallery'
   | 'more'
   | 'tasks'
@@ -32,31 +44,83 @@ type Page =
   | 'sync'
   | 'archive'
   | 'about'
-  | 'task'
+  | 'rulebook'
+  | 'review'
+  | 'readthrough'
+  | 'personcheck'
+  | 'ledger'
+  | 'brief'
   | 'search';
-type Filter = 'all' | 'tasks' | 'birthdays';
+type Filter = 'all' | 'people' | 'notes' | 'todos' | 'photos' | 'birthdays' | 'rules' | 'exchanges';
 type TaskCtx = { id: string | null; from: Page };
 
 const TABS: { page: Page; label: string; icon: IconName }[] = [
   { page: 'today', label: 'امروز', icon: 'home' },
+  { page: 'rulebook', label: 'قوانین من', icon: 'listChecks' },
   { page: 'people', label: 'افراد', icon: 'users' },
-  { page: 'gallery', label: 'گالری', icon: 'image' },
+  { page: 'ledger', label: 'دادوستد', icon: 'repeat' },
   { page: 'more', label: 'بیشتر', icon: 'moreCircle' },
 ];
-const MORE: Page[] = ['tasks', 'birthdays', 'settings', 'sync', 'archive', 'about'];
+const MORE: Page[] = ['tasks', 'birthdays', 'settings', 'sync', 'archive', 'about', 'gallery'];
 
 export function App() {
   const [page, setPage] = useState<Page>('today');
-  const [quick, setQuick] = useState(false);
+  const [addingPerson, setAddingPerson] = useState(false);
+  const [personId, setPersonId] = useState<string | null>(null);
+  // where the profile was opened from, so back returns there (a person opened from search must not drop the search)
+  const [personFrom, setPersonFrom] = useState<{ page: Page; search?: { from: Page; filter?: Filter } }>({ page: 'people' });
   const [taskCtx, setTaskCtx] = useState<TaskCtx | null>(null);
   const [searchCtx, setSearchCtx] = useState<{ from: Page; filter?: Filter }>({ from: 'today' });
   const [bdayFocus, setBdayFocus] = useState<string | null>(null);
   const { remind, theme } = useSettings();
   useTheme(theme);
   useEffect(() => startSync(), []);
+  // B2b: the photo file queue rides along with sync. Silent when no account is connected, and it never blocks the UI.
+  useEffect(() => {
+    if (!isConnected()) return;
+    let alive = true;
+    const run = async () => {
+      if (!alive || !navigator.onLine) return;
+      await uploadPendingPhotos().catch(() => {});
+      // a restored phone has metadata but no files: ask the server what it has and fetch what is missing
+      await downloadMissingPhotos().catch(() => {});
+    };
+    void run();
+    const onOnline = () => void run();
+    window.addEventListener('online', onOnline);
+    return () => {
+      alive = false;
+      window.removeEventListener('online', onOnline);
+    };
+  }, []);
+  useEffect(() => watchKeyboard(), []);
   useEffect(() => (isNative ? watchNative({ remind }) : undefined), [remind]);
+  // Handle action when user taps "+ کار تازه" on Android Home Screen Widget
+  useEffect(() => {
+    const handleQuickTask = () => {
+      setAddingPerson(false);
+      setPage('today');
+      setTaskCtx({ id: null, from: 'today' });
+    };
+    (window as unknown as { __onWidgetQuickTask?: () => void }).__onWidgetQuickTask = handleQuickTask;
+    void getWidgetAction().then((res) => {
+      if (res.quickTask) handleQuickTask();
+    });
+    return () => {
+      delete (window as unknown as { __onWidgetQuickTask?: () => void }).__onWidgetQuickTask;
+    };
+  }, []);
   // the lock covers the app on a cold start and when coming back after being away; the page underneath stays mounted so no draft is lost
   const lock = useLock();
+  const [reviewNow, setReviewNow] = useState(false);
+  /** The rule a search result asked for; the rulebook opens its sheet as soon as it mounts. */
+  const [ruleFocus, setRuleFocus] = useState<string | null>(null);
+  /** Phase 4: which category (if any) the on-demand read-through was opened for. */
+  const [readCtx, setReadCtx] = useState<{ categoryId?: string; name?: string }>({});
+  /** Part 2: the rule check being read, and where it was opened from so back returns there. */
+  const [checkCtx, setCheckCtx] = useState<{ id: string; from: Page } | null>(null);
+  /** Part 4: the person whose pre-meeting brief is open, and where it was opened from. */
+  const [briefFor, setBriefFor] = useState<{ personId: string; from: Page } | null>(null);
   const [locked, setLocked] = useState(() => !!getLock());
   useEffect(() => {
     if (!lock) setLocked(false);
@@ -72,7 +136,7 @@ export function App() {
     return () => document.removeEventListener('visibilitychange', on);
   }, []);
   const go = (p: Page) => {
-    setQuick(false);
+    setAddingPerson(false);
     setPage(p);
     window.scrollTo(0, 0);
   };
@@ -85,22 +149,54 @@ export function App() {
         return !!el;
       };
       if (locked) return false; // nothing to go back to behind the lock
-      if (quick) {
-        setQuick(false);
+      if (addingPerson) {
+        setAddingPerson(false);
         return true;
       }
-      if (click('.scrim.dim')) return true; // an open sheet or confirm dialog closes first
-      if (page === 'task') return click('.ne-head > button:first-child'); // the editor's own cancel asks before discarding
+      if (click('.scrim.dim')) return true; // an open sheet or confirm dialog closes first (the contact import sheet included)
+      // the rulebook's overlays (comparison session, check mode, review) are inside the page, not page states
+      if ((window as unknown as { __rulebookBack?: () => boolean }).__rulebookBack?.()) return true;
+      if (page === 'review') return go(reviewNow ? 'today' : 'rulebook'), true;
+      if (page === 'readthrough') return go('rulebook'), true;
+      if (page === 'personcheck') return go(checkCtx?.from ?? 'person'), true;
+      if (page === 'brief') return go(briefFor?.from ?? 'person'), true;
       if (page === 'search') return go(searchCtx.from), true;
+      if (page === 'person') return backFromPerson(), true;
+      if (page === 'whocan') return go('people'), true;
       if (MORE.includes(page)) return go('more'), true;
       if (page !== 'today') return go('today'), true;
       return false;
     };
   });
+  /** Part 2: opening a rule check records where it came from, so back returns to the profile or the ledger. */
+  const openCheck = (id: string, from: Page) => {
+    setCheckCtx({ id, from });
+    go('personcheck');
+  };
+  /** Part 4: the pre-meeting brief, opened from a profile. */
+  const openBrief = (personId: string) => {
+    setBriefFor({ personId, from: page === 'brief' ? (briefFor?.from ?? 'person') : page });
+    go('brief');
+  };
+  const openReadThrough = (categoryId?: string, name?: string) => {
+    setReadCtx({ categoryId, name });
+    go('readthrough');
+  };
+  const openReview = (from: 'today' | 'rulebook') => {
+    setReviewNow(from === 'today');
+    go('review');
+  };
+  const openPerson = (id: string) => {
+    setPersonFrom(page === 'search' ? { page: 'search', search: searchCtx } : { page: page === 'person' ? personFrom.page : page });
+    setPersonId(id);
+    go('person');
+  };
+  const backFromPerson = () => {
+    if (personFrom.page === 'search') setSearchCtx(personFrom.search ?? { from: 'today' });
+    go(personFrom.page);
+  };
   const openTask = (id: string | null) => {
-    setTaskCtx({ id, from: page === 'task' ? 'tasks' : page });
-    setPage('task');
-    window.scrollTo(0, 0);
+    setTaskCtx({ id, from: page === 'search' ? 'search' : page });
   };
   const openSearch = (filter?: Filter) => {
     setSearchCtx({ from: page === 'search' ? 'today' : page, filter });
@@ -108,7 +204,8 @@ export function App() {
     window.scrollTo(0, 0);
   };
   const tabOf = (p: Page): Page => {
-    if (p === 'task') return tabOf(taskCtx?.from ?? 'today');
+    if (p === 'person' || p === 'whocan') return 'people';
+    if (p === 'review' || p === 'readthrough') return 'rulebook';
     if (p === 'search') return tabOf(searchCtx.from);
     return MORE.includes(p) ? 'more' : p;
   };
@@ -119,13 +216,40 @@ export function App() {
       <span>{n.label}</span>
     </button>
   );
-  const full = page === 'task' || page === 'sync' || page === 'search'; // editors and the sync screen cover the whole screen: no tab bar
+  const full = page === 'sync' || page === 'search' || page === 'person' || page === 'whocan'; // full-screen pages: no tab bar
   return (
     <>
       <main inert={locked && !!lock}>
-        {page === 'today' && <TodayPage openSearch={() => openSearch()} />}
-        {page === 'people' && <PeoplePage />}
-        {page === 'gallery' && <GalleryPage />}
+        {page === 'today' && (
+          <TodayPage
+            openSearch={() => openSearch()}
+            openPerson={openPerson}
+            openTask={openTask}
+            openTodos={() => go('tasks')}
+            openRulebook={() => go('rulebook')}
+            openReview={() => openReview('today')}
+            openLedger={() => go('ledger')}
+          />
+        )}
+        {page === 'people' && (
+          <PeoplePage
+            openAddPerson={() => setAddingPerson(true)}
+            openPerson={openPerson}
+            openSearch={() => openSearch('people')}
+            openWhoCan={() => go('whocan')}
+          />
+        )}
+        {page === 'person' && personId && (
+          <PersonPage
+            id={personId}
+            onBack={backFromPerson}
+            openCheck={(id) => openCheck(id, 'person')}
+            openBrief={() => openBrief(personId)}
+            openLedger={() => go('ledger')}
+          />
+        )}
+        {page === 'whocan' && <WhoCan openPerson={openPerson} onClose={() => go('people')} />}
+        {page === 'gallery' && <Gallery onBack={() => go('more')} />}
         {page === 'more' && (
           <MorePage
             openSettings={() => go('settings')}
@@ -134,10 +258,31 @@ export function App() {
             openAbout={() => go('about')}
             openTasks={() => go('tasks')}
             openBirthdays={() => go('birthdays')}
+            openRulebook={() => go('rulebook')}
+            openLedger={() => go('ledger')}
+            openGallery={() => go('gallery')}
           />
         )}
-        {page === 'tasks' && <Tasks openForm={openTask} />}
-        {page === 'task' && taskCtx && <RecurringForm key={taskCtx.id ?? 'new'} id={taskCtx.id} onClose={() => go(taskCtx.from)} />}
+        {page === 'tasks' && <Todos openForm={openTask} openPerson={openPerson} />}
+        {page === 'rulebook' && (
+          <RulebookPage
+            focusId={ruleFocus}
+            onFocused={() => setRuleFocus(null)}
+            openReview={() => openReview('rulebook')}
+            openReadThrough={openReadThrough}
+          />
+        )}
+        {page === 'readthrough' && <ReadThrough categoryId={readCtx.categoryId} categoryName={readCtx.name} onClose={() => go('rulebook')} />}
+        {page === 'review' && <ReviewSession onClose={() => go(reviewNow ? 'today' : 'rulebook')} />}
+        {page === 'personcheck' && checkCtx && <PersonCheckPage checkId={checkCtx.id} onBack={() => go(checkCtx.from)} />}
+        {page === 'ledger' && <LedgerPage openPerson={openPerson} openCheck={(id) => openCheck(id, 'ledger')} />}
+        {page === 'brief' && briefFor && (
+          <BriefPage
+            personId={briefFor.personId}
+            onBack={() => go(briefFor.from)}
+            openCheck={(id) => openCheck(id, 'brief')}
+          />
+        )}
         {page === 'birthdays' && <BirthdaysPage focusId={bdayFocus} onFocused={() => setBdayFocus(null)} openSearch={() => openSearch('birthdays')} />}
         {page === 'settings' && <SettingsPage openSync={() => go('sync')} />}
         {page === 'sync' && <SyncPage onBack={() => go('more')} />}
@@ -147,23 +292,30 @@ export function App() {
           <SearchPage
             initialFilter={searchCtx.filter}
             onClose={() => go(searchCtx.from)}
+            openPerson={openPerson}
             openTask={(id) => openTask(id)}
             openBirthday={(id) => { setBdayFocus(id); go('birthdays'); }}
+            openRule={(id) => { setRuleFocus(id); go('rulebook'); }}
           />
         )}
       </main>
       <ConfirmHost />
       {locked && lock && <LockScreen onUnlock={() => setLocked(false)} />}
-      {quick && <QuickAdd onClose={() => setQuick(false)} />}
+      {addingPerson && (
+        <PersonEditor
+          onClose={() => setAddingPerson(false)}
+          onSaved={(newPersonId) => {
+            setAddingPerson(false);
+            openPerson(newPersonId);
+          }}
+        />
+      )}
+      {taskCtx && <TodoSheet key={taskCtx.id ?? 'new'} id={taskCtx.id} onClose={() => setTaskCtx(null)} />}
       {!full && (
       <div className="dock" inert={locked && !!lock}>
         <div className="bar">
           <nav aria-label="ناوبری اصلی">
-            {TABS.slice(0, 2).map(tabBtn)}
-            <button className="quick" aria-label="افزودن سریع" aria-haspopup="dialog" onClick={() => setQuick(true)}>
-              <Icon name="plus" size={26} stroke={2.4} />
-            </button>
-            {TABS.slice(2).map(tabBtn)}
+            {TABS.map(tabBtn)}
           </nav>
         </div>
       </div>

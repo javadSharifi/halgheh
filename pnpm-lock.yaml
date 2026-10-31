@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@capacitor-community/contacts':
+        specifier: 8.0.0
+        version: 8.0.0(@capacitor/core@8.5.3)
       '@capacitor/android':
         specifier: ^8.5.3
         version: 8.5.3(@capacitor/core@8.5.3)
@@ -23,6 +26,9 @@ importers:
       '@capacitor/share':
         specifier: ^8.0.3
         version: 8.0.3(@capacitor/core@8.5.3)
+      '@capawesome/capacitor-file-picker':
+        specifier: 8.1.1
+        version: 8.1.1(@capacitor/core@8.5.3)
       '@fontsource/vazirmatn':
         specifier: ^5.3.0
         version: 5.3.0
@@ -582,6 +588,11 @@ packages:
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
+  '@capacitor-community/contacts@8.0.0':
+    resolution: {integrity: sha512-ST9DNZnbgMpFaICx0LLw95ZCNihNMrWfuc9MyeKZFnFYAfnFGa9gSGrRBLp7EEVtor8ZaiQrFOTiUgHu+/2GaQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
   '@capacitor/android@8.5.3':
     resolution: {integrity: sha512-ilH4gSSz3DrketMkzDVAvY9JsWJ//rCQnECLTdcFRO7xXDogwAbUvQAnIAbiqefwV/D1xfjEL4Gw1MJXEcaA9g==}
     peerDependencies:
@@ -612,6 +623,11 @@ packages:
 
   '@capacitor/synapse@1.0.4':
     resolution: {integrity: sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw==}
+
+  '@capawesome/capacitor-file-picker@8.1.1':
+    resolution: {integrity: sha512-4zDRca+uQbhFkbASoRbMpvXRbuCVhmVATDYLL9MG5UvILer01uUcN7oQhuxpltVir2YnP+1O8LasnwYlqlLM5g==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
@@ -3605,6 +3621,10 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
+  '@capacitor-community/contacts@8.0.0(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+
   '@capacitor/android@8.5.3(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
@@ -3650,6 +3670,10 @@ snapshots:
       '@capacitor/core': 8.5.3
 
   '@capacitor/synapse@1.0.4': {}
+
+  '@capawesome/capacitor-file-picker@8.1.1(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 

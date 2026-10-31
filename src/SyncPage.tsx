@@ -7,12 +7,15 @@ import { ask } from './confirm';
 import { Icon, type IconName } from './Icon';
 import { useOnline } from './online';
 import { DEFAULT_URL, HttpError, connect, disableSync, getCfg, syncNow } from './sync';
+import { downloadMissingPhotos, photoQueueStatus, uploadPendingPhotos } from './photoSync';
+import { STR } from './strings/rulebook';
 
 const errorText = (e: unknown) =>
   e instanceof HttpError
     ? e.status === 409 ? 'با این ایمیل قبلاً حساب ساخته شده. وارد شوید.'
       : e.status === 401 ? 'ایمیل یا رمز اشتباه است، یا حسابی با این ایمیل نیست.'
       : e.status === 413 ? 'سقف داده‌ی حساب پر شده است.'
+      : e.status === 429 ? 'تلاش‌های شما زیاد بوده است. چند دقیقه بعد دوباره امتحان کنید.'
       : `خطای سرور (${e.status}).`
     : 'اتصال به سرور برقرار نشد. اینترنت را بررسی کنید.';
 
@@ -22,8 +25,25 @@ const KIND: Record<Outbox['t'], { icon: IconName; tone: string; name: string }> 
   birthdays: { icon: 'cake', tone: 'peach', name: 'تولد' },
   people: { icon: 'users', tone: 'blue', name: 'فرد' },
   tags: { icon: 'tag', tone: 'purple', name: 'برچسب' },
+  personTags: { icon: 'tag', tone: 'purple', name: 'برچسب فرد' },
   personNotes: { icon: 'note', tone: 'green', name: 'یادداشت' },
+  skills: { icon: 'toolbox', tone: 'purple', name: 'مهارت' },
+  personSkills: { icon: 'toolbox', tone: 'purple', name: 'مهارت فرد' },
+  ratings: { icon: 'target', tone: 'blue', name: 'امتیاز' },
+  relationships: { icon: 'users', tone: 'green', name: 'رابطه' },
+  photos: { icon: 'image', tone: 'purple', name: 'عکس' },
   interactions: { icon: 'history', tone: 'peach', name: 'تعامل' },
+  ruleCategories: { icon: 'alignLeft', tone: 'purple', name: STR.sync.kindCategory },
+  rules: { icon: 'listChecks', tone: 'blue', name: STR.sync.kindRule },
+  ruleReviews: { icon: 'repeat', tone: 'green', name: STR.sync.kindReview },
+  compareSessions: { icon: 'target', tone: 'blue', name: STR.sync.kindSession },
+  compareItems: { icon: 'tag', tone: 'peach', name: STR.sync.kindItem },
+  compareChecks: { icon: 'checkCircle', tone: 'green', name: STR.sync.kindCheck },
+  ruleBreaks: { icon: 'close', tone: 'peach', name: STR.sync.kindBreak },
+  ruleChecks: { icon: 'listChecks', tone: 'purple', name: STR.sync.kindPersonCheck },
+  ruleCheckItems: { icon: 'check', tone: 'green', name: STR.sync.kindPersonCheckItem },
+  exchanges: { icon: 'repeat', tone: 'blue', name: STR.sync.kindExchange },
+  exchangeSettlements: { icon: 'checkCircle', tone: 'green', name: STR.sync.kindSettlement },
 };
 const OP = { create: 'ایجاد', edit: 'ویرایش', delete: 'حذف' } as const;
 const SHOWN = 5; // pending rows listed before "and N more"
@@ -70,6 +90,8 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
   const formOk = emailOk && pw.length >= 8 && (mode === 'login' || pw === pw2);
   const cfg = getCfg();
   const pending = useLiveQuery(loadPending, []) ?? [];
+  // B2b: photo files live outside the row sync, so their queue is reported separately
+  const photoQueue = useLiveQuery(() => photoQueueStatus(), []) ?? { pending: 0, uploaded: 0, total: 0 };
   const data = useLiveQuery(async () => ({
     tasks: await db.tasks.count(),
     birthdays: await db.birthdays.count(),
@@ -144,7 +166,14 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
           {mode === 'register' && <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="تکرار رمز" dir="ltr" autoComplete="new-password" aria-label="تکرار رمز" />}
           {mode === 'register' && pw2 !== '' && pw !== pw2 && <p className="form-error">دو رمز یکی نیست.</p>}
           <button className="primary" disabled={busy || !formOk} onClick={() => run(() => connect(DEFAULT_URL, email, pw, mode))}>{mode === 'register' ? 'ساخت حساب و همگام‌سازی' : 'ورود و همگام‌سازی'}</button>
-          <p className="hint">ایمیل تأیید نمی‌شود و رمز روی سرور ذخیره نمی‌شود، پس رمز فراموش‌شده قابل بازیابی نیست. داده‌ها روی سرور رمزنگاری نمی‌شوند. داده‌های روی گوشی در هر حال می‌مانند.</p>
+          {mode === 'register' ? (
+            <div className="warn-box" role="note">
+              <b><Icon name="info" size={15} stroke={2} />رمز را جای مطمئن نگه دار</b>
+              <p>ایمیل تأیید نمی‌شود و راهی برای بازیابی رمز نیست. اگر رمز را فراموش کنی، پشتیبان ابری برای همیشه از دست می‌رود. داده‌ها روی سرور رمزنگاری نمی‌شوند. داده‌های روی گوشی در هر حال می‌مانند.</p>
+            </div>
+          ) : (
+            <p className="hint">ایمیل تأیید نمی‌شود. اگر رمز را فراموش کرده‌ای راه بازیابی نیست. داده‌ها روی سرور رمزنگاری نمی‌شوند.</p>
+          )}
         </section>
       )}
 
@@ -154,11 +183,33 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
           {data && <small>{formatBytes(data.bytes)} روی دستگاه</small>}
         </div>
         <div className="stats">
-          {([['کار', data?.tasks], ['تولد', data?.birthdays]] as const).map(([k, v]) => (
+          {([['کار', data?.tasks], ['تولد', data?.birthdays], ['عکس', photoQueue.total]] as const).map(([k, v]) => (
             <div key={k}><b>{fa(v ?? 0)}</b><span>{k}</span></div>
           ))}
         </div>
       </section>
+
+      {cfg && photoQueue.total > 0 && (
+        <section className="glass sync-card" aria-label="فایل عکس‌ها">
+          <div className="sc-head">
+            <span><Icon name="image" size={16} stroke={1.9} />فایل عکس‌ها</span>
+            {photoQueue.pending > 0 ? <em className="chip-warn">{fa(photoQueue.pending)} در صف</em> : <em className="chip-ok">همه آپلود شد</em>}
+          </div>
+          <p className="hint">
+            {photoQueue.pending > 0
+              ? `${fa(photoQueue.pending)} فایل عکس هنوز روی سرور نیست. با وصل بودن اینترنت خودکار فرستاده می‌شود.`
+              : `${fa(photoQueue.uploaded)} فایل عکس روی سرور است.`}
+          </p>
+          <div className="set-actions">
+            <button disabled={busy} onClick={() => run(async () => { await uploadPendingPhotos(); })}>
+              <Icon name="upload" size={17} stroke={1.9} />آپلود فایل‌ها
+            </button>
+            <button disabled={busy} onClick={() => run(async () => { await downloadMissingPhotos(); })}>
+              <Icon name="download" size={17} stroke={1.9} />دریافت فایل‌های گمشده
+            </button>
+          </div>
+        </section>
+      )}
 
       {cfg && (
         <section className="glass sync-pending" aria-label="در انتظار همگام‌سازی">

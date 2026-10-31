@@ -66,10 +66,15 @@ jobs:
           fi
 
           CLEAN_VER="${TAG#v}"
-          VERSION_CODE="${{ github.run_number }}"
-          if [ -z "$VERSION_CODE" ] || [ "$VERSION_CODE" -le 0 ]; then
-            VERSION_CODE=1
-          fi
+          # versionCode must rise with every release or Android refuses to update an installed copy. Deriving it from the
+          # semver tag keeps it deterministic: 1.2.3 -> 10203. (Using the run number made CI and local builds disagree,
+          # and a local build with code 1 could not be installed over a CI build.)
+          MAJOR=$(echo "$CLEAN_VER" | cut -d. -f1 | tr -dc '0-9')
+          MINOR=$(echo "$CLEAN_VER" | cut -d. -f2 | tr -dc '0-9')
+          PATCH=$(echo "$CLEAN_VER" | cut -d. -f3 | tr -dc '0-9')
+          MAJOR=${MAJOR:-1}; MINOR=${MINOR:-0}; PATCH=${PATCH:-0}
+          VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          if [ "$VERSION_CODE" -le 0 ]; then VERSION_CODE=1; fi
 
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "version_name=${CLEAN_VER}" >> $GITHUB_OUTPUT
@@ -79,8 +84,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm test
+      - name: Typecheck and test
+        run: pnpm verify
 
       - name: Build web application
         run: pnpm build
@@ -114,6 +119,20 @@ EOF
           chmod +x gradlew
           ./gradlew assembleRelease -PversionName=${{ steps.vars.outputs.version_name }} -PversionCode=${{ steps.vars.outputs.version_code }}
 
+      - name: Verify the APK is really signed
+        run: |
+          # A release build with no keystore silently produces app-release-unsigned.apk, which cannot be installed over
+          # an existing install. Fail here with a clear message instead of publishing a broken file.
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK" ]; then
+            echo "::error::Signed APK not found ($APK). The keystore properties did not reach Gradle."
+            ls -la android/app/build/outputs/apk/release/ || true
+            exit 1
+          fi
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK" | head -5
+          echo "Package: $("$BUILD_TOOLS/aapt2" dump badging "$APK" | head -1)"
+
       - name: Package Release Assets
         run: |
           mkdir -p dist-release
@@ -146,11 +165,27 @@ EOF
           prerelease: ${{ github.event.inputs.prerelease == true }}
           generate_release_notes: true
           body: |
-            ## 📱 حلقه (Halgheh) - نسخه ${{ steps.vars.outputs.tag }}
+            ## حلقه — نسخه ${{ steps.vars.outputs.tag }}
 
-            تقویم فارسی، آفلاین و سبک برای اندروید (نسخه ۸ به بالا).
+            دفترچهٔ خصوصی آدم‌هایی که می‌شناسی: افراد، مهارت‌ها و شواهد، امتیازهای شش‌گانه،
+            رابطه‌ها و مسیر معرفی، کارهایی که کسی از تو خواسته، تولدها و گالری عکس.
+            آفلاین و بدون حساب کاربری هم کامل کار می‌کند.
 
-            ### دانلود
-            - 📥 **[halgheh-${{ steps.vars.outputs.tag }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.vars.outputs.tag }}/halgheh-${{ steps.vars.outputs.tag }}.apk)**
+            ### نصب
+            1. فایل APK زیر را دانلود کن.
+            2. اگر اندروید هشدار داد، «نصب از منابع ناشناس» را برای مرورگر یا فایل‌منیجر اجازه بده.
+            3. نصب کن و باز کن — دفترچه از خالی شروع می‌شود.
+
+            نیازمند **اندروید ۷ (API 24) یا بالاتر**. این نسخه از گوگل‌پلی نمی‌آید.
+
+            ### پشتیبان
+            حساب اختیاری است. در «تنظیمات ← داده و همگام‌سازی» می‌توانی پشتیبان کامل (JSON یا ZIP همراه عکس‌ها)
+            بگیری. **رمز حساب قابل بازیابی نیست**؛ اگر فراموش شود، پشتیبان ابری از دست می‌رود.
+
+            ### حریم خصوصی
+            داده‌ها روی گوشی خودت می‌مانند. همگام‌سازی اختیاری است و دادهٔ سرور رمزنگاری نمی‌شود.
+            هیچ تحلیل‌گر، تبلیغ یا SDK سوم‌شخصی در برنامه نیست.
+
+            - **[halgheh-${{ steps.vars.outputs.tag }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.vars.outputs.tag }}/halgheh-${{ steps.vars.outputs.tag }}.apk)**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

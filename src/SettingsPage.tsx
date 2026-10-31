@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, exportAll, importAll } from './db';
 import { fa } from './cal';
+import { formatBytes } from './format';
 import { Icon, type IconName } from './Icon';
-import { askNotifications, biometric, isNative, shareBackup } from './native';
+import { askNotifications, biometric, isNative, restoreBackupZip, shareBackup, shareBackupZip } from './native';
 import { type Theme, type WeekStart, updateSettings, useSettings } from './settings';
 import { Choice } from './Choice';
 import { DEFAULT_URL, getCfg } from './sync';
 import { PinFlow } from './Lock';
 import { setBio, useLock } from './lockStore';
+import { Toggle as Switch } from './Toggle';
 
 const WEEK_STARTS: [WeekStart, string][] = [[6, 'شنبه'], [0, 'یکشنبه'], [1, 'دوشنبه']];
 const THEMES: [Theme, string, IconName][] = [['light', 'روشن', 'sun'], ['dark', 'تیره', 'moon'], ['auto', 'خودکار', 'contrast']];
@@ -22,10 +24,6 @@ function Row({ icon, tone, name, children }: { icon: IconName; tone: 'blue' | 'p
     </div>
   );
 }
-
-const Switch = ({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) => (
-  <button className="switch" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)}><i /></button>
-);
 
 export function SettingsPage({ openSync }: { openSync: () => void }) {
   const { weekStart, theme, remind } = useSettings();
@@ -50,11 +48,35 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
     a.download = `halgheh-backup-${new Date().toLocaleDateString('sv')}.json`;
     a.click();
   };
+  const [zipBusy, setZipBusy] = useState(false);
+  // B3: the complete backup — rows plus photo files — in one archive
+  const backupZip = async () => {
+    setZipBusy(true);
+    setMsg('');
+    try {
+      const r = await shareBackupZip();
+      setMsg(
+        `پشتیبان کامل ساخته شد: ${fa(r.photos)} عکس` +
+          (r.missing ? ` · ${fa(r.missing)} فایل روی این گوشی نبود` : '') +
+          ` · ${formatBytes(r.bytes)}`,
+      );
+    } catch {
+      setMsg('ساخت پشتیبان کامل ناموفق بود.');
+    } finally {
+      setZipBusy(false);
+    }
+  };
   const upload = async (file?: File) => {
     if (!file) return;
     try {
-      await importAll(await file.text());
-      setMsg('پشتیبان بازیابی شد.');
+      // B3: one control for both formats; a .zip carries the photo files too
+      if (file.name.toLowerCase().endsWith('.zip') || file.type.includes('zip')) {
+        const r = await restoreBackupZip(file);
+        setMsg(`پشتیبان بازیابی شد${r.photos ? ` · ${fa(r.photos)} عکس` : ''}.`);
+      } else {
+        await importAll(await file.text());
+        setMsg('پشتیبان بازیابی شد.');
+      }
     } catch {
       setMsg('فایل پشتیبان معتبر نیست.');
     }
@@ -126,8 +148,9 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
             </button>
           )}
           <div className="set-actions">
-            <button onClick={download}><Icon name="download" size={18} stroke={1.9} />خروجی پشتیبان</button>
-            <label className="btn"><Icon name="upload" size={18} stroke={1.9} />بازیابی از فایل<input type="file" accept="application/json" hidden onChange={(e) => upload(e.target.files?.[0])} /></label>
+            <button onClick={() => void backupZip()} disabled={zipBusy}><Icon name="archive" size={18} stroke={1.9} />{zipBusy ? 'در حال ساخت…' : 'پشتیبان کامل (با عکس)'}</button>
+            <button onClick={download}><Icon name="download" size={18} stroke={1.9} />فقط داده (JSON)</button>
+            <label className="btn"><Icon name="upload" size={18} stroke={1.9} />بازیابی از فایل<input type="file" accept="application/json,.zip,application/zip" hidden onChange={(e) => upload(e.target.files?.[0])} /></label>
           </div>
         </div>
         {msg && <p className="hint set-msg" role="status">{msg}</p>}

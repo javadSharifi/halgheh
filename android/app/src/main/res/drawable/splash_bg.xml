@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Launch background: the three-stop brand gradient of primary in src/style.css. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient android:angle="315" android:startColor="#5B7BFF" android:endColor="#7A4FD8"/>
+    <gradient
+        android:angle="315"
+        android:startColor="#7591FF"
+        android:centerColor="#4466E6"
+        android:endColor="#3651C9" />
 </shape>

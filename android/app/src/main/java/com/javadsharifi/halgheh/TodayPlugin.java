@@ -84,4 +84,49 @@ public class TodayPlugin extends Plugin {
             call.resolve();
         });
     }
+
+    /** Synchronize today's tasks and date to the Android Home Screen widget */
+    @PluginMethod
+    public void syncWidgetData(PluginCall call) {
+        String date = call.getString("date");
+        String summary = call.getString("summary");
+        Integer openCount = call.getInt("openCount", 0);
+        Integer totalCount = call.getInt("totalCount", 0);
+        com.getcapacitor.JSArray tasks = call.getArray("tasks");
+
+        android.content.SharedPreferences prefs = getContext().getSharedPreferences(
+            TodayWidgetProvider.PREFS_NAME,
+            android.content.Context.MODE_PRIVATE
+        );
+        android.content.SharedPreferences.Editor editor = prefs.edit();
+
+        if (date != null) editor.putString("date", date);
+        if (summary != null) editor.putString("summary", summary);
+        editor.putInt("open_count", openCount != null ? openCount : 0);
+        editor.putInt("total_count", totalCount != null ? totalCount : 0);
+
+        editor.remove("task_1");
+        editor.remove("task_2");
+        editor.remove("task_3");
+
+        if (tasks != null) {
+            try {
+                for (int i = 0; i < tasks.length() && i < 3; i++) {
+                    editor.putString("task_" + (i + 1), tasks.getString(i));
+                }
+            } catch (org.json.JSONException e) {
+                // ignore
+            }
+        }
+        editor.apply();
+
+        TodayWidgetProvider.updateAllWidgets(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getWidgetAction(PluginCall call) {
+        boolean quick = MainActivity.consumePendingQuickTask();
+        call.resolve(new JSObject().put("quickTask", quick));
+    }
 }

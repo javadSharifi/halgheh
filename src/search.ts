@@ -75,4 +75,4 @@ export const clearRecents = () => {
 };
 
 /** The search screen remembers its query while you open a result and come back; cleared on cancel. */
-export const lastSearch = { q: '', filter: 'all' as 'all' | 'tasks' | 'birthdays' };
+export const lastSearch = { q: '', filter: 'all' as 'all' | 'people' | 'notes' | 'todos' | 'photos' | 'birthdays' | 'rules' | 'exchanges' };

@@ -15,7 +15,12 @@ const ms = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 export const addDays = (iso: string, n: number) => new Date(ms(iso) + n * 864e5).toISOString().slice(0, 10);
 export const today = () => new Date().toLocaleDateString('sv'); // 'sv' prints local YYYY-MM-DD
 export const wd = (iso: string) => new Date(ms(iso)).getUTCDay(); // JS weekday, 0 = Sunday
-export const fa = (n: number) => n.toLocaleString('fa', { useGrouping: false });
+/**
+ * Persian digits for a number. Explicitly mapped instead of `toLocaleString('fa')`, because the Android WebView can ship an
+ * ICU build without Persian digits and then renders "۴" as "4" — which is exactly what happened on the emulator.
+ */
+const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+export const fa = (n: number) => String(n).replace(/\d/g, (d) => FA_DIGITS[+d]);
 
 const num = Object.fromEntries(
   CALS.map((c) => [c, new Intl.DateTimeFormat(`en-u-ca-${ID[c]}-nu-latn`, { timeZone: 'UTC' })]),
