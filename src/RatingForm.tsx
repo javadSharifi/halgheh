@@ -3,6 +3,7 @@ import { type Rating, del, put, uid } from './db';
 import { fa, today } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
+import { Button, InputField } from './ui';
 import { DatePicker } from './DatePicker';
 import { CRITERION_HINT, CRITERION_LABEL, SCORES, currentOf, historyOf, newRating, scoreText } from './ratings';
 import type { RatingCriterion } from './db';
@@ -51,7 +52,7 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
       <section className="sheet rating-sheet" role="dialog" aria-modal="true" aria-labelledby="rating-title">
         <div className="bf-head">
           <span id="rating-title">{tx(CRITERION_LABEL[criterion])}</span>
-          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx('بستن')}</Button>
         </div>
 
         <div className="pe-scroll">
@@ -75,10 +76,15 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
             {current ? tx('امتیاز فعلی: {a1} — ثبت تازه امتیاز فعلی را عوض می‌کند، قبلی در تاریخچه می‌ماند.', { a1: scoreText(current.score) }) : tx('هنوز امتیازی برای این مورد ثبت نشده.')}
           </p>
 
-          <label className="bf-name bf-name-top">
-            <span>{tx('یادداشت (اختیاری)')}</span>
-            <textarea className="rf-text" value={note} onChange={(e) => setNote(e.target.value)} placeholder={tx('چرا این امتیاز؟')} maxLength={500} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx('یادداشت (اختیاری)')}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={tx('چرا این امتیاز؟')}
+            maxLength={500}
+          />
 
           <div className="rf-row">
             <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
@@ -100,7 +106,7 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
                       <b>{h.ratedAt}</b>
                       {h.note && <span>{h.note}</span>}
                     </span>
-                    <button className="icon-btn small" aria-label={tx('حذف این ثبت')} onClick={() => void removeOne(h)}><Icon name="close" size={15} stroke={2.2} /></button>
+                    <Button variant="ghost" size="icon-sm" aria-label={tx('حذف این ثبت')} onClick={() => void removeOne(h)} icon="close" />
                   </div>
                 ))}
               </div>
@@ -110,10 +116,9 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
           {err && <p className="form-error" role="alert">{err}</p>}
         </div>
 
-        <button className="primary" disabled={score < 1 || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />
+        <Button variant="primary" block disabled={score < 1 || busy} onClick={() => void save()} icon="check">
           {busy ? tx('در حال ذخیره…') : current ? tx('ثبت امتیاز تازه') : tx('ثبت امتیاز')}
-        </button>
+        </Button>
       </section>
       {picking && <DatePicker value={ratedAt} onPick={(d) => { setRatedAt(d); setPicking(false); }} onClose={() => setPicking(false)} />}
     </>

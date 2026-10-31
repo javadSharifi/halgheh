@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { type Person, type Relationship, del, put } from './db';
 import { ask } from './confirm';
 import { Icon } from './Icon';
+import { Button, InputField } from './ui';
 import { CONFIDENCE_LABEL, REL_LABEL, REL_TYPES, findLink, isSymmetric, linkId, linkIds } from './relationships';
 import type { RelType } from './db';
 import { locale, tx } from './i18n';
@@ -93,16 +94,13 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
       <section className="sheet rel-sheet" role="dialog" aria-modal="true" aria-labelledby="rel-title">
         <div className="bf-head">
           <span id="rel-title">{editing ? tx('ویرایش رابطه') : tx('رابطهٔ تازه')}</span>
-          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx('بستن')}</Button>
         </div>
 
         <div className="pe-scroll">
           {!editing && (
             <>
-              <label className="bf-name">
-                <span>{tx('طرف دیگر')}</span>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('جستجوی نام…')} />
-              </label>
+              <InputField label={tx('طرف دیگر')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('جستجوی نام…')} />
               {others.length === 0 && <p className="hint pe-hint">{tx('برای ساختن رابطه دست‌کم دو نفر لازم است.')}</p>}
               <div className="rel-people">
                 {shown.slice(0, 40).map((p) => (
@@ -138,7 +136,7 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
           </div>
           {!closenessOk && <p className="form-error">{tx('نزدیکی باید عددی بین ۱ و ۵ باشد.')}</p>}
 
-          <label className="bf-name"><span>{tx('از کجا می‌شناسیشان (اختیاری)')}</span><input value={howMet} maxLength={200} onChange={(e) => setHowMet(e.target.value)} /></label>
+          <InputField label={tx('از کجا می‌شناسیشان (اختیاری)')} value={howMet} maxLength={200} onChange={(e) => setHowMet(e.target.value)} />
           <div className="rf-row">
             <span className="tile green" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
             <span className="rf-name">{tx('معرف')}</span>
@@ -147,19 +145,26 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
               {others.map((p) => <option key={p.id} value={p.id}>{personLabel(p)}</option>)}
             </select>
           </div>
-          <label className="bf-name bf-name-top">
-            <span>{tx('یادداشت (اختیاری)')}</span>
-            <textarea className="rf-text" value={note} onChange={(e) => setNote(e.target.value)} maxLength={400} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx('یادداشت (اختیاری)')}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={400}
+          />
 
           {err && <p className="form-error" role="alert">{err}</p>}
         </div>
 
-        <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />
+        <Button variant="primary" block disabled={!valid || busy} onClick={() => void save()} icon="check">
           {busy ? tx('در حال ذخیره…') : editing ? tx('ذخیره') : tx('افزودن رابطه')}
-        </button>
-        {editing && <button className="danger-btn" onClick={() => void remove()}><Icon name="trash" size={16} stroke={2} />{tx('حذف این رابطه')}</button>}
+        </Button>
+        {editing && (
+          <Button variant="danger" block onClick={() => void remove()} icon="trash">
+            {tx('حذف این رابطه')}
+          </Button>
+        )}
       </section>
     </>
   );
