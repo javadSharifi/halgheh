@@ -171,7 +171,7 @@ export function TodayWidget({
       {/* Top Header: Clock, Greeting & Status */}
       <div className="tw-header">
         <div className="tw-clock-block">
-          <div className="tw-clock-display" aria-label={tx('ساعت فعلی: {a1}', { a1: clockText })}>
+          <div className="tw-clock-display" aria-label={tx('ساعت فعلی: {a1}', { a1: faDigits(clockText) })}>
             <span className="tw-clock-time">{faDigits(clockText)}</span>
             <span className="tw-clock-seconds">:{faDigits(secondsStr)}</span>
           </div>

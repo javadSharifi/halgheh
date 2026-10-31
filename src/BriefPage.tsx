@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Person, db } from './db';
-import { MONTHS, fa, label, parts, today } from './cal';
+import { fa, label, monthName, parts, today } from './cal';
 import { Icon } from './Icon';
 import { STR, EXCHANGE_DIRECTION_LABEL } from './strings/rulebook';
 import { normPhone } from './phone';
@@ -203,7 +203,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
               <span className="set-name">
                 {tx(STR.brief.birthdayIn(bday.inDays))}
                 <small className="set-sub">
-                  {fa(bday.birthday.day)} {tx(MONTHS[bday.birthday.cal][bday.birthday.month - 1])}
+                  {fa(bday.birthday.day)} {monthName(bday.birthday.cal, bday.birthday.month)}
                   {bday.birthday.year && ` · ${tx('{a1} ساله', { a1: fa(parts(t, bday.birthday.cal, 0).y - bday.birthday.year) })}`}
                 </small>
               </span>

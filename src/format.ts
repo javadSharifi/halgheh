@@ -1,8 +1,7 @@
-import { type Cal, addDays, bdayOn, fa, wd } from './cal';
-import { lang, tk, tx } from './i18n';
+import { type Cal, addDays, bdayOn, fa, wd, wdName } from './cal';
+import { lang, tx } from './i18n';
 
 const SAT_FIRST = [6, 0, 1, 2, 3, 4, 5]; // JS weekdays in the order Iranians read the week
-const NAMES: Record<number, string> = { 6: tk('شنبه'), 0: tk('یکشنبه'), 1: tk('دوشنبه'), 2: tk('سه‌شنبه'), 3: tk('چهارشنبه'), 4: tk('پنجشنبه'), 5: tk('جمعه') };
 
 /** Weekday mask -> "هر روز", "شنبه تا چهارشنبه" (3+ days in a row) or "شنبه، دوشنبه". */
 export function daysText(mask: number) {
@@ -11,8 +10,8 @@ export function daysText(mask: number) {
   const idx = on.map((d) => SAT_FIRST.indexOf(d));
   const run = idx.every((v, i) => i === 0 || v === idx[i - 1] + 1);
   return on.length >= 3 && run
-    ? tx('{a1} تا {a2}', { a1: tx(NAMES[on[0]]), a2: tx(NAMES[on[on.length - 1]]) })
-    : on.map((d) => tx(NAMES[d])).join(lang() === 'fa' ? '، ' : ', ');
+    ? tx('{a1} تا {a2}', { a1: wdName(on[0]), a2: wdName(on[on.length - 1]) })
+    : on.map((d) => wdName(d)).join(lang() === 'fa' ? '، ' : ', ');
 }
 
 /** What a task repeats on, for list subtitles. */

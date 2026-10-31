@@ -1,4 +1,4 @@
-import { CALS, CAL_NAMES, MONTHS, type Cal, fa, parts, today } from './cal';
+import { CALS, CAL_NAMES, MONTHS, type Cal, fa, monthName, parts, today } from './cal';
 import type { Birthday } from './db';
 import { YEAR_RANGE, maxDay, toLatinDigits } from './format';
 import { Choice } from './Choice';
@@ -80,7 +80,7 @@ export function BirthdayFields({
         </label>
         <div className="bf-tile">
           <span>{tx('ماه')}</span>
-          <Choice className="pick-text" label={tx('ماه')} value={d.month} options={MONTHS[d.cal].map((m, i): [number, string] => [i + 1, tx(m)])} onChange={(m) => set({ month: m })} />
+          <Choice className="pick-text" label={tx('ماه')} value={d.month} options={MONTHS[d.cal].map((_, i): [number, string] => [i + 1, monthName(d.cal, i + 1)])} onChange={(m) => set({ month: m })} />
         </div>
         <label className={`bf-tile${!r.yearOk ? ' bad' : ''}`}>
           <span>{tx('سال (اختیاری)')}</span>

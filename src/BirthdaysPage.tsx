@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Birthday, db, del, put, uid } from './db';
-import { CAL_NAMES, MONTHS, type Cal, fa, label, parts, today } from './cal';
+import { CAL_NAMES, type Cal, fa, label, monthName, parts, today } from './cal';
 import { nextOccurrence } from './format';
 import { ask } from './confirm';
 import { BirthdayFields, draftOf, emptyDraft, readDraft, rowOf } from './BirthdayFields';
@@ -77,7 +77,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
     b.year
       ? tx('متولد {a1} {a2} {a3} · {a4} ساله می‌شود', {
           a1: fa(b.day),
-          a2: tx(MONTHS[b.cal][b.month - 1]),
+          a2: monthName(b.cal, b.month),
           a3: fa(b.year).replace(/٬/g, ''),
           a4: fa(parts(date, b.cal, off).y - b.year),
         })

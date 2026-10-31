@@ -1,4 +1,4 @@
-import { CAL_NAMES, MONTHS, fa } from '../cal';
+import { CAL_NAMES, fa, monthName } from '../cal';
 import type { Birthday, Person, PersonNote, PersonTag, Tag } from '../db';
 import { Icon } from '../Icon';
 import { normPhone } from '../phone';
@@ -67,7 +67,7 @@ export function OverviewTab({ person: p, birthday: bd, note, tags, tagLinks, onE
             <button className="set-row as-btn" onClick={onEdit}>
               <span className="tile peach" aria-hidden="true"><Icon name="cake" size={17} stroke={1.9} /></span>
               <span className="set-name">
-                {fa(bd.day)} {tx(MONTHS[bd.cal][bd.month - 1])}{bd.year ? ` ${fa(bd.year)}` : ''}
+                {fa(bd.day)} {monthName(bd.cal, bd.month)}{bd.year ? ` ${fa(bd.year)}` : ''}
                 <small className="set-sub">{join([tx(CAL_NAMES[bd.cal]), age !== null && tx('{a1} ساله', { a1: fa(age) })])}</small>
               </span>
               <Icon name="chevronLeft" size={16} stroke={2} />
