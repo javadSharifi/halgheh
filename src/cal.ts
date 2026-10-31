@@ -1,3 +1,5 @@
+import { lang, num } from './i18n';
+
 export type Cal = 'persian' | 'gregory' | 'islamic';
 export const CALS: Cal[] = ['persian', 'gregory', 'islamic'];
 export const CAL_NAMES: Record<Cal, string> = { persian: 'شمسی', gregory: 'میلادی', islamic: 'قمری' };
@@ -20,9 +22,14 @@ export const wd = (iso: string) => new Date(ms(iso)).getUTCDay(); // JS weekday,
  * ICU build without Persian digits and then renders "۴" as "4" — which is exactly what happened on the emulator.
  */
 const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
-export const fa = (n: number) => String(n).replace(/\d/g, (d) => FA_DIGITS[+d]);
+const EN_WD = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const FA_WD = ['ی', 'د', 'س', 'چ', 'پ', 'ج', 'ش'];
+/** Single-letter weekday header, by JS weekday (0 = Sunday). */
+export const wdInitial = (d: number) => (lang() === 'fa' ? FA_WD : EN_WD)[d];
+/** Persian digits in fa, latin in en. Kept under the old name: ~30 files call it. */
+export const fa = (n: number) => num(n);
 
-const num = Object.fromEntries(
+const fmt = Object.fromEntries(
   CALS.map((c) => [c, new Intl.DateTimeFormat(`en-u-ca-${ID[c]}-nu-latn`, { timeZone: 'UTC' })]),
 ) as Record<Cal, Intl.DateTimeFormat>;
 
@@ -30,12 +37,12 @@ const shift = (iso: string, cal: Cal, off: number) => (cal === 'islamic' ? addDa
 
 export function parts(iso: string, cal: Cal, off = 0) {
   const p: Record<string, string> = {};
-  for (const x of num[cal].formatToParts(ms(shift(iso, cal, off)))) p[x.type] = x.value;
+  for (const x of fmt[cal].formatToParts(ms(shift(iso, cal, off)))) p[x.type] = x.value;
   return { y: +p.year, m: +p.month, d: +p.day };
 }
 
 export const label = (iso: string, cal: Cal, off: number, o: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat(`fa-u-ca-${ID[cal]}`, { ...o, timeZone: 'UTC' }).format(ms(shift(iso, cal, off)));
+  new Intl.DateTimeFormat(`${lang()}-u-ca-${ID[cal]}`, { ...o, timeZone: 'UTC' }).format(ms(shift(iso, cal, off)));
 
 /** "۱۰ جمادی‌الاول ۱۴۴۸": day, month name and plain year (the locale's own year text adds an era suffix like "ه‍.ق."). */
 export const fullDate = (iso: string, cal: Cal, off = 0) =>
