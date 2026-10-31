@@ -18,7 +18,7 @@
   4. `Card` (کانتینر سطوح شیشه‌ای و تخت با استایل‌های یکدست).
   5. `Sheet` (باتم‌شیت استاندارد با پشتیبانی کامل از کلید Escape، مدیریت استک چندلایه، جلوگیری از اسکرول بدنه، و هم‌تراز با `--kb` و `safe-area-inset-bottom`).
   6. `Chip` (تگ‌ها و فیلترهای تعاملی و قابل حذف بر اساس ساختار استاندارد بدون تداخل دکمه در دکمه).
-- **صفحات و بخش‌های مهاجرت‌داده‌شده:**
+- **صفحات و بخش‌های مهاجرت‌داده‌شده (۲۸ صفحه/شیت/کامپوننت):**
   - `AboutPage` (مهاجرت به Card)
   - `SettingsPage` (مهاجرت به Card)
   - `SyncPage` (مهاجرت به Card)
@@ -33,9 +33,21 @@
   - `MorePage` (مهاجرت لیست‌ها به Card)
   - `Gallery` (مهاجرت دکمه‌های افزودن/بازگشت به Button و کارت‌های خالی به Card)
   - `SearchPage` (مهاجرت چیپ‌های جستجوهای اخیر به Chip و کانتینرها به Card)
-  - `BirthdaysPage` (مهاجرت لیست‌ها به Card و دکمه‌های فرم‌ها و هدر به Button)
-  - `ExchangeItem` و `ExchangeSheet` (بهبود دسترسی کیبورد، اصلاح المان‌های کلیک‌پذیر به Button استاندارد)
+  - `BirthdaysPage` (مهاجرت لیست‌ها به Card، فیلد عنوان مناسبت به InputField و دکمه‌های فرم‌ها و هدر به Button)
+  - `BirthdayFields` (مهاجرت فیلدهای نام و شماره تلفن به InputField با اعتبارسنجی خطا)
+  - `ExchangeItem` و `ExchangeSheet` (بهبود دسترسی کیبورد، اصلاح المان‌های کلیک‌پذیر و دکمه‌های اقدام به Button)
   - `WishSheet` (مهاجرت کامل به Sheet، InputField و Button)
+  - `confirm` (مهاجرت دکمه‌های تأیید و انصراف مدال تاییدیه به Button با پشتیبانی از Ref برای فوکوس خودکار)
+  - `QuickAdd` (مهاجرت فیلد نام به InputField و دکمه ثبت به Button)
+  - `RatingForm` و `RelationshipForm` (مهاجرت فیلدهای یادداشت، دلیل، سرفصل به InputField و دکمه‌های ثبت/حذف به Button)
+  - `InteractionForm` و `NoteBox` (مهاجرت ورودی‌های خلاصه، نتیجه، پیگیری به InputField و دکمه‌های ثبت به Button)
+  - `CompareHome`، `ReviewSession` و `ReadThrough` (مهاجرت اکشن‌ها و ورودی‌ها به Button و InputField)
+  - `BreakSheet` و `PersonCheck` (مهاجرت فیلدهای عنوان و یادداشت به InputField و دکمه‌های ثبت به Button)
+  - `RulebookPage` و `WhoCan` (مهاجرت دکمه افزودن قانون و کارت‌های نتیجه جستجوی تخصص به Button و Card)
+  - `ContactsImport`، `PhotoViewer` و `DatePicker` (مهاجرت دکمه‌های انتخاب همه، بستن/حذف عکس و پیش‌تنظیم‌های تاریخ به Button)
+  - `SettleSheet` (مهاجرت کارت خلاصه به Card و دکمه‌های ثبت تسویه/انصراف به Button)
+  - `ActivityTab`، `EvaluationTab` و `LedgerTab` (مهاجرت دکمه‌های افزودن در هدرهای تب‌های فرد به Button)
+  - `Todos` (مهاجرت دکمه افزودن و دکمه‌های یادآوری تعویقی Snooze به Button)
 
 ---
 
@@ -60,6 +72,18 @@
 | `ff1b80d` | `feat(ui): migrate BirthdaysPage list containers and buttons to ui components` | استفاده از Card برای گروه‌های تولد و Button برای اکشن‌های فرم |
 | `f4332bc` | `feat(ui): improve keyboard accessibility and button semantics for clickable ledger items` | ارتقای کارت‌های دادوستد به ساختار دارای هندلر کلید و تبدیل دکمه موعد به button استاندارد |
 | `7f84231` | `feat(ui): migrate WishSheet to Sheet, InputField and Button` | مهاجرت کامل شیت تبریک تولد به باتم‌شیت پایه و دکمه/ورودی استاندارد |
+| `e167062` | `feat(ui): migrate confirm dialog and QuickAdd to ui Button and InputField` | مهاجرت مدال تایید سراسری و فرم افزودن سریع شخص |
+| `4ead9d3` | `feat(ui): migrate RatingForm and RelationshipForm to Button and InputField` | مهاجرت فرم امتیازدهی ۶گانه و ارتباطات اشخاص |
+| `44f5f9b` | `feat(ui): migrate InteractionForm and NoteBox to ui components` | مهاجرت شیت ثبت تعامل‌ها و جعبه یادداشت اشخاص |
+| `8037f10` | `feat(ui): migrate CompareHome, ReviewSession and ReadThrough to ui components` | مهاجرت صفحه خانگی مقایسه و جلسات مرور قوانین |
+| `0a212b0` | `feat(ui): migrate BreakSheet and PersonCheck to ui components` | مهاجرت ثبت شکست قانون و شیت بررسی قوانین شخص |
+| `38b797c` | `feat(ui): migrate RulebookPage and WhoCan to ui components` | مهاجرت دکمه افزودن قانون و کارت‌های نتایج جویای مهارت |
+| `d0688e3` | `feat(ui): migrate ContactsImport, PhotoViewer and DatePicker to ui components` | مهاجرت ابزار ورود مخاطبین، نمایشگر تصویر و انتخاب‌گر تقویم |
+| `d504fd5` | `feat(ui): migrate SettleSheet to ui Button and Card` | مهاجرت کارت محاسبات و اکشن‌های شیت تسویه دادوستد |
+| `afcaa08` | `feat(ui): migrate ExchangeSheet actions to ui Button` | مهاجرت دکمه‌های ثبت، بررسی قوانین و بستن در فرم دادوستد |
+| `09917e1` | `feat(ui): migrate person tabs action buttons to ui Button` | مهاجرت دکمه‌های افزودن و ناوبری در تب‌های فعالیت، ارزیابی و دادوستد فرد |
+| `8aba889` | `feat(ui): migrate Todos add and snooze buttons to ui Button` | مهاجرت دکمه افزودن کار و دکمه‌های آیکونی به تعویق انداختن یادآوری |
+| `4e16020` | `feat(ui): migrate BirthdayFields and occasion form to ui InputField` | مهاجرت ورودی‌های نام، تلفن و عنوان مناسبت به InputField با اعتبارسنجی |
 
 *نکته: تمامی کامیت‌ها پس از اجرای موفقیت‌آمیز `pnpm verify` (بررسی تایپ‌اسکریپت و پاس شدن ۴۷ تست vitest) و `pnpm build` (بررسی بدون خطای i18n و خروجی باندل Vite/PWA) ثبت شده‌اند.*
 
