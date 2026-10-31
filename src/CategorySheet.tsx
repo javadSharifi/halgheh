@@ -8,6 +8,7 @@ import { Choice } from './Choice';
 import { STR } from './strings/rulebook';
 import { addCategory, deleteCategory, deleteCategory as removeCategory, moveCategory, renameCategory, setCompareEnabled } from './ruleData';
 import { tn, tx } from './i18n';
+import { Button } from './ui';
 
 /**
  * Phase 2: category management. Add, rename, reorder, delete and the per-category purchase-comparison switch. Deleting a
@@ -137,19 +138,23 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
                 />
               </span>
             </div>
-            <button
-              className="primary"
+            <Button
+              variant="primary"
+              block
               disabled={busy || !target}
               onClick={async () => { if (target) { await removeCategory(pending, rules.filter((r) => r.categoryId === pending.id), { moveTo: target }); setPending(null); } }}
+              icon="undo"
             >
-              <Icon name="undo" size={18} stroke={2.2} />{tx(STR.categories.deleteMoveTo)}
-            </button>
-            <button
-              className="danger-btn"
+              {tx(STR.categories.deleteMoveTo)}
+            </Button>
+            <Button
+              variant="danger"
+              block
               onClick={async () => { await removeCategory(pending, rules.filter((r) => r.categoryId === pending.id), { deleteRules: true }); setPending(null); }}
+              icon="trash"
             >
-              <Icon name="trash" size={16} stroke={2} />{tx(STR.categories.deleteWithRules)}
-            </button>
+              {tx(STR.categories.deleteWithRules)}
+            </Button>
           </>
         )}
       </section>
