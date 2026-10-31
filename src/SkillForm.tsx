@@ -7,6 +7,7 @@ import { DatePicker } from './DatePicker';
 import { Choice } from './Choice';
 import { EVIDENCE_STATUS, findSkill, readSkillNumbers, STATUS_LABEL } from './skills';
 import { tx } from './i18n';
+import { InputField, Button } from './ui';
 
 /** The status picker's labels, ordered strongest first. */
 const STATUS: [PersonSkill['evidenceStatus'], string][] = [...EVIDENCE_STATUS].map(([k, v]) => [k, v] as const);
@@ -112,10 +113,14 @@ export function SkillForm({ personId, skills, existing, initial, onClose }: {
         </div>
 
         <div className="pe-scroll">
-          <label className="bf-name">
-            <span>{tx('مهارت')}</span>
-            <input autoFocus value={v.name} maxLength={60} onChange={(e) => set({ name: e.target.value })} placeholder={tx('مثلاً مکانیک خودرو')} />
-          </label>
+          <InputField
+            label={tx('مهارت')}
+            autoFocus
+            value={v.name}
+            maxLength={60}
+            onChange={(e) => set({ name: e.target.value })}
+            placeholder={tx('مثلاً مکانیک خودرو')}
+          />
           {match && (
             <p className="hint pe-hint" role="status">
               <Icon name="checkCircle" size={13} stroke={2} /> «{match.name}{tx('» از قبل در فهرست مهارت‌ها هست و به همان وصل می‌شود.')}</p>
@@ -123,15 +128,20 @@ export function SkillForm({ personId, skills, existing, initial, onClose }: {
           {creating && <p className="hint pe-hint">«{v.name.trim()}{tx('» به فهرست مهارت‌ها اضافه می‌شود.')}</p>}
           {clash && <p className="form-error" role="alert">{tx('این مهارت برای این فرد ثبت شده است.')}</p>}
 
-          <label className="bf-name">
-            <span>{tx('زیرشاخهٔ (اختیاری)')}</span>
-            <input value={v.parentName} maxLength={60} onChange={(e) => set({ parentName: e.target.value })} placeholder={tx('مثلاً مکانیک')} />
-          </label>
+          <InputField
+            label={tx('زیرشاخهٔ (اختیاری)')}
+            value={v.parentName}
+            maxLength={60}
+            onChange={(e) => set({ parentName: e.target.value })}
+            placeholder={tx('مثلاً مکانیک')}
+          />
           {creating && (
-            <label className="bf-name">
-              <span>{tx('نام‌های دیگر (اختیاری)')}</span>
-              <input value={v.aliases} onChange={(e) => set({ aliases: e.target.value })} placeholder={tx('با «،» جدا کن')} />
-            </label>
+            <InputField
+              label={tx('نام‌های دیگر (اختیاری)')}
+              value={v.aliases}
+              onChange={(e) => set({ aliases: e.target.value })}
+              placeholder={tx('با «،» جدا کن')}
+            />
           )}
 
           <div className="pe-grid">
@@ -151,10 +161,15 @@ export function SkillForm({ personId, skills, existing, initial, onClose }: {
             </span>
           </div>
 
-          <label className="bf-name bf-name-top">
-            <span>{tx('چه چیزی دیدی (اختیاری)')}</span>
-            <textarea className="rf-text" value={v.evidence} onChange={(e) => set({ evidence: e.target.value })} placeholder={tx('مثلاً موتور پراید را خودش تعمیر کرد')} maxLength={600} />
-          </label>
+          <InputField
+            label={tx('چه چیزی دیدی (اختیاری)')}
+            multiline
+            rows={3}
+            value={v.evidence}
+            onChange={(e) => set({ evidence: e.target.value })}
+            placeholder={tx('مثلاً موتور پراید را خودش تعمیر کرد')}
+            maxLength={600}
+          />
 
           <div className="rf-row">
             <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={17} stroke={1.9} /></span>
@@ -174,11 +189,10 @@ export function SkillForm({ personId, skills, existing, initial, onClose }: {
           {err && <p className="form-error" role="alert">{err}</p>}
         </div>
 
-        <button className="primary" disabled={!valid || busy || clash} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />
+        <Button variant="primary" block disabled={!valid || busy || clash} onClick={() => void save()} icon="check">
           {busy ? tx('در حال ذخیره…') : initial ? tx('ذخیره') : tx('افزودن مهارت')}
-        </button>
-        {initial && <button className="danger-btn" onClick={() => void remove()}><Icon name="trash" size={16} stroke={2} />{tx('حذف این مهارت')}</button>}
+        </Button>
+        {initial && <Button variant="danger" block onClick={() => void remove()} icon="trash">{tx('حذف این مهارت')}</Button>}
       </section>
       {picking === 'verified' && (
         <DatePicker value={v.verified} onPick={(d) => { set({ verified: d, hasVerified: true }); setPicking(null); }} onClose={() => setPicking(null)} />
