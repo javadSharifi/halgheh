@@ -6,10 +6,11 @@ import { faDigits, isTime } from './format';
 import { ask } from './confirm';
 import { Icon } from './Icon';
 import { counts, doneDateFor, doneKey, FILTERS, isOverdue, listTodos, overdue, type TodoFilter } from './todoFilters';
+import { tn, tx } from './i18n';
 
 /** Asks first; true when the task and its done-history are gone. */
 export async function removeTask(id: string) {
-  if (!(await ask({ title: 'حذف این کار؟', message: 'کار و سابقهٔ انجام‌شدن‌هایش پاک می‌شود.', confirm: 'حذف' }))) return false;
+  if (!(await ask({ title: tx('حذف این کار؟'), message: tx('کار و سابقهٔ انجام‌شدن‌هایش پاک می‌شود.'), confirm: tx('حذف') }))) return false;
   for (const d of await db.done.where('taskId').equals(id).toArray()) await del('done', d.id);
   await del('tasks', id);
   return true;
@@ -56,45 +57,45 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
     const bits: string[] = [];
     if (task.on && task.on !== t) bits.push(label(task.on, 'persian', 0, { day: 'numeric', month: 'long' }));
     if (isTime(task.time)) bits.push(faDigits(task.time));
-    if (task.fromPersonId) bits.push(`از طرف ${nameOf.get(task.fromPersonId) ?? 'کسی'}`);
-    if (!task.on) bits.push('بدون موعد');
-    if (done) bits.push('انجام شد');
-    if (snoozedNow(task)) bits.push('یادآوری به تعویق افتاده');
+    if (task.fromPersonId) bits.push(tx('از طرف {a1}', { a1: nameOf.get(task.fromPersonId) ?? tx('کسی') }));
+    if (!task.on) bits.push(tx('بدون موعد'));
+    if (done) bits.push(tx('انجام شد'));
+    if (snoozedNow(task)) bits.push(tx('یادآوری به تعویق افتاده'));
     return bits.join(' · ');
   };
 
   const noDate = filter === 'nodate' && n.nodate === 0;
   const emptyText =
-    filter === 'today' ? 'کاری برای امروز نیست.'
-      : filter === 'upcoming' ? 'کار آینده‌ای نیست.'
-        : filter === 'nodate' ? 'کار بی‌موعدی نداری.'
-          : filter === 'done' ? 'هنوز کاری انجام نشده.'
-            : 'هنوز کاری نساخته‌ای.';
+    filter === 'today' ? tx('کاری برای امروز نیست.')
+      : filter === 'upcoming' ? tx('کار آینده‌ای نیست.')
+        : filter === 'nodate' ? tx('کار بی‌موعدی نداری.')
+          : filter === 'done' ? tx('هنوز کاری انجام نشده.')
+            : tx('هنوز کاری نساخته‌ای.');
 
   const Row = ({ task, done }: { task: Task; done: boolean }) => (
     <div className={`task-row${done ? ' done' : ''}`}>
-      <button className="tick" aria-pressed={done} aria-label={done ? `${task.title}، انجام شد` : `${task.title}، انجام نشده`} onClick={() => void toggleTodo(task, done)}>
+      <button className="tick" aria-pressed={done} aria-label={done ? tx('{a1}، انجام شد', { a1: task.title }) : tx('{a1}، انجام نشده', { a1: task.title })} onClick={() => void toggleTodo(task, done)}>
         <span className="circle">{done && <Icon name="check" size={13} stroke={3} />}</span>
       </button>
-      <button className="t-body" onClick={() => openForm(task.id)} aria-label={`ویرایش ${task.title}`}>
+      <button className="t-body" onClick={() => openForm(task.id)} aria-label={tx('ویرایش {a1}', { a1: task.title })}>
         <span className="t-title">{task.title}</span>
         <span className="t-sub">
-          {isOverdue(task, done, t) && <em className="late-chip">عقب‌افتاده</em>}
+          {isOverdue(task, done, t) && <em className="late-chip">{tx('عقب‌افتاده')}</em>}
           {sub(task, done)}
         </span>
       </button>
       {task.fromPersonId && (
-        <button className="icon-btn small" aria-label={`پروفایل ${nameOf.get(task.fromPersonId) ?? ''}`} onClick={() => openPerson(task.fromPersonId!)}>
+        <button className="icon-btn small" aria-label={tx('پروفایل {a1}', { a1: nameOf.get(task.fromPersonId) ?? '' })} onClick={() => openPerson(task.fromPersonId!)}>
           <Icon name="users" size={17} stroke={1.9} />
         </button>
       )}
       {!done && (
         snoozedNow(task) ? (
-          <button className="icon-btn small on" aria-label={`لغو یادآوری بعدی ${task.title}`} onClick={() => void clearSnooze(task)}>
+          <button className="icon-btn small on" aria-label={tx('لغو یادآوری بعدی {a1}', { a1: task.title })} onClick={() => void clearSnooze(task)}>
             <Icon name="bell" size={17} stroke={1.9} />
           </button>
         ) : (
-          <button className="icon-btn small" aria-label={`یادآوری ${task.title} را یک ساعت بعد بیاور`} onClick={() => void snoozeTodo(task, 1)}>
+          <button className="icon-btn small" aria-label={tx('یادآوری {a1} را یک ساعت بعد بیاور', { a1: task.title })} onClick={() => void snoozeTodo(task, 1)}>
             <Icon name="clock" size={17} stroke={1.9} />
           </button>
         )
@@ -105,32 +106,32 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
   return (
     <>
       <div className="page-head">
-        <h1>کارها</h1>
-        <button className="pill-btn" onClick={() => openForm(null)}><Icon name="plus" size={16} stroke={2.4} />افزودن</button>
+        <h1>{tx('کارها')}</h1>
+        <button className="pill-btn" onClick={() => openForm(null)}><Icon name="plus" size={16} stroke={2.4} />{tx('افزودن')}</button>
       </div>
 
-      <div className="tabs" role="tablist" aria-label="فیلتر کارها">
+      <div className="tabs" role="tablist" aria-label={tx('فیلتر کارها')}>
         {FILTERS.map(([k, labelText]) => (
           <button key={k} role="tab" aria-selected={filter === k} className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>
-            {labelText}{n[k] > 0 ? ` · ${fa(n[k])}` : ''}
+            {tx(labelText)}{n[k] > 0 ? ` · ${fa(n[k])}` : ''}
           </button>
         ))}
       </div>
 
       {late.length > 0 && (
         <section>
-          <h2 className="sec-title">عقب‌افتاده<small>{fa(late.length)} کار</small></h2>
+          <h2 className="sec-title">{tx('عقب‌افتاده')}<small>{tn('{n} کار', late.length)}</small></h2>
           <div className="glass task-list">
             {late.map((task) => (
               <div key={task.id} className="task-row">
-                <button className="tick" aria-pressed={false} aria-label={`${task.title}، انجام نشده`} onClick={() => void toggleTodo(task, false)}>
+                <button className="tick" aria-pressed={false} aria-label={tx('{a1}، انجام نشده', { a1: task.title })} onClick={() => void toggleTodo(task, false)}>
                   <span className="circle" />
                 </button>
-                <button className="t-body" onClick={() => openForm(task.id)} aria-label={`ویرایش ${task.title}`}>
+                <button className="t-body" onClick={() => openForm(task.id)} aria-label={tx('ویرایش {a1}', { a1: task.title })}>
                   <span className="t-title">{task.title}</span>
-                  <span className="t-sub"><em className="late-chip">عقب‌افتاده</em>{label(task.on!, 'persian', 0, { day: 'numeric', month: 'long' })}{isTime(task.time) ? ` · ${faDigits(task.time)}` : ''}</span>
+                  <span className="t-sub"><em className="late-chip">{tx('عقب‌افتاده')}</em>{label(task.on!, 'persian', 0, { day: 'numeric', month: 'long' })}{isTime(task.time) ? ` · ${faDigits(task.time)}` : ''}</span>
                 </button>
-                <button className="icon-btn small" aria-label={`یادآوری ${task.title} را یک ساعت بعد بیاور`} onClick={() => void snoozeTodo(task, 1)}><Icon name="clock" size={17} stroke={1.9} /></button>
+                <button className="icon-btn small" aria-label={tx('یادآوری {a1} را یک ساعت بعد بیاور', { a1: task.title })} onClick={() => void snoozeTodo(task, 1)}><Icon name="clock" size={17} stroke={1.9} /></button>
               </div>
             ))}
           </div>
@@ -141,8 +142,7 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
         <div className="glass task-list">
           {list.length === 0 && (
             <p className="hint empty">
-              {emptyText}
-              {noDate && ' کارِ بی‌موعد را از «افزودن» و با انتخاب «بدون موعد» بساز.'}
+              {noDate ? tx('{a1} کارِ بی‌موعد را از «افزودن» و با انتخاب «بدون موعد» بساز.', { a1: emptyText }) : emptyText}
             </p>
           )}
           {list.map(({ task, done }) => <Row key={task.id} task={task} done={done} />)}
@@ -150,7 +150,7 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
       </section>
 
       {filter === 'all' && n.all === 0 && (
-        <p className="hint todos-hint">هر کاری که کسی از تو می‌خواهد یا خودت باید انجام بدهی، اینجا نگه دار.</p>
+        <p className="hint todos-hint">{tx('هر کاری که کسی از تو می‌خواهد یا خودت باید انجام بدهی، اینجا نگه دار.')}</p>
       )}
     </>
   );

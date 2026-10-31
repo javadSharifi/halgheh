@@ -11,6 +11,7 @@ import { queueForUpload } from './photoSync';
 import { PhotoViewer } from './PhotoViewer';
 import { usePhotoUrls } from './usePhotoUrls';
 import { PhotoEdit } from './PhotoEdit';
+import { tn, tx } from './i18n';
 
 /** The gallery tab (G1): grid of stored photos, add from the system picker, full-screen viewer, cap at 300. */
 export function Gallery({ onBack }: { onBack?: () => void } = {}) {
@@ -33,7 +34,7 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
   const add = async () => {
     setErr('');
     if (cap.full) {
-      setErr(`سقف ${fa(cap.max)} عکس پر شده است. برای افزودن عکس تازه، یکی را حذف کن.`);
+      setErr(tx('سقف {a1} عکس پر شده است. برای افزودن عکس تازه، یکی را حذف کن.', { a1: fa(cap.max) }));
       return;
     }
     try {
@@ -42,7 +43,7 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
       // never write more rows than the cap allows, whatever the picker returned
       const room = Math.max(0, cap.remaining);
       const list = picked.slice(0, room);
-      if (picked.length > room) setErr(`فقط ${fa(room)} عکس جا داشت؛ بقیه اضافه نشد.`);
+      if (picked.length > room) setErr(tx('فقط {a1} عکس جا داشت؛ بقیه اضافه نشد.', { a1: fa(room) }));
       setBusy({ done: 0, total: list.length });
       const takenAt = defaultTakenAt();
       for (const [i, file] of list.entries()) {
@@ -51,7 +52,7 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
         const path = await saveFile(id, data);
         const row: Photo = {
           id,
-          title: titleFromName(file.name) || 'عکس',
+          title: titleFromName(file.name) || tx('عکس'),
           takenAt,
           tagIds: [],
           width,
@@ -66,12 +67,12 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
       setBusy(null);
     } catch {
       setBusy(null);
-      setErr('افزودن عکس ممکن نشد. اگر پنجرهٔ انتخاب عکس را بستی، دوباره تلاش کن.');
+      setErr(tx('افزودن عکس ممکن نشد. اگر پنجرهٔ انتخاب عکس را بستی، دوباره تلاش کن.'));
     }
   };
 
   const remove = async (p: Photo) => {
-    if (!(await ask({ title: `«${p.title}» حذف شود؟`, message: 'فایل عکس از این گوشی پاک می‌شود. این کار قابل بازگشت نیست.', confirm: 'حذف' }))) return;
+    if (!(await ask({ title: tx('«{a1}» حذف شود؟', { a1: p.title }), message: tx('فایل عکس از این گوشی پاک می‌شود. این کار قابل بازگشت نیست.'), confirm: tx('حذف') }))) return;
     await del('photos', p.id);
     const f = fileOf.get(p.id);
     if (f) {
@@ -88,16 +89,16 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {onBack && (
-            <button className="icon-btn" style={{ margin: 0 }} aria-label="بازگشت" onClick={onBack}>
+            <button className="icon-btn" style={{ margin: 0 }} aria-label={tx('بازگشت')} onClick={onBack}>
               <Icon name="chevronRight" size={20} stroke={2} />
             </button>
           )}
-          <h1>گالری</h1>
+          <h1>{tx('گالری')}</h1>
         </div>
         {isNative && (
           <button className="pill-btn" disabled={!!busy || cap.full} onClick={() => void add()}>
             <Icon name="plus" size={16} stroke={2.4} />
-            {busy ? `${fa(busy.done)}/${fa(busy.total)}` : 'افزودن عکس'}
+            {busy ? `${fa(busy.done)}/${fa(busy.total)}` : tx('افزودن عکس')}
           </button>
         )}
       </div>
@@ -105,21 +106,21 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
       {!isNative && (
         <section className="glass empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="image" size={24} stroke={1.7} /></span>
-          <b>گالری روی گوشی کار می‌کند</b>
-          <p className="hint">افزودن عکس از گالری گوشی تنها در نسخهٔ اندرویدی در دسترس است.</p>
+          <b>{tx('گالری روی گوشی کار می‌کند')}</b>
+          <p className="hint">{tx('افزودن عکس از گالری گوشی تنها در نسخهٔ اندرویدی در دسترس است.')}</p>
         </section>
       )}
 
       {err && <p className="form-error gallery-err" role="alert">{err}</p>}
-      {cap.warning && !err && <p className="hint gallery-err">{fa(cap.count)} از {fa(cap.max)} عکس پر شده است.</p>}
-      {absent > 0 && <p className="hint gallery-err">{fa(absent)} عکس پرونده‌اش روی این گوشی نیست؛ با همگام‌سازی بعدی می‌آید.</p>}
+      {cap.warning && !err && <p className="hint gallery-err">{tx('{a1} از {a2} عکس پر شده است.', { a1: fa(cap.count), a2: fa(cap.max) })}</p>}
+      {absent > 0 && <p className="hint gallery-err">{tn('{n} عکس پرونده‌اش روی این گوشی نیست؛ با همگام‌سازی بعدی می‌آید.', absent)}</p>}
 
       {isNative && photos.length === 0 && !busy && (
         <section className="glass empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="image" size={24} stroke={1.7} /></span>
-          <b>عکسی نیست</b>
-          <p className="hint">کارت ویزیت، مدارک و عکس‌هایی که به آدم‌ها مربوط‌اند اینجا نگه داشته می‌شوند.</p>
-          <button className="mini-btn primary" onClick={() => void add()}><Icon name="plus" size={14} stroke={2.4} />افزودن از گالری</button>
+          <b>{tx('عکسی نیست')}</b>
+          <p className="hint">{tx('کارت ویزیت، مدارک و عکس‌هایی که به آدم‌ها مربوط‌اند اینجا نگه داشته می‌شوند.')}</p>
+          <button className="mini-btn primary" onClick={() => void add()}><Icon name="plus" size={14} stroke={2.4} />{tx('افزودن از گالری')}</button>
         </section>
       )}
 

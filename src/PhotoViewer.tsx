@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Photo } from './db';
 import { fa, label } from './cal';
 import { Icon } from './Icon';
+import { tx } from './i18n';
 
 /**
  * Full-screen viewer (G1) with pinch/double-tap zoom and pan. Switching photos with the arrow buttons keeps the zoom
@@ -57,9 +58,9 @@ export function PhotoViewer({ photoId, photos, urls, title, onClose, onEdit, onR
   return (
     <div className="viewer" role="dialog" aria-modal="true" aria-label={photo.title}>
       <div className="viewer-bar">
-        <button className="icon-btn" aria-label="بستن" onClick={onClose}><Icon name="close" size={20} stroke={2.2} /></button>
+        <button className="icon-btn" aria-label={tx('بستن')} onClick={onClose}><Icon name="close" size={20} stroke={2.2} /></button>
         <span className="viewer-title">{photo.title}</span>
-        <button className="icon-btn" aria-label="ویرایش" onClick={() => onEdit(photo)}><Icon name="settings" size={19} stroke={1.9} /></button>
+        <button className="icon-btn" aria-label={tx('ویرایش')} onClick={() => onEdit(photo)}><Icon name="settings" size={19} stroke={1.9} /></button>
       </div>
 
       <div
@@ -86,22 +87,22 @@ export function PhotoViewer({ photoId, photos, urls, title, onClose, onEdit, onR
             draggable={false}
           />
         ) : (
-          <p className="hint">فایل این عکس روی گوشی نیست.</p>
+          <p className="hint">{tx('فایل این عکس روی گوشی نیست.')}</p>
         )}
       </div>
 
       {photos.length > 1 && (
         <>
-          <button className="viewer-nav prev" aria-label="عکس بعدی" onClick={() => step(1)} disabled={index >= photos.length - 1}><Icon name="chevronRight" size={22} stroke={2.2} /></button>
-          <button className="viewer-nav next" aria-label="عکس قبلی" onClick={() => step(-1)} disabled={index <= 0}><Icon name="chevronLeft" size={22} stroke={2.2} /></button>
+          <button className="viewer-nav prev" aria-label={tx('عکس بعدی')} onClick={() => step(1)} disabled={index >= photos.length - 1}><Icon name="chevronRight" size={22} stroke={2.2} /></button>
+          <button className="viewer-nav next" aria-label={tx('عکس قبلی')} onClick={() => step(-1)} disabled={index <= 0}><Icon name="chevronLeft" size={22} stroke={2.2} /></button>
         </>
       )}
 
       <div className="viewer-foot">
         <span>{label(photo.takenAt, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         {photo.note && <span className="viewer-note">{photo.note}</span>}
-        <span className="viewer-count">{fa(index + 1)} از {fa(photos.length)}</span>
-        <button className="text-btn" onClick={() => onRemove(photo)}>حذف</button>
+        <span className="viewer-count">{tx('{a1} از {a2}', { a1: fa(index + 1), a2: fa(photos.length) })}</span>
+        <button className="text-btn" onClick={() => onRemove(photo)}>{tx('حذف')}</button>
       </div>
     </div>
   );

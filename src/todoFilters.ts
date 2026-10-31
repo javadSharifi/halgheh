@@ -1,14 +1,15 @@
 import { type Task, type Done } from './db';
 import { addDays, taskOn, today } from './cal';
+import { locale, tx, tk } from './i18n';
 
 export type TodoFilter = 'today' | 'upcoming' | 'nodate' | 'done' | 'all';
 
 export const FILTERS: [TodoFilter, string][] = [
-  ['today', 'امروز'],
-  ['upcoming', 'پیش‌رو'],
-  ['nodate', 'بدون موعد'],
-  ['done', 'انجام‌شده'],
-  ['all', 'همه'],
+  ['today', tk('امروز')],
+  ['upcoming', tk('پیش‌رو')],
+  ['nodate', tk('بدون موعد')],
+  ['done', tk('انجام‌شده')],
+  ['all', tk('همه')],
 ];
 
 /** A todo is a one-off task (`mask: 0`). A todo with no `on` is the "someday" case: it has no day to run on. */
@@ -48,7 +49,7 @@ export function listTodos(tasks: Task[], dones: Done[], filter: TodoFilter, t = 
     const da = a.due ?? '9999-99-99'; // dateless last: it has no day to be due on
     const db_ = b.due ?? '9999-99-99';
     if (da !== db_) return da.localeCompare(db_);
-    return a.task.title.localeCompare(b.task.title, 'fa');
+    return a.task.title.localeCompare(b.task.title, locale());
   };
 
   switch (filter) {
@@ -89,9 +90,9 @@ export function counts(tasks: Task[], dones: Done[], t = today()) {
 /** "فردا", "۳ روز دیگر", "دیروز" for a due date next to a todo. */
 export function dueLabel(due: string | undefined, t = today()) {
   if (!due) return '';
-  if (due === t) return 'امروز';
-  if (due === addDays(t, 1)) return 'فردا';
-  if (due === addDays(t, -1)) return 'دیروز';
+  if (due === t) return tx('امروز');
+  if (due === addDays(t, 1)) return tx('فردا');
+  if (due === addDays(t, -1)) return tx('دیروز');
   return '';
 }
 

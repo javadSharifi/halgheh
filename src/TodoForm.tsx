@@ -9,6 +9,7 @@ import { InputField } from './InputField';
 import { askNotifications, isNative } from './native';
 import { getSettings, updateSettings } from './settings';
 import { removeTask } from './Todos';
+import { locale, tx } from './i18n';
 
 /**
  * Redesigned Task Bottom Sheet Modal:
@@ -68,7 +69,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
       }
       onClose();
     } catch {
-      setErr('ذخیره نشد؛ لطفاً دوباره تلاش کنید.');
+      setErr(tx('ذخیره نشد؛ لطفاً دوباره تلاش کنید.'));
       setBusy(false);
     }
   };
@@ -86,8 +87,8 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
                 <Icon name={initial ? 'edit' : 'plus'} size={20} stroke={2.4} />
               </div>
               <div className="sheet-titles-text">
-                <h2 id="todo-sheet-title">{initial ? 'ویرایش کار' : 'کار تازه'}</h2>
-                <span>{initial ? 'ویرایش جزئیات و زمان‌بندی کار' : 'افزودن فعالیت و وظیفه به روز جاری'}</span>
+                <h2 id="todo-sheet-title">{initial ? tx('ویرایش کار') : tx('کار تازه')}</h2>
+                <span>{initial ? tx('ویرایش جزئیات و زمان‌بندی کار') : tx('افزودن فعالیت و وظیفه به روز جاری')}</span>
               </div>
             </div>
 
@@ -95,9 +96,9 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
               type="button"
               className="sheet-close-btn"
               onClick={onClose}
-              aria-label="بستن فرم"
+              aria-label={tx('بستن فرم')}
             >
-              <span>بستن</span>
+              <span>{tx('بستن')}</span>
               <Icon name="close" size={13} stroke={2.5} />
             </button>
           </div>
@@ -113,24 +114,24 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
         >
           {/* Input: Task Title with unified InputField */}
           <InputField
-            label="عنوان کار"
+            label={tx('عنوان کار')}
             required
-            hint="واضح و مشخص بنویسید"
+            hint={tx('واضح و مشخص بنویسید')}
             icon="edit"
             autoFocus
             value={v.title}
             maxLength={200}
-            placeholder="مثلاً: هماهنگی و زنگ زدن به رضا..."
+            placeholder={tx('مثلاً: هماهنگی و زنگ زدن به رضا...')}
             onChange={(e) => set({ title: e.target.value })}
-            error={err && !valid ? 'عنوان کار نمی‌تواند خالی باشد' : undefined}
+            error={err && !valid ? tx('عنوان کار نمی‌تواند خالی باشد') : undefined}
           />
 
           {/* Segmented Control: Deadline Toggle */}
           <div className="input-field-group">
             <div className="input-label-row">
-              <span className="input-label-text">موعد انجام</span>
+              <span className="input-label-text">{tx('موعد انجام')}</span>
             </div>
-            <div className="modal-segmented" role="radiogroup" aria-label="موعد انجام">
+            <div className="modal-segmented" role="radiogroup" aria-label={tx('موعد انجام')}>
               <button
                 type="button"
                 role="radio"
@@ -139,7 +140,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
                 onClick={() => set({ dated: false })}
               >
                 <Icon name="close" size={15} stroke={2.2} />
-                <span>بدون موعد</span>
+                <span>{tx('بدون موعد')}</span>
               </button>
               <button
                 type="button"
@@ -149,7 +150,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
                 onClick={() => set({ dated: true })}
               >
                 <Icon name="calendar" size={15} stroke={2.2} />
-                <span>با موعد زمانی</span>
+                <span>{tx('با موعد زمانی')}</span>
               </button>
             </div>
           </div>
@@ -182,14 +183,14 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
                   <div className="drb-icon tile blue">
                     <Icon name="clock" size={16} stroke={2} />
                   </div>
-                  <span>ساعت مشخص</span>
+                  <span>{tx('ساعت مشخص')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span className="time-btn" style={{ height: 34, fontSize: 13, borderRadius: 10 }}>
-                    {v.time ? faDigits(v.time) : 'تعیین نشده'}
+                    {v.time ? faDigits(v.time) : tx('تعیین نشده')}
                     <input
                       type="time"
-                      aria-label="ساعت"
+                      aria-label={tx('ساعت')}
                       value={v.time}
                       onChange={(e) => set({ time: e.target.value })}
                     />
@@ -198,7 +199,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
                     <button
                       type="button"
                       className="icon-btn small"
-                      aria-label="حذف ساعت"
+                      aria-label={tx('حذف ساعت')}
                       onClick={() => set({ time: '' })}
                     >
                       <Icon name="close" size={14} stroke={2} />
@@ -214,16 +215,16 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
                     <div className="drb-icon tile green">
                       <Icon name="bell" size={16} stroke={2} />
                     </div>
-                    <span>یادآوری قبل از موعد</span>
+                    <span>{tx('یادآوری قبل از موعد')}</span>
                   </div>
                   <span className="rf-value" style={{ fontSize: 13 }}>
-                    {v.lead < 0 ? 'بدون یادآوری' : leadLabel(v.lead)}
+                    {v.lead < 0 ? tx('بدون یادآوری') : leadLabel(v.lead)}
                     <Icon name="chevronLeft" size={15} stroke={2} />
                     <Choice
                       className="pick-hit"
-                      label="یادآوری"
+                      label={tx('یادآوری')}
                       value={v.lead}
-                      options={[[-1, 'بدون یادآوری'], ...LEADS.map((m): [number, string] => [m, leadLabel(m)])]}
+                      options={[[-1, tx('بدون یادآوری')], ...LEADS.map((m): [number, string] => [m, leadLabel(m)])]}
                       onChange={(m) => set({ lead: m })}
                     />
                   </span>
@@ -235,7 +236,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
           {/* Assignee / Responsible Person Selector Card */}
           <div className="input-field-group">
             <div className="input-label-row">
-              <span className="input-label-text">ارجاع دهنده / مسئول</span>
+              <span className="input-label-text">{tx('ارجاع دهنده / مسئول')}</span>
             </div>
             <WhoAskedCard value={v.fromPersonId} onChange={(id) => set({ fromPersonId: id })} />
           </div>
@@ -244,11 +245,11 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
           <InputField
             multiline
             rows={3}
-            label="یادداشت و جزئیات"
-            hint="اختیاری"
+            label={tx('یادداشت و جزئیات')}
+            hint={tx('اختیاری')}
             value={v.note}
             maxLength={1000}
-            placeholder="توضیحات تکمیلی، شماره تماس، لینک یا نکات مهم را اینجا بنویسید..."
+            placeholder={tx('توضیحات تکمیلی، شماره تماس، لینک یا نکات مهم را اینجا بنویسید...')}
             onChange={(e) => set({ note: e.target.value })}
           />
 
@@ -264,7 +265,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
             onClick={() => void save()}
           >
             <Icon name="check" size={19} stroke={2.5} />
-            <span>{busy ? 'در حال ذخیره…' : initial ? 'ذخیره تغییرات' : 'ثبت کار'}</span>
+            <span>{busy ? tx('در حال ذخیره…') : initial ? tx('ذخیره تغییرات') : tx('ثبت کار')}</span>
           </button>
 
           {initial && (
@@ -276,7 +277,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
               }}
             >
               <Icon name="trash" size={15} stroke={2} />
-              <span>حذف این کار</span>
+              <span>{tx('حذف این کار')}</span>
             </button>
           )}
         </div>
@@ -307,7 +308,7 @@ function WhoAskedCard({ value, onChange }: { value: string; onChange: (id: strin
 
   const load = async () => {
     const rows = (await db.people.toArray()).filter((p) => !p.archivedAt && !p.isSelf);
-    rows.sort((a, b) => a.displayName.localeCompare(b.displayName, 'fa'));
+    rows.sort((a, b) => a.displayName.localeCompare(b.displayName, locale()));
     setPeople(rows);
     setOpen(true);
   };
@@ -320,21 +321,21 @@ function WhoAskedCard({ value, onChange }: { value: string; onChange: (id: strin
         type="button"
         className="assignee-card-btn group"
         onClick={() => void load()}
-        aria-label="انتخاب چه کسی خواسته"
+        aria-label={tx('انتخاب چه کسی خواسته')}
       >
         <div className="acb-right">
           <div className="acb-icon-tile">
             <Icon name="users" size={20} stroke={2} />
           </div>
           <div className="acb-texts">
-            <span className="acb-title">چه کسی خواسته؟</span>
-            <span className="acb-sub">شخص یا تیم را مشخص کنید</span>
+            <span className="acb-title">{tx('چه کسی خواسته؟')}</span>
+            <span className="acb-sub">{tx('شخص یا تیم را مشخص کنید')}</span>
           </div>
         </div>
 
         <div className="acb-left">
           <span className={`acb-badge${value ? ' selected' : ''}`}>
-            {name ?? (value ? '…' : 'کسی مشخص نشده')}
+            {name ?? (value ? '…' : tx('کسی مشخص نشده'))}
           </span>
           <Icon name="chevronLeft" size={15} stroke={2} />
         </div>
@@ -343,9 +344,9 @@ function WhoAskedCard({ value, onChange }: { value: string; onChange: (id: strin
       {open && people && (
         <>
           <div className="scrim dim" onClick={() => setOpen(false)} />
-          <div className="glass sheet" role="dialog" aria-modal="true" aria-label="چه کسی خواسته">
-            <b className="sheet-title">چه کسی خواسته</b>
-            <div className="pick-list" role="radiogroup" aria-label="چه کسی خواسته">
+          <div className="glass sheet" role="dialog" aria-modal="true" aria-label={tx('چه کسی خواسته')}>
+            <b className="sheet-title">{tx('چه کسی خواسته')}</b>
+            <div className="pick-list" role="radiogroup" aria-label={tx('چه کسی خواسته')}>
               <button
                 type="button"
                 role="radio"
@@ -355,8 +356,7 @@ function WhoAskedCard({ value, onChange }: { value: string; onChange: (id: strin
                   onChange('');
                   setOpen(false);
                 }}
-              >
-                کسی مشخص نشده{value === '' && <Icon name="check" size={18} stroke={2.4} />}
+              >{tx('کسی مشخص نشده')}{value === '' && <Icon name="check" size={18} stroke={2.4} />}
               </button>
               {people.map((p) => (
                 <button
@@ -374,12 +374,10 @@ function WhoAskedCard({ value, onChange }: { value: string; onChange: (id: strin
                   {value === p.id && <Icon name="check" size={18} stroke={2.4} />}
                 </button>
               ))}
-              {people.length === 0 && <p className="hint">هنوز کسی در دفترچه نیست.</p>}
+              {people.length === 0 && <p className="hint">{tx('هنوز کسی در دفترچه نیست.')}</p>}
             </div>
             <div className="sheet-actions">
-              <button type="button" onClick={() => setOpen(false)}>
-                بستن
-              </button>
+              <button type="button" onClick={() => setOpen(false)}>{tx('بستن')}</button>
             </div>
           </div>
         </>

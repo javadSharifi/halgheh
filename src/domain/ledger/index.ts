@@ -1,5 +1,6 @@
 import type { Exchange, ExchangeSettlement } from '../../db';
 import { addDays } from '../../cal';
+import { tx } from '../../i18n';
 
 /**
  * Part 3 pure logic: the back-and-forth ledger. No UI, no Dexie import, no clock.
@@ -129,9 +130,9 @@ export function groupByPerson<T extends Exchange>(exchanges: T[], settlements: E
 export function dueText(dueOn: string | undefined, today: string, fa: (n: number) => string) {
   if (!dueOn) return '';
   const diff = Math.round((Date.parse(`${dueOn}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
-  if (diff === 0) return 'امروز';
-  if (diff > 0) return `${fa(diff)} روز مانده`;
-  return `${fa(-diff)} روز گذشته`;
+  if (diff === 0) return tx('امروز');
+  if (diff > 0) return tx('{a1} روز مانده', { a1: fa(diff) });
+  return tx('{a1} روز گذشته', { a1: fa(-diff) });
 }
 
 /** A due date in the next `days` days (used by the brief's "soon" sections). */

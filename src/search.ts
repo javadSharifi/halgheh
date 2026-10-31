@@ -1,5 +1,6 @@
 import type { Birthday, Task } from './db';
 import { nextOccurrence, toLatinDigits } from './format';
+import { locale } from './i18n';
 
 const ZWNJ_OR_MARK = /[‌‍ً-ٰٟـ]/; // half-space, joiners, vowel marks, tatweel
 
@@ -35,7 +36,7 @@ export type Results = { tasks: Task[]; birthdays: { b: Birthday; inDays: number 
 export function searchAll(q: string, data: { tasks: Task[]; birthdays: Birthday[] }, today: string, off: number): Results {
   const has = (...fields: (string | undefined)[]) => fields.some((f) => f && findMatch(f, q));
   return {
-    tasks: data.tasks.filter((t) => has(t.title, t.description)).sort((a, b) => a.title.localeCompare(b.title, 'fa')),
+    tasks: data.tasks.filter((t) => has(t.title, t.description)).sort((a, b) => a.title.localeCompare(b.title, locale())),
     birthdays: data.birthdays
       .filter((b) => has(b.name))
       .map((b) => ({ b, inDays: nextOccurrence(b, today, off)?.inDays ?? null }))

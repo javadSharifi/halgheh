@@ -9,27 +9,28 @@ import { CRITERION_LABEL } from './ratings';
 import { clearRecents, findMatch, lastSearch, loadRecents, saveRecent } from './search';
 import { Icon } from './Icon';
 import { STR } from './strings/rulebook';
+import { tx, tk } from './i18n';
 
 type Filter = 'all' | 'people' | 'notes' | 'todos' | 'photos' | 'birthdays' | 'rules' | 'exchanges';
 const FILTERS: [Filter, string][] = [
-  ['all', 'همه'],
-  ['people', 'افراد'],
-  ['notes', 'یادداشت‌ها'],
-  ['todos', 'کارها'],
-  ['photos', 'عکس‌ها'],
-  ['birthdays', 'تولدها'],
-  ['rules', STR.search.chip],
-  ['exchanges', STR.ledger.title],
+  ['all', tk('همه')],
+  ['people', tk('افراد')],
+  ['notes', tk('یادداشت‌ها')],
+  ['todos', tk('کارها')],
+  ['photos', tk('عکس‌ها')],
+  ['birthdays', tk('تولدها')],
+  ['rules', tx(STR.search.chip)],
+  ['exchanges', tx(STR.ledger.title)],
 ];
 const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 const KIND_NAME: Record<Doc['kind'], string> = {
-  person: 'فرد',
-  note: 'یادداشت',
-  todo: 'کار',
-  interaction: 'تعامل',
-  tag: 'برچسب',
-  birthday: 'تولد',
-  photo: 'عکس',
+  person: tk('فرد'),
+  note: tk('یادداشت'),
+  todo: tk('کار'),
+  interaction: tk('تعامل'),
+  tag: tk('برچسب'),
+  birthday: tk('تولد'),
+  photo: tk('عکس'),
   rule: STR.search.kind,
   exchange: STR.ledger.kindExchange,
 };
@@ -140,23 +141,23 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
     if (d.kind === 'person') {
       const p = byPerson.get(d.id);
       const meta = [p?.occupation, p?.city].filter(Boolean).join(' · ');
-      return meta || 'در دفترچهٔ آدم‌ها';
+      return meta || tx('در دفترچهٔ آدم‌ها');
     }
     if (d.kind === 'note' || d.kind === 'interaction') return byPerson.get(d.personId ?? '')?.displayName ?? '';
     if (d.kind === 'todo') {
       const x = tasks.find((k) => k.id === d.id);
-      return x ? `${x.on ? dayLabel(x.on) : 'بدون تاریخ'}${isTime(x.time) ? ` · ${faDigits(x.time)}` : ''}` : '';
+      return x ? `${x.on ? dayLabel(x.on) : tx('بدون تاریخ')}${isTime(x.time) ? ` · ${faDigits(x.time)}` : ''}` : '';
     }
     if (d.kind === 'birthday') {
       const b = birthdays.find((k) => k.id === d.id);
       if (!b) return '';
       const inDays = bdayIn(b, t, 0);
-      return `${CAL_NAMES[b.cal]}${inDays === null ? '' : inDays === 0 ? ' · امروز' : ` · ${fa(inDays)} روز دیگر`}`;
+      return inDays === null ? tx(CAL_NAMES[b.cal]) : inDays === 0 ? tx('{a1} · امروز', { a1: tx(CAL_NAMES[b.cal]) }) : tx('{a1} · {a2} روز دیگر', { a1: tx(CAL_NAMES[b.cal]), a2: fa(inDays) });
     }
-    if (d.kind === 'photo') return byPerson.get(d.personId ?? '')?.displayName ?? 'در گالری';
-    if (d.kind === 'rule') return STR.feature.title;
-    if (d.kind === 'exchange') return byPerson.get(d.personId ?? '')?.displayName ?? STR.ledger.title;
-    return 'برچسب';
+    if (d.kind === 'photo') return byPerson.get(d.personId ?? '')?.displayName ?? tx('در گالری');
+    if (d.kind === 'rule') return tx(STR.feature.title);
+    if (d.kind === 'exchange') return byPerson.get(d.personId ?? '')?.displayName ?? tx(STR.ledger.title);
+    return tx('برچسب');
   };
 
   const go = (h: (typeof hits)[number]) => {
@@ -177,14 +178,14 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
       <form className="search-top" onSubmit={(e) => { e.preventDefault(); remember(); }} role="search">
         <label className="search-field">
           <Icon name="search" size={20} stroke={1.9} />
-          <span className="sr-only">جستجو در دفترچه</span>
-          <input type="search" autoFocus value={q} placeholder="نام، شماره، مهارت، یادداشت…" onChange={(e) => set(e.target.value)} />
-          {q && <button type="button" className="clear" aria-label="پاک کردن جستجو" onClick={() => set('')}><span><Icon name="close" size={12} stroke={3} /></span></button>}
+          <span className="sr-only">{tx('جستجو در دفترچه')}</span>
+          <input type="search" autoFocus value={q} placeholder={tx('نام، شماره، مهارت، یادداشت…')} onChange={(e) => set(e.target.value)} />
+          {q && <button type="button" className="clear" aria-label={tx('پاک کردن جستجو')} onClick={() => set('')}><span><Icon name="close" size={12} stroke={3} /></span></button>}
         </label>
-        <button type="button" className="text-btn big" onClick={close}>انصراف</button>
+        <button type="button" className="text-btn big" onClick={close}>{tx('انصراف')}</button>
       </form>
 
-      <div className="tabs" role="tablist" aria-label="دسته‌بندی نتایج">
+      <div className="tabs" role="tablist" aria-label={tx('دسته‌بندی نتایج')}>
         {FILTERS.map(([k, n]) => (
           <button key={k} role="tab" aria-selected={filter === k} className={filter === k ? 'on' : ''} onClick={() => pickFilter(k)}>
             {k === 'all' && searching ? `${n} · ${fa(total)}` : n}
@@ -194,7 +195,7 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
 
       {!searching && recents.length > 0 && (
         <section className="recents">
-          <div><h2>جستجوهای اخیر</h2><button className="text-btn" onClick={() => { clearRecents(); setRecents([]); }}>پاک کردن</button></div>
+          <div><h2>{tx('جستجوهای اخیر')}</h2><button className="text-btn" onClick={() => { clearRecents(); setRecents([]); }}>{tx('پاک کردن')}</button></div>
           <div className="recent-chips">
             {recents.map((r) => <button key={r} onClick={() => set(r)}><Icon name="history" size={14} stroke={1.9} />{r}</button>)}
           </div>
@@ -204,28 +205,28 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
       {!searching && recents.length === 0 && (
         <section className="glass empty-state search-empty">
           <span className="tile blue" aria-hidden="true"><Icon name="search" size={24} stroke={1.8} /></span>
-          <b>چه کسی را می‌خواهی پیدا کنی؟</b>
-          <p className="hint">نام، شمارهٔ تلفن، شهر، شغل، برچسب یا بخشی از یک یادداشت را بنویس. همهٔ کلمه‌ها باید پیدا شوند.</p>
+          <b>{tx('چه کسی را می‌خواهی پیدا کنی؟')}</b>
+          <p className="hint">{tx('نام، شمارهٔ تلفن، شهر، شغل، برچسب یا بخشی از یک یادداشت را بنویس. همهٔ کلمه‌ها باید پیدا شوند.')}</p>
         </section>
       )}
 
       {searching && (
         <div className="results">
           <span role="status" className="count-line">
-            {total ? `${fa(total)} نتیجه برای «${q.trim()}»` : `نتیجه‌ای برای «${q.trim()}» پیدا نشد`}
+            {total ? tx('{a1} نتیجه برای «{a2}»', { a1: fa(total), a2: q.trim() }) : tx('نتیجه‌ای برای «{a1}» پیدا نشد', { a1: q.trim() })}
           </span>
 
           {total === 0 && (
             <section className="glass empty-state search-empty">
               <span className="tile purple" aria-hidden="true"><Icon name="search" size={22} stroke={1.8} /></span>
-              <b>چیزی پیدا نشد</b>
-              <p className="hint">هجی را ساده‌تر کن یا فقط بخشی از نام را بنویس؛ ي/ك عربی و نیم‌فاصله اهمیتی ندارند.</p>
+              <b>{tx('چیزی پیدا نشد')}</b>
+              <p className="hint">{tx('هجی را ساده‌تر کن یا فقط بخشی از نام را بنویس؛ ي/ك عربی و نیم‌فاصله اهمیتی ندارند.')}</p>
             </section>
           )}
 
           {order.filter((k) => show(k) && counts[k] > 0).map((kind) => (
             <section key={kind} className="glass res-group" aria-label={KIND_NAME[kind]}>
-              <span className="g-label">{KIND_PLURAL[kind] ?? `${KIND_NAME[kind]}ها`}</span>
+              <span className="g-label">{tx(KIND_PLURAL[kind] ?? '') || tx('{a1}ها', { a1: tx(KIND_NAME[kind]) })}</span>
               {sorted.filter((h) => h.doc.kind === kind).map((h) => {
                 const action = go(h);
                 const Row = action ? 'button' : 'div';
@@ -243,11 +244,11 @@ export function SearchPage({ initialFilter, onClose, openPerson, openTask, openB
                       {kind === 'person' && (
                         <em className="why-chips">
                           {h.why.length > 0 && <i>{h.why.slice(0, 2).map((w) => (w.length > 20 ? `${w.slice(0, 20)}…` : w)).join(' · ')}</i>}
-                          {facts.evidence.has(h.doc.id) && <i className="w-ev">{STATUS_LABEL[facts.evidence.get(h.doc.id) as keyof typeof STATUS_LABEL]}</i>}
+                          {facts.evidence.has(h.doc.id) && <i className="w-ev">{tx(STATUS_LABEL[facts.evidence.get(h.doc.id) as keyof typeof STATUS_LABEL])}</i>}
                           <i className={`w-trust${facts.trust.has(h.doc.id) ? '' : ' none'}`}>
                             {facts.trust.has(h.doc.id)
-                              ? `${CRITERION_LABEL.trustworthiness}: ${fa(facts.trust.get(h.doc.id)!)}`
-                              : 'ثبت نشده'}
+                              ? tx('{a1}: {a2}', { a1: tx(CRITERION_LABEL.trustworthiness), a2: fa(facts.trust.get(h.doc.id)!) })
+                              : tx('ثبت نشده')}
                           </i>
                           {facts.last.has(h.doc.id) && <i className="w-when">{label(facts.last.get(h.doc.id)!, 'persian', 0, { day: 'numeric', month: 'long' })}</i>}
                         </em>

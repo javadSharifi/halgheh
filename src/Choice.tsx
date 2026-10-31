@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
+import { tx } from './i18n';
 
 /** A button that opens a glass bottom sheet to pick one option (replaces the native <select> popup). */
 export function Choice<T extends string | number>({ label, value, options, onChange, disabled, className, children }: {
@@ -25,7 +26,7 @@ export function Choice<T extends string | number>({ label, value, options, onCha
                 </button>
               ))}
             </div>
-            <div className="sheet-actions"><button onClick={() => setOpen(false)}>بستن</button></div>
+            <div className="sheet-actions"><button onClick={() => setOpen(false)}>{tx('بستن')}</button></div>
           </div>
         </>,
         document.body,

@@ -2,11 +2,13 @@ import { useSyncExternalStore } from 'react';
 
 export type Theme = 'light' | 'dark' | 'auto';
 export type WeekStart = 6 | 0 | 1; // JS weekday of the first column: Saturday, Sunday, Monday
+export type Lang = 'fa' | 'en';
 
 export type Settings = {
   weekStart: WeekStart;
   theme: Theme;
   remind: boolean; // daily reminders (Android)
+  lang: Lang;
 };
 
 const KEY = 'halgheh:settings';
@@ -15,6 +17,7 @@ export const DEFAULTS: Settings = {
   weekStart: 6,
   theme: 'auto',
   remind: false,
+  lang: 'fa',
 };
 
 /** Anything read from storage is untrusted: keep valid fields, fall back to defaults for the rest. */
@@ -24,6 +27,7 @@ export function normalize(x: unknown): Settings {
     weekStart: r.weekStart === 0 || r.weekStart === 1 || r.weekStart === 6 ? r.weekStart : DEFAULTS.weekStart,
     theme: r.theme === 'light' || r.theme === 'dark' || r.theme === 'auto' ? r.theme : DEFAULTS.theme,
     remind: r.remind === true,
+    lang: r.lang === 'en' ? 'en' : 'fa',
   };
 }
 

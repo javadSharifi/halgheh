@@ -1,4 +1,5 @@
 import { REL_TYPES, type RelType, type Relationship } from './db';
+import { locale, tx, tk } from './i18n';
 
 /**
  * R3 pure logic: the shape of a link, which types are symmetric, and the graph walk over them. No UI, no Dexie import.
@@ -8,19 +9,19 @@ import { REL_TYPES, type RelType, type Relationship } from './db';
 export { REL_TYPES };
 
 export const REL_LABEL: Record<RelType, string> = {
-  family: 'خانواده',
-  friend: 'دوست',
-  colleague: 'همکار',
-  neighbor: 'همسایه',
-  classmate: 'هم‌کلاس',
-  acquaintance: 'آشنا',
-  introduced: 'معرفی‌شده',
+  family: tk('خانواده'),
+  friend: tk('دوست'),
+  colleague: tk('همکار'),
+  neighbor: tk('همسایه'),
+  classmate: tk('هم‌کلاس'),
+  acquaintance: tk('آشنا'),
+  introduced: tk('معرفی‌شده'),
 };
 
 /** Every type except `introduced` means the same thing from both sides. */
 export const isSymmetric = (t: RelType) => t !== 'introduced';
 
-export const CONFIDENCE_LABEL = { sure: 'مطمئن', maybe: 'شاید' } as const;
+export const CONFIDENCE_LABEL = { sure: tk('مطمئن'), maybe: tk('شاید') } as const;
 
 /**
  * The stored ids for a link. Symmetric types sort the pair so `a→b` and `b→a` are the same row; `introduced` keeps the
@@ -125,11 +126,11 @@ export function findPaths(
     (a, b) =>
       a.people.length - b.people.length || // shortest first
       sumCloseness(b) - sumCloseness(a) || // stronger ties first
-      pathNames(a).localeCompare(pathNames(b), 'fa'),
+      pathNames(a).localeCompare(pathNames(b), locale()),
   );
 }
 
 /** "من ← رضا ← علی" for display. R4 adds occupation and `maybe` marking on top of this. */
 export function pathText(p: Path, names: Map<string, string>) {
-  return p.people.map((id) => names.get(id) ?? '؟').join(' ← ');
+  return p.people.map((id) => names.get(id) ?? tx('؟')).join(' ← ');
 }

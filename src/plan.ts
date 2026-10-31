@@ -3,6 +3,7 @@ import { addDays, bdayOn, fa, label, parts, taskOn, today } from './cal';
 import { byTime, faDigits, isTime } from './format';
 import { dueCount } from './domain/rules/schedule';
 import { dueExchanges } from './domain/ledger';
+import { tx } from './i18n';
 
 /** One line in the daily digest: a birthday (no id) or a task (id), with its done flag. */
 export type PlanItem = {
@@ -57,9 +58,9 @@ export async function buildPlan(n = 30): Promise<Record<string, PlanDay>> {
     out[date] = {
       title: label(date, 'persian', 0, { weekday: 'long', day: 'numeric', month: 'long' }),
       items: [
-        ...(dueCount_ > 0 ? [{ t: `${fa(dueCount_)} قانون برای مرور`, d: 0 as const, rules: 1 as const }] : []),
-        ...(i === 0 && ledgerDue > 0 ? [{ t: `${fa(ledgerDue)} دادوستد سررسید`, d: 0 as const, ledger: 1 as const }] : []),
-        ...bdays.filter((b) => bdayOn(b, date, 0)).map((b) => ({ t: `تولد ${b.name}`, d: 0 as const })),
+        ...(dueCount_ > 0 ? [{ t: tx('{a1} قانون برای مرور', { a1: fa(dueCount_) }), d: 0 as const, rules: 1 as const }] : []),
+        ...(i === 0 && ledgerDue > 0 ? [{ t: tx('{a1} دادوستد سررسید', { a1: fa(ledgerDue) }), d: 0 as const, ledger: 1 as const }] : []),
+        ...bdays.filter((b) => bdayOn(b, date, 0)).map((b) => ({ t: tx('تولد {a1}', { a1: b.name }), d: 0 as const })),
         // open tasks by time first, then the done ones in the order they were ticked: the order the board shows
         ...todo.filter((x) => x.at === undefined).sort((a, b) => byTime(a.t, b.t)).map(task),
         ...todo.filter((x) => x.at !== undefined).sort((a, b) => (a.at ?? 0) - (b.at ?? 0)).map(task),

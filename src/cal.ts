@@ -1,8 +1,8 @@
-import { lang, num } from './i18n';
+import { lang, num, tk } from './i18n';
 
 export type Cal = 'persian' | 'gregory' | 'islamic';
 export const CALS: Cal[] = ['persian', 'gregory', 'islamic'];
-export const CAL_NAMES: Record<Cal, string> = { persian: 'شمسی', gregory: 'میلادی', islamic: 'قمری' };
+export const CAL_NAMES: Record<Cal, string> = { persian: tk('شمسی'), gregory: tk('میلادی'), islamic: tk('قمری') };
 // shortcut: umalqura (Saudi) can differ 1-2 days from Iran's official Hijri; the user-set offset covers it
 const ID: Record<Cal, string> = { persian: 'persian', gregory: 'gregory', islamic: 'islamic-umalqura' };
 

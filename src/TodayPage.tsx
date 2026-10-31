@@ -11,6 +11,7 @@ import { dueCount, dueRules } from './domain/rules/schedule';
 import { STR } from './strings/rulebook';
 import { dueExchanges } from './domain/ledger';
 import { TodayWidget } from './TodayWidget';
+import { tn, tx } from './i18n';
 
 const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
@@ -19,8 +20,8 @@ function StatusChip() {
   const online = useOnline();
   const pending = useLiveQuery(() => db.outbox.count(), []) ?? 0;
   if (!getCfg()) return null;
-  if (!online) return <span className="status"><Icon name="wifiOff" size={14} stroke={2} />آفلاین</span>;
-  return pending ? <span className="status"><Icon name="refresh" size={14} stroke={2} />در حال همگام‌سازی</span> : <span className="status"><Icon name="cloudCheck" size={14} stroke={2} />همگام شد</span>;
+  if (!online) return <span className="status"><Icon name="wifiOff" size={14} stroke={2} />{tx('آفلاین')}</span>;
+  return pending ? <span className="status"><Icon name="refresh" size={14} stroke={2} />{tx('در حال همگام‌سازی')}</span> : <span className="status"><Icon name="cloudCheck" size={14} stroke={2} />{tx('همگام شد')}</span>;
 }
 
 type Props = {
@@ -86,18 +87,18 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
           onClick={() => bdaysToday[0].b.personId && openPerson(bdaysToday[0].b.personId)}
           role="button"
           tabIndex={0}
-          aria-label="تولد امروز"
+          aria-label={tx('تولد امروز')}
         >
           <div className="bcc-left">
             <div className="bcc-icon-glow">
               <Icon name="cake" size={24} stroke={2} />
             </div>
             <div className="bcc-text">
-              <b>امروز تولد {bdaysToday.map((x) => x.b.name).join(' و ')} است!</b>
+              <b>{tx('امروز تولد {a1} است!', { a1: bdaysToday.map((x) => x.b.name).join(` ${tx('و')} `) })}</b>
               <span>
                 {bdaysToday[0].b.year
-                  ? `${fa(parts(t, bdaysToday[0].b.cal, 0).y - bdaysToday[0].b.year)} ساله می‌شود · تبریک یادت نره`
-                  : 'این روز زیبا را گرامی بدار'}
+                  ? tx('{a1} ساله می‌شود · تبریک یادت نره', { a1: fa(parts(t, bdaysToday[0].b.cal, 0).y - bdaysToday[0].b.year) })
+                  : tx('این روز زیبا را گرامی بدار')}
               </span>
             </div>
           </div>
@@ -108,9 +109,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               e.stopPropagation();
               if (bdaysToday[0].b.personId) openPerson(bdaysToday[0].b.personId);
             }}
-          >
-            مشاهده
-          </button>
+          >{tx('مشاهده')}</button>
         </section>
       )}
 
@@ -124,19 +123,18 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               onClick={openTodos}
               role="button"
               tabIndex={0}
-              aria-label="کارهای عقب‌افتاده"
+              aria-label={tx('کارهای عقب‌افتاده')}
             >
               <div className="ob-info">
                 <div className="ob-icon">
                   <Icon name="clock" size={18} stroke={2.2} />
                 </div>
                 <div className="ob-text">
-                  <b>کارهای عقب‌افتاده</b>
-                  <span>{fa(late.length)} کار منتظر انجام یا تعیین زمان است</span>
+                  <b>{tx('کارهای عقب‌افتاده')}</b>
+                  <span>{tn('{n} کار منتظر انجام یا تعیین زمان است', late.length)}</span>
                 </div>
               </div>
-              <div className="ob-badge">
-                بررسی <Icon name="chevronLeft" size={13} stroke={2.4} />
+              <div className="ob-badge">{tx('بررسی')}<Icon name="chevronLeft" size={13} stroke={2.4} />
               </div>
             </div>
           )}
@@ -148,15 +146,15 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               onClick={openReview}
               role="button"
               tabIndex={0}
-              aria-label="مرور روزانه آیین‌نامه"
+              aria-label={tx('مرور روزانه آیین‌نامه')}
             >
               <div className="rrc-left">
                 <div className="rrc-icon">
                   <Icon name="repeat" size={20} stroke={2.2} />
                 </div>
                 <div className="rrc-content">
-                  <b>{STR.feature.title} · مرور روزانه</b>
-                  <span>{STR.today.cardTitle(rulesDue)} آمادهٔ بررسی است</span>
+                  <b>{tx('{a1} · مرور روزانه', { a1: tx(STR.feature.title) })}</b>
+                  <span>{tx('{a1} آمادهٔ بررسی است', { a1: tx(STR.today.cardTitle(rulesDue)) })}</span>
                 </div>
               </div>
               <button
@@ -166,9 +164,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                   e.stopPropagation();
                   openReview();
                 }}
-              >
-                شروع مرور
-              </button>
+              >{tx('شروع مرور')}</button>
             </div>
           ) : pinned.length > 0 ? (
             <div
@@ -176,7 +172,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               onClick={openRulebook}
               role="button"
               tabIndex={0}
-              aria-label="اصل سنجاق‌شده آیین‌نامه"
+              aria-label={tx('اصل سنجاق‌شده آیین‌نامه')}
             >
               <div className="rrc-left">
                 <div className="rrc-icon">
@@ -184,10 +180,10 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                 </div>
                 <div className="rrc-content">
                   <b>{pinned[0].title}</b>
-                  <span>{pinned[0].why || 'از اصول سنجاق‌شدهٔ آیین‌نامه'}</span>
+                  <span>{pinned[0].why || tx('از اصول سنجاق‌شدهٔ آیین‌نامه')}</span>
                 </div>
               </div>
-              <span className="ob-badge">آیین‌نامه</span>
+              <span className="ob-badge">{tx('آیین‌نامه')}</span>
             </div>
           ) : null}
 
@@ -198,7 +194,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               onClick={openLedger}
               role="button"
               tabIndex={0}
-              aria-label="موعد تبادل‌ها"
+              aria-label={tx('موعد تبادل‌ها')}
             >
               <div className="lac-info">
                 <span
@@ -210,13 +206,14 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                 <div>
                   <b style={{ fontSize: 14 }}>{ledgerDue[0].title}</b>
                   <span style={{ fontSize: 12, color: 'var(--muted)', display: 'block' }}>
-                    {nameOf.get(ledgerDue[0].personId) ?? 'کسی'}
-                    {ledgerDue.length > 1 ? ` · و ${fa(ledgerDue.length - 1)} مورد دیگر` : ''}
+                    {ledgerDue.length > 1
+                      ? tx('{a1} و {a2} مورد دیگر', { a1: nameOf.get(ledgerDue[0].personId) ?? tx('کسی'), a2: fa(ledgerDue.length - 1) })
+                      : nameOf.get(ledgerDue[0].personId) ?? tx('کسی')}
                   </span>
                 </div>
               </div>
               <span className="lac-badge">
-                {STR.ledger.title} <Icon name="chevronLeft" size={12} stroke={2} />
+                {tx(STR.ledger.title)} <Icon name="chevronLeft" size={12} stroke={2} />
               </span>
             </div>
           )}
@@ -227,11 +224,9 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
 
       {/* 5. Upcoming Birthdays (Only shown if any upcoming in next 1..7 days) */}
       {bdaysLater.length > 0 && (
-        <section aria-label="تولدهای پیش‌رو">
+        <section aria-label={tx('تولدهای پیش‌رو')}>
           <div className="section-head" style={{ margin: '8px 4px 6px' }}>
-            <h2 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: 'var(--muted)' }}>
-              تولدهای هفته
-            </h2>
+            <h2 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: 'var(--muted)' }}>{tx('تولدهای هفته')}</h2>
           </div>
           <div className="upcoming-bdays-strip">
             {bdaysLater.map(({ b, inDays }) => (
@@ -241,14 +236,14 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                 onClick={() => b.personId && openPerson(b.personId)}
                 role="button"
                 tabIndex={0}
-                aria-label={`تولد ${b.name}`}
+                aria-label={tx('تولد {a1}', { a1: b.name })}
               >
                 <span className={`avatar p${PALETTE(b.name)}`} aria-hidden="true">
                   {b.name.slice(0, 1)}
                 </span>
                 <div className="ub-info">
                   <span className="ub-name">{b.name}</span>
-                  <span className="ub-days">{inDays === 1 ? 'فردا' : `${fa(inDays)} روز دیگر`}</span>
+                  <span className="ub-days">{inDays === 1 ? tx('فردا') : tx('{a1} روز دیگر', { a1: fa(inDays) })}</span>
                 </div>
               </div>
             ))}
@@ -258,10 +253,10 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
 
       {/* 6. Follow-ups Due (Clean connection cards) */}
       {due.length > 0 && (
-        <section className="glass followups-card" aria-label="پیگیری‌ها">
+        <section className="glass followups-card" aria-label={tx('پیگیری‌ها')}>
           <div className="fc-head">
-            <h2>پیگیری‌ها</h2>
-            <span className="progress-pill">{fa(due.length)} مورد</span>
+            <h2>{tx('پیگیری‌ها')}</h2>
+            <span className="progress-pill">{tn('{n} مورد', due.length)}</span>
           </div>
           {due.slice(0, 3).map((x) => (
             <button
@@ -269,13 +264,13 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               type="button"
               className="fc-row"
               onClick={() => openPerson(x.personId)}
-              aria-label={`پیگیری ${nameOf.get(x.personId) ?? 'شخص'}`}
+              aria-label={tx('پیگیری {a1}', { a1: nameOf.get(x.personId) ?? tx('شخص') })}
             >
               <span className={`avatar p${PALETTE(nameOf.get(x.personId) ?? '')}`} aria-hidden="true">
-                {(nameOf.get(x.personId) ?? '؟').slice(0, 1)}
+                {(nameOf.get(x.personId) ?? tx('؟')).slice(0, 1)}
               </span>
               <div className="fc-details">
-                <span className="fc-name">{nameOf.get(x.personId) ?? 'کسی'}</span>
+                <span className="fc-name">{nameOf.get(x.personId) ?? tx('کسی')}</span>
                 <span className="fc-sub">{x.summary}</span>
               </div>
               <em className="due-chip">{followUpLabel(x.followUpDate, t)}</em>
@@ -287,19 +282,17 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               className="text-btn more-row"
               onClick={openSearch}
               style={{ padding: '6px 0' }}
-            >
-              و {fa(due.length - 3)} پیگیری دیگر
-            </button>
+            >{tn('و {n} پیگیری دیگر', due.length - 3)}</button>
           )}
         </section>
       )}
 
       {/* 7. Recently Added People (Horizontal avatar reel) */}
       {fresh.length > 0 && (
-        <section className="fresh-reel-container" aria-label="تازه‌افزوده‌ها">
+        <section className="fresh-reel-container" aria-label={tx('تازه‌افزوده‌ها')}>
           <div className="frc-head">
-            <h2>تازه‌افزوده‌ها</h2>
-            <button type="button" className="text-btn" onClick={openSearch}>همه</button>
+            <h2>{tx('تازه‌افزوده‌ها')}</h2>
+            <button type="button" className="text-btn" onClick={openSearch}>{tx('همه')}</button>
           </div>
           <div className="fresh-reel">
             {fresh.map((p) => (
@@ -308,7 +301,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
                 type="button"
                 className="fresh-person-item"
                 onClick={() => openPerson(p.id)}
-                aria-label={`پروفایل ${p.displayName}`}
+                aria-label={tx('پروفایل {a1}', { a1: p.displayName })}
               >
                 <span className={`avatar p${PALETTE(p.displayName)}`} aria-hidden="true">
                   {p.displayName.slice(0, 1)}
@@ -322,12 +315,12 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
 
       {/* 8. Global empty state when app is brand new */}
       {tasks.length === 0 && people.filter((p) => !p.isSelf).length === 0 && (
-        <section className="glass empty-state" aria-label="حلقه خالی است">
+        <section className="glass empty-state" aria-label={tx('حلقه خالی است')}>
           <span className="tile blue" aria-hidden="true">
             <Icon name="users" size={24} stroke={1.7} />
           </span>
-          <b>حلقه خالی است</b>
-          <p className="hint">از تب «افراد» آدم‌هایت را اضافه کن؛ کارها و تولدهایشان همین‌جا می‌آید.</p>
+          <b>{tx('حلقه خالی است')}</b>
+          <p className="hint">{tx('از تب «افراد» آدم‌هایت را اضافه کن؛ کارها و تولدهایشان همین‌جا می‌آید.')}</p>
         </section>
       )}
     </div>

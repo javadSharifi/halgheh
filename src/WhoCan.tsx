@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import { CRITERION_LABEL } from './ratings';
 import { STATUS_LABEL } from './skills';
 import { introducers, whoCan, type Hit } from './whoCanEngine';
+import { tn, tx } from './i18n';
 
 const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
@@ -48,12 +49,12 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
           <span className="who-meta">{[hit.person.occupation, hit.person.city].filter(Boolean).join(' · ')}</span>
         )}
         <span className="why-chips">
-          {hit.why.skills.length > 0 && <i className="w-skill"><Icon name="toolbox" size={11} stroke={2.2} />{hit.why.skills.join('، ')}</i>}
-          {hit.why.evidence && <i className="w-ev">{STATUS_LABEL[hit.why.evidence]}</i>}
+          {hit.why.skills.length > 0 && <i className="w-skill"><Icon name="toolbox" size={11} stroke={2.2} />{hit.why.skills.join(`${tx('،')} `)}</i>}
+          {hit.why.evidence && <i className="w-ev">{tx(STATUS_LABEL[hit.why.evidence])}</i>}
           {/* the one trust criterion, side by side with the evidence, never added to it */}
           <i className={`w-trust${trustOf(hit) === undefined ? ' none' : ''}`}>
             <Icon name="target" size={11} stroke={2.2} />
-            {trustOf(hit) === undefined ? 'ثبت نشده' : `${CRITERION_LABEL.trustworthiness}: ${fa(trustOf(hit)!)}`}
+            {trustOf(hit) === undefined ? tx('ثبت نشده') : tx('{a1}: {a2}', { a1: tx(CRITERION_LABEL.trustworthiness), a2: fa(trustOf(hit)!) })}
           </i>
           {lastOf(hit) && <i className="w-when"><Icon name="history" size={11} stroke={2.2} />{lastOf(hit)}</i>}
         </span>
@@ -65,45 +66,45 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
   return (
     <>
       <header className="dd-head">
-        <button className="icon-btn" aria-label="بازگشت" onClick={onClose}><Icon name="chevronRight" /></button>
-        <span>چه کسی می‌تواند</span>
+        <button className="icon-btn" aria-label={tx('بازگشت')} onClick={onClose}><Icon name="chevronRight" /></button>
+        <span>{tx('چه کسی می‌تواند')}</span>
         <span className="head-spacer" />
       </header>
 
       <form className="search-top" onSubmit={(e) => e.preventDefault()} role="search">
         <label className="search-field">
           <Icon name="search" size={20} stroke={1.9} />
-          <span className="sr-only">چه کسی می‌تواند</span>
-          <input autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="چه کاری؟ مثلاً لوله‌کشی" />
-          {q && <button type="button" className="clear" aria-label="پاک کردن" onClick={() => setQ('')}><span><Icon name="close" size={12} stroke={3} /></span></button>}
+          <span className="sr-only">{tx('چه کسی می‌تواند')}</span>
+          <input autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tx('چه کاری؟ مثلاً لوله‌کشی')} />
+          {q && <button type="button" className="clear" aria-label={tx('پاک کردن')} onClick={() => setQ('')}><span><Icon name="close" size={12} stroke={3} /></span></button>}
         </label>
       </form>
 
       {!searching && (
         <section className="glass empty-state search-empty">
           <span className="tile purple" aria-hidden="true"><Icon name="toolbox" size={24} stroke={1.8} /></span>
-          <b>چه کاری را می‌خواهی انجام دهد؟</b>
-          <p className="hint">یک مهارت بنویس تا ببینی چه کسی آن را بلد است، و اگر خودت کسی را نمی‌شناسی، چه کسی می‌تواند معرفی کند.</p>
+          <b>{tx('چه کاری را می‌خواهی انجام دهد؟')}</b>
+          <p className="hint">{tx('یک مهارت بنویس تا ببینی چه کسی آن را بلد است، و اگر خودت کسی را نمی‌شناسی، چه کسی می‌تواند معرفی کند.')}</p>
         </section>
       )}
 
       {searching && hitList.length === 0 && (
         <section className="glass empty-state search-empty">
-          <b>کسی پیدا نشد</b>
-          <p className="hint">کلمهٔ دیگری امتحان کن، یا در پروفایل افراد مهارتشان را ثبت کن.</p>
+          <b>{tx('کسی پیدا نشد')}</b>
+          <p className="hint">{tx('کلمهٔ دیگری امتحان کن، یا در پروفایل افراد مهارتشان را ثبت کن.')}</p>
         </section>
       )}
 
       {specialists.length > 0 && (
         <section>
-          <h2 className="sec-title">متخصص‌ها<small>{fa(specialists.length)} نفر</small></h2>
+          <h2 className="sec-title">{tx('متخصص‌ها')}<small>{tn('{n} نفر', specialists.length)}</small></h2>
           <div className="who-list">{specialists.map((h) => <Card key={h.person.id} hit={h} />)}</div>
         </section>
       )}
 
       {refs.length > 0 && (
         <section>
-          <h2 className="sec-title">از طریق معرفی<small>{fa(refs.length)} مسیر</small></h2>
+          <h2 className="sec-title">{tx('از طریق معرفی')}<small>{tn('{n} مسیر', refs.length)}</small></h2>
           <div className="who-list">
             {refs.map((s) => (
               <button key={`${s.pathText}`} className="glass who-card ref-card" onClick={() => openPerson(s.person.id)}>
@@ -112,10 +113,12 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
                   <b>{s.specialist.displayName}</b>
                   <span className="ref-path">
                     {s.pathWithTrades}
-                    {s.uncertain && <em className="c-dup">شاید</em>}
+                    {s.uncertain && <em className="c-dup">{tx('شاید')}</em>}
                   </span>
                   <span className="who-meta">
-                    {s.specialist.occupation ? `${s.specialist.occupation} · ` : ''}از طریق {s.person.displayName}
+                                      {s.specialist.occupation
+                      ? tx('{a1} · از طریق {a2}', { a1: s.specialist.occupation, a2: s.person.displayName })
+                      : tx('از طریق {a1}', { a1: s.person.displayName })}
                   </span>
                 </span>
                 <Icon name="chevronLeft" size={16} stroke={2} />
@@ -127,7 +130,7 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
 
       {others.length > 0 && (
         <section>
-          <h2 className="sec-title">بقیه<small>{fa(others.length)} نفر</small></h2>
+          <h2 className="sec-title">{tx('بقیه')}<small>{tn('{n} نفر', others.length)}</small></h2>
           <div className="who-list">{others.map((h) => <Card key={h.person.id} hit={h} />)}</div>
         </section>
       )}

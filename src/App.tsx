@@ -24,16 +24,19 @@ import { LedgerPage } from './LedgerPage';
 import { BriefPage } from './BriefPage';
 import { AboutPage } from './AboutPage';
 import { PersonEditor } from './PersonEditor';
+import { ContactsImport } from './ContactsImport';
 import { watchKeyboard } from './keyboard';
 import { getWidgetAction, isNative, setSecure, watchNative } from './native';
 import { isConnected, startSync } from './sync';
 import { downloadMissingPhotos, uploadPendingPhotos } from './photoSync';
 import { useSettings } from './settings';
+import { applyLang, tx, tk } from './i18n';
 import { useTheme } from './theme';
 
 type Page =
   | 'today'
   | 'people'
+  | 'personnew'
   | 'person'
   | 'whocan'
   | 'gallery'
@@ -55,17 +58,24 @@ type Filter = 'all' | 'people' | 'notes' | 'todos' | 'photos' | 'birthdays' | 'r
 type TaskCtx = { id: string | null; from: Page };
 
 const TABS: { page: Page; label: string; icon: IconName }[] = [
-  { page: 'today', label: 'امروز', icon: 'home' },
-  { page: 'rulebook', label: 'قوانین من', icon: 'listChecks' },
-  { page: 'people', label: 'افراد', icon: 'users' },
-  { page: 'ledger', label: 'دادوستد', icon: 'repeat' },
-  { page: 'more', label: 'بیشتر', icon: 'moreCircle' },
+  { page: 'today', label: tk('امروز'), icon: 'home' },
+  { page: 'rulebook', label: tk('قوانین من'), icon: 'listChecks' },
+  { page: 'people', label: tk('افراد'), icon: 'users' },
+  { page: 'ledger', label: tk('دادوستد'), icon: 'repeat' },
+  { page: 'more', label: tk('بیشتر'), icon: 'moreCircle' },
 ];
 const MORE: Page[] = ['tasks', 'birthdays', 'settings', 'sync', 'archive', 'about', 'gallery'];
 
 export function App() {
+  const { lang } = useSettings();
+  useEffect(() => applyLang(lang), [lang]);
+  // a language change remounts every screen: each one reads tx() while rendering and none subscribes to it
+  return <AppShell key={lang} />;
+}
+
+function AppShell() {
   const [page, setPage] = useState<Page>('today');
-  const [addingPerson, setAddingPerson] = useState(false);
+  const [importingContacts, setImportingContacts] = useState(false);
   const [personId, setPersonId] = useState<string | null>(null);
   // where the profile was opened from, so back returns there (a person opened from search must not drop the search)
   const [personFrom, setPersonFrom] = useState<{ page: Page; search?: { from: Page; filter?: Filter } }>({ page: 'people' });
@@ -98,7 +108,6 @@ export function App() {
   // Handle action when user taps "+ کار تازه" on Android Home Screen Widget
   useEffect(() => {
     const handleQuickTask = () => {
-      setAddingPerson(false);
       setPage('today');
       setTaskCtx({ id: null, from: 'today' });
     };
@@ -136,7 +145,6 @@ export function App() {
     return () => document.removeEventListener('visibilitychange', on);
   }, []);
   const go = (p: Page) => {
-    setAddingPerson(false);
     setPage(p);
     window.scrollTo(0, 0);
   };
@@ -149,10 +157,6 @@ export function App() {
         return !!el;
       };
       if (locked) return false; // nothing to go back to behind the lock
-      if (addingPerson) {
-        setAddingPerson(false);
-        return true;
-      }
       if (click('.scrim.dim')) return true; // an open sheet or confirm dialog closes first (the contact import sheet included)
       // the rulebook's overlays (comparison session, check mode, review) are inside the page, not page states
       if ((window as unknown as { __rulebookBack?: () => boolean }).__rulebookBack?.()) return true;
@@ -162,6 +166,7 @@ export function App() {
       if (page === 'brief') return go(briefFor?.from ?? 'person'), true;
       if (page === 'search') return go(searchCtx.from), true;
       if (page === 'person') return backFromPerson(), true;
+      if (page === 'personnew') return go('people'), true;
       if (page === 'whocan') return go('people'), true;
       if (MORE.includes(page)) return go('more'), true;
       if (page !== 'today') return go('today'), true;
@@ -187,7 +192,11 @@ export function App() {
     go('review');
   };
   const openPerson = (id: string) => {
-    setPersonFrom(page === 'search' ? { page: 'search', search: searchCtx } : { page: page === 'person' ? personFrom.page : page });
+    setPersonFrom(
+      page === 'search'
+        ? { page: 'search', search: searchCtx }
+        : { page: page === 'person' ? personFrom.page : page === 'personnew' ? 'people' : page },
+    );
     setPersonId(id);
     go('person');
   };
@@ -204,19 +213,19 @@ export function App() {
     window.scrollTo(0, 0);
   };
   const tabOf = (p: Page): Page => {
-    if (p === 'person' || p === 'whocan') return 'people';
+    if (p === 'person' || p === 'personnew' || p === 'whocan') return 'people';
     if (p === 'review' || p === 'readthrough') return 'rulebook';
     if (p === 'search') return tabOf(searchCtx.from);
     return MORE.includes(p) ? 'more' : p;
   };
   const tab = tabOf(page);
   const tabBtn = (n: (typeof TABS)[number]) => (
-    <button key={n.page} aria-label={n.label} aria-current={tab === n.page ? 'page' : undefined} className={tab === n.page ? 'on' : ''} onClick={() => go(n.page)}>
+    <button key={n.page} aria-label={tx(n.label)} aria-current={tab === n.page ? 'page' : undefined} className={tab === n.page ? 'on' : ''} onClick={() => go(n.page)}>
       <Icon name={n.icon} size={22} />
-      <span>{n.label}</span>
+      <span>{tx(n.label)}</span>
     </button>
   );
-  const full = page === 'sync' || page === 'search' || page === 'person' || page === 'whocan'; // full-screen pages: no tab bar
+  const full = page === 'sync' || page === 'search' || page === 'person' || page === 'personnew' || page === 'whocan'; // full-screen pages: no tab bar
   return (
     <>
       <main inert={locked && !!lock}>
@@ -233,10 +242,18 @@ export function App() {
         )}
         {page === 'people' && (
           <PeoplePage
-            openAddPerson={() => setAddingPerson(true)}
+            openAddPerson={() => go('personnew')}
             openPerson={openPerson}
             openSearch={() => openSearch('people')}
             openWhoCan={() => go('whocan')}
+          />
+        )}
+        {page === 'personnew' && (
+          <PersonEditor
+            asPage
+            onClose={() => go('people')}
+            onImportContacts={isNative ? () => setImportingContacts(true) : undefined}
+            onSaved={(newPersonId) => openPerson(newPersonId)}
           />
         )}
         {page === 'person' && personId && (
@@ -258,8 +275,6 @@ export function App() {
             openAbout={() => go('about')}
             openTasks={() => go('tasks')}
             openBirthdays={() => go('birthdays')}
-            openRulebook={() => go('rulebook')}
-            openLedger={() => go('ledger')}
             openGallery={() => go('gallery')}
           />
         )}
@@ -301,20 +316,12 @@ export function App() {
       </main>
       <ConfirmHost />
       {locked && lock && <LockScreen onUnlock={() => setLocked(false)} />}
-      {addingPerson && (
-        <PersonEditor
-          onClose={() => setAddingPerson(false)}
-          onSaved={(newPersonId) => {
-            setAddingPerson(false);
-            openPerson(newPersonId);
-          }}
-        />
-      )}
+      {importingContacts && <ContactsImport onClose={() => setImportingContacts(false)} />}
       {taskCtx && <TodoSheet key={taskCtx.id ?? 'new'} id={taskCtx.id} onClose={() => setTaskCtx(null)} />}
       {!full && (
       <div className="dock" inert={locked && !!lock}>
         <div className="bar">
-          <nav aria-label="ناوبری اصلی">
+          <nav aria-label={tx('ناوبری اصلی')}>
             {TABS.map(tabBtn)}
           </nav>
         </div>

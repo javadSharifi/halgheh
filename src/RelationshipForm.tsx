@@ -4,6 +4,7 @@ import { ask } from './confirm';
 import { Icon } from './Icon';
 import { CONFIDENCE_LABEL, REL_LABEL, REL_TYPES, findLink, isSymmetric, linkId, linkIds } from './relationships';
 import type { RelType } from './db';
+import { locale, tx } from './i18n';
 
 /**
  * Add or edit one link from a person's profile (R3). A symmetric link is saved once with the pair in sorted order, so
@@ -17,7 +18,7 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
   onClose: () => void;
 }) {
   const others = useMemo(
-    () => people.filter((p) => !p.isSelf && !p.archivedAt && p.id !== personId).sort((a, b) => a.displayName.localeCompare(b.displayName, 'fa')),
+    () => people.filter((p) => !p.isSelf && !p.archivedAt && p.id !== personId).sort((a, b) => a.displayName.localeCompare(b.displayName, locale())),
     [people, personId],
   );
   const [otherId, setOtherId] = useState(() => {
@@ -52,7 +53,7 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
       try {
         ids = linkIds(personId, otherId, type);
       } catch {
-        setErr('یک نفر نمی‌تواند با خودش رابطه داشته باشد.');
+        setErr(tx('یک نفر نمی‌تواند با خودش رابطه داشته باشد.'));
         setBusy(false);
         return;
       }
@@ -73,14 +74,14 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
       if (editing && editing.id !== row.id) await del('relationships', editing.id);
       onClose();
     } catch {
-      setErr('ذخیره نشد؛ دوباره تلاش کن.');
+      setErr(tx('ذخیره نشد؛ دوباره تلاش کن.'));
       setBusy(false);
     }
   };
 
   const remove = async () => {
     if (!editing) return;
-    if (!(await ask({ title: 'این رابطه حذف شود؟', message: 'فقط همین پیوند پاک می‌شود؛ خود افراد می‌مانند.', confirm: 'حذف' }))) return;
+    if (!(await ask({ title: tx('این رابطه حذف شود؟'), message: tx('فقط همین پیوند پاک می‌شود؛ خود افراد می‌مانند.'), confirm: tx('حذف') }))) return;
     await del('relationships', editing.id);
     onClose();
   };
@@ -90,63 +91,63 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet rel-sheet" role="dialog" aria-modal="true" aria-labelledby="rel-title">
         <div className="bf-head">
-          <span id="rel-title">{editing ? 'ویرایش رابطه' : 'رابطهٔ تازه'}</span>
-          <button className="text-btn" onClick={onClose}>بستن</button>
+          <span id="rel-title">{editing ? tx('ویرایش رابطه') : tx('رابطهٔ تازه')}</span>
+          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
         </div>
 
         <div className="pe-scroll">
           {!editing && (
             <>
               <label className="bf-name">
-                <span>طرف دیگر</span>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="جستجوی نام…" />
+                <span>{tx('طرف دیگر')}</span>
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('جستجوی نام…')} />
               </label>
-              {others.length === 0 && <p className="hint pe-hint">برای ساختن رابطه دست‌کم دو نفر لازم است.</p>}
+              {others.length === 0 && <p className="hint pe-hint">{tx('برای ساختن رابطه دست‌کم دو نفر لازم است.')}</p>}
               <div className="rel-people">
                 {shown.slice(0, 40).map((p) => (
                   <button key={p.id} type="button" className={`tag-chip${otherId === p.id ? ' on c1' : ''}`} onClick={() => setOtherId(p.id)}>
                     {p.displayName}
                   </button>
                 ))}
-                {shown.length === 0 && others.length > 0 && <p className="hint pe-hint">کسی با این نام پیدا نشد.</p>}
+                {shown.length === 0 && others.length > 0 && <p className="hint pe-hint">{tx('کسی با این نام پیدا نشد.')}</p>}
               </div>
             </>
           )}
 
-          <div className="radios rel-types" role="radiogroup" aria-label="نوع رابطه">
+          <div className="radios rel-types" role="radiogroup" aria-label={tx('نوع رابطه')}>
             {REL_TYPES.map((k) => (
               <button key={k} type="button" role="radio" aria-checked={type === k} className={type === k ? 'on' : ''} onClick={() => setType(k)}>
-                {REL_LABEL[k]}
+                {tx(REL_LABEL[k])}
               </button>
             ))}
           </div>
           <p className="hint pe-hint">
-            {isSymmetric(type) ? 'این رابطه دوطرفه است؛ یک بار ثبت می‌شود و برای هر دو نفر دیده می‌شود.' : '«معرفی‌شده» یک‌طرفه است: یعنی این فرد، آن یکی را به تو معرفی کرده.'}
+            {isSymmetric(type) ? tx('این رابطه دوطرفه است؛ یک بار ثبت می‌شود و برای هر دو نفر دیده می‌شود.') : tx('«معرفی‌شده» یک‌طرفه است: یعنی این فرد، آن یکی را به تو معرفی کرده.')}
           </p>
-          {duplicate && <p className="form-error" role="alert">این رابطه از قبل ثبت شده است.</p>}
+          {duplicate && <p className="form-error" role="alert">{tx('این رابطه از قبل ثبت شده است.')}</p>}
 
           <div className="pe-grid">
-            <label className="bf-tile"><span>نزدیکی (۱–۵)</span><input inputMode="numeric" value={closeness} onChange={(e) => setCloseness(e.target.value)} /></label>
+            <label className="bf-tile"><span>{tx('نزدیکی (۱–۵)')}</span><input inputMode="numeric" value={closeness} onChange={(e) => setCloseness(e.target.value)} /></label>
             <div className="bf-tile">
-              <span>اطمینان</span>
+              <span>{tx('اطمینان')}</span>
               <button type="button" className="as-value" onClick={() => setConfidence(confidence === 'sure' ? 'maybe' : 'sure')}>
-                {CONFIDENCE_LABEL[confidence]}
+                {tx(CONFIDENCE_LABEL[confidence])}
               </button>
             </div>
           </div>
-          {!closenessOk && <p className="form-error">نزدیکی باید عددی بین ۱ و ۵ باشد.</p>}
+          {!closenessOk && <p className="form-error">{tx('نزدیکی باید عددی بین ۱ و ۵ باشد.')}</p>}
 
-          <label className="bf-name"><span>از کجا می‌شناسیشان (اختیاری)</span><input value={howMet} maxLength={200} onChange={(e) => setHowMet(e.target.value)} /></label>
+          <label className="bf-name"><span>{tx('از کجا می‌شناسیشان (اختیاری)')}</span><input value={howMet} maxLength={200} onChange={(e) => setHowMet(e.target.value)} /></label>
           <div className="rf-row">
             <span className="tile green" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
-            <span className="rf-name">معرف</span>
-            <select className="as-value" aria-label="معرف" value={introducedBy} onChange={(e) => setIntroducedBy(e.target.value)}>
-              <option value="">مشخص نیست</option>
+            <span className="rf-name">{tx('معرف')}</span>
+            <select className="as-value" aria-label={tx('معرف')} value={introducedBy} onChange={(e) => setIntroducedBy(e.target.value)}>
+              <option value="">{tx('مشخص نیست')}</option>
               {others.map((p) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
             </select>
           </div>
           <label className="bf-name bf-name-top">
-            <span>یادداشت (اختیاری)</span>
+            <span>{tx('یادداشت (اختیاری)')}</span>
             <textarea className="rf-text" value={note} onChange={(e) => setNote(e.target.value)} maxLength={400} />
           </label>
 
@@ -155,9 +156,9 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
 
         <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
           <Icon name="check" size={18} stroke={2.4} />
-          {busy ? 'در حال ذخیره…' : editing ? 'ذخیره' : 'افزودن رابطه'}
+          {busy ? tx('در حال ذخیره…') : editing ? tx('ذخیره') : tx('افزودن رابطه')}
         </button>
-        {editing && <button className="danger-btn" onClick={() => void remove()}><Icon name="trash" size={16} stroke={2} />حذف این رابطه</button>}
+        {editing && <button className="danger-btn" onClick={() => void remove()}><Icon name="trash" size={16} stroke={2} />{tx('حذف این رابطه')}</button>}
       </section>
     </>
   );

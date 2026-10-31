@@ -17,6 +17,7 @@ import { LedgerHero } from './ledger/LedgerHero';
 import { BalanceChips, ExchangeItem } from './ledger/ExchangeItem';
 import { ExchangeSheet } from './ledger/ExchangeSheet';
 import { SettleSheet } from './ledger/SettleSheet';
+import { locale, tn, tx } from './i18n';
 
 export { money, BalanceChips };
 export { ExchangeSheet };
@@ -121,7 +122,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
 
   const personOrder = useMemo(() => {
     const ids = [...new Set(filteredExchanges.map((e) => e.personId))];
-    return ids.sort((a, b) => (nameOf.get(a) ?? '').localeCompare(nameOf.get(b) ?? '', 'fa'));
+    return ids.sort((a, b) => (nameOf.get(a) ?? '').localeCompare(nameOf.get(b) ?? '', locale()));
   }, [filteredExchanges, nameOf]);
 
   const groups = useMemo(
@@ -134,14 +135,13 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
       {/* Page Header */}
       <div className="page-head">
         <div className="ledger-title-wrap">
-          <h1>{STR.ledger.title}</h1>
+          <h1>{tx(STR.ledger.title)}</h1>
           <span className="ledger-title-count">
-            {fa(openEarnCount + openOweCount + nonMoneyCount)} باز
-          </span>
+            {tx('{a1} باز', { a1: fa(openEarnCount + openOweCount + nonMoneyCount) })}</span>
         </div>
         <button className="primary ledger-quick-add-btn" onClick={() => setAdding('new')}>
           <Icon name="plus" size={17} stroke={2.4} />
-          <span>{STR.ledger.quickAdd}</span>
+          <span>{tx(STR.ledger.quickAdd)}</span>
         </button>
       </div>
 
@@ -166,15 +166,15 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="جستجو در نام شخص، موضوع، یادداشت یا مبلغ..."
-            aria-label="جستجو در دادوستدها"
+            placeholder={tx('جستجو در نام شخص، موضوع، یادداشت یا مبلغ...')}
+            aria-label={tx('جستجو در دادوستدها')}
           />
           {search && (
             <button
               type="button"
               className="icon-btn small ledger-search-clear"
               onClick={() => setSearch('')}
-              aria-label="پاک کردن جستجو"
+              aria-label={tx('پاک کردن جستجو')}
             >
               <Icon name="close" size={14} stroke={2.2} />
             </button>
@@ -183,38 +183,34 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
       )}
 
       {/* Filter Tabs */}
-      <div className="tabs ledger-tabs" role="tablist" aria-label="فیلترهای دادوستد">
+      <div className="tabs ledger-tabs" role="tablist" aria-label={tx('فیلترهای دادوستد')}>
         <button
           role="tab"
           aria-selected={filter === 'all'}
           className={filter === 'all' ? 'on' : ''}
           onClick={() => setFilter('all')}
-        >
-          همهٔ بازها ({fa(openEarnCount + openOweCount + nonMoneyCount)})
+        >{tx('همهٔ بازها (')}{fa(openEarnCount + openOweCount + nonMoneyCount)})
         </button>
         <button
           role="tab"
           aria-selected={filter === 'earn'}
           className={filter === 'earn' ? 'on tab-earn' : ''}
           onClick={() => setFilter('earn')}
-        >
-          طلب‌های من ({fa(openEarnCount)})
+        >{tx('طلب‌های من (')}{fa(openEarnCount)})
         </button>
         <button
           role="tab"
           aria-selected={filter === 'owe'}
           className={filter === 'owe' ? 'on tab-owe' : ''}
           onClick={() => setFilter('owe')}
-        >
-          بدهی‌های من ({fa(openOweCount)})
+        >{tx('بدهی‌های من (')}{fa(openOweCount)})
         </button>
         <button
           role="tab"
           aria-selected={filter === 'nonmoney'}
           className={filter === 'nonmoney' ? 'on tab-items' : ''}
           onClick={() => setFilter('nonmoney')}
-        >
-          امانت و لطف ({fa(nonMoneyCount)})
+        >{tx('امانت و لطف (')}{fa(nonMoneyCount)})
         </button>
         {overdueCount > 0 && (
           <button
@@ -222,8 +218,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
             aria-selected={filter === 'overdue'}
             className={filter === 'overdue' ? 'on tab-overdue' : 'tab-overdue-chip'}
             onClick={() => setFilter('overdue')}
-          >
-            سررسید گذشته ({fa(overdueCount)})
+          >{tx('سررسید گذشته (')}{fa(overdueCount)})
           </button>
         )}
         <button
@@ -231,9 +226,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
           aria-selected={filter === 'settled'}
           className={filter === 'settled' ? 'on' : ''}
           onClick={() => setFilter('settled')}
-        >
-          تسویه‌شده‌ها
-        </button>
+        >{tx('تسویه‌شده‌ها')}</button>
       </div>
 
       {/* Main Content Area */}
@@ -242,20 +235,16 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
           <span className="tile blue" aria-hidden="true">
             <Icon name="repeat" size={28} stroke={1.8} />
           </span>
-          <b>هنوز هیچ دادوستدی ثبت نکرده‌اید</b>
-          <p className="hint">
-            قرض‌هایی که دادید، بدهی‌ها، کالاهایی که امانت دادید یا گرفتید، و لطف‌هایی که برای هم انجام دادید را اینجا منظم نگه دارید.
-          </p>
+          <b>{tx('هنوز هیچ دادوستدی ثبت نکرده‌اید')}</b>
+          <p className="hint">{tx('قرض‌هایی که دادید، بدهی‌ها، کالاهایی که امانت دادید یا گرفتید، و لطف‌هایی که برای هم انجام دادید را اینجا منظم نگه دارید.')}</p>
           <button className="primary" onClick={() => setAdding('new')}>
-            <Icon name="plus" size={17} stroke={2.4} />
-            ثبت اولین دادوستد
-          </button>
+            <Icon name="plus" size={17} stroke={2.4} />{tx('ثبت اولین دادوستد')}</button>
         </section>
       ) : groups.length === 0 ? (
         <div className="glass ledger-empty-search">
           <Icon name="search" size={24} stroke={1.8} />
-          <b>دادوستدی با این مشخصات پیدا نشد</b>
-          <p className="hint">می‌توانید عبارت جستجو را تغییر دهید یا فیلتر دیگری را انتخاب کنید.</p>
+          <b>{tx('دادوستدی با این مشخصات پیدا نشد')}</b>
+          <p className="hint">{tx('می‌توانید عبارت جستجو را تغییر دهید یا فیلتر دیگری را انتخاب کنید.')}</p>
           {(search || filter !== 'all') && (
             <button
               className="text-btn"
@@ -263,31 +252,27 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
                 setSearch('');
                 setFilter('all');
               }}
-            >
-              نمایش همه دادوستدهای باز
-            </button>
+            >{tx('نمایش همه دادوستدهای باز')}</button>
           )}
         </div>
       ) : (
         <div className="ledger-groups">
           {groups.map((g) => {
             const personBalance = balances.get(g.personId);
-            const pName = nameOf.get(g.personId) ?? 'شخص نامشخص';
+            const pName = nameOf.get(g.personId) ?? tx('شخص نامشخص');
             const pal = PALETTE(pName);
 
             return (
               <section key={g.personId} className="glass ledger-person-card">
                 {/* Person Header */}
                 <div className="ledger-person-header">
-                  <button className="ledger-person-meta" onClick={() => openPerson(g.personId)} title="مشاهده پروفایل">
+                  <button className="ledger-person-meta" onClick={() => openPerson(g.personId)} title={tx('مشاهده پروفایل')}>
                     <span className={`avatar p${pal}`} aria-hidden="true">
                       {pName.slice(0, 1)}
                     </span>
                     <div className="ledger-person-title-col">
                       <b>{pName}</b>
-                      <span className="ledger-person-badge-link">
-                        مشاهده سوابق و پروفایل
-                        <Icon name="chevronLeft" size={12} stroke={2.2} />
+                      <span className="ledger-person-badge-link">{tx('مشاهده سوابق و پروفایل')}<Icon name="chevronLeft" size={12} stroke={2.2} />
                       </span>
                     </div>
                   </button>
@@ -297,8 +282,8 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
                     <button
                       className="icon-btn small ledger-add-to-person-btn"
                       onClick={() => setAdding(g.personId)}
-                      title={`ثبت دادوستد با ${pName}`}
-                      aria-label={`ثبت دادوستد با ${pName}`}
+                      title={tx('ثبت دادوستد با {a1}', { a1: pName })}
+                      aria-label={tx('ثبت دادوستد با {a1}', { a1: pName })}
                     >
                       <Icon name="plus" size={16} stroke={2.4} />
                     </button>
@@ -344,7 +329,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
         <SettleSheet
           exchange={settling}
           settlements={settlements.filter((s) => s.exchangeId === settling.id)}
-          personName={nameOf.get(settling.personId) ?? 'طرف حساب'}
+          personName={nameOf.get(settling.personId) ?? tx('طرف حساب')}
           onClose={() => setSettling(null)}
         />
       )}

@@ -1,4 +1,5 @@
 import { fa } from './cal';
+import { tx, tk } from './i18n';
 import { RATING_CRITERIA, type Rating, type RatingCriterion } from './db';
 
 /**
@@ -10,22 +11,22 @@ export { RATING_CRITERIA };
 
 /** Persian labels for the six fixed criteria (section 5). Not settings, not user-editable in the MVP. */
 export const CRITERION_LABEL: Record<RatingCriterion, string> = {
-  trustworthiness: 'قابل‌اعتماد بودن',
-  punctuality: 'وقت‌شناسی',
-  manner: 'رفتار',
-  responsibility: 'مسئولیت‌پذیری',
-  negotiation: 'مذاکره',
-  responsiveness: 'پاسخ‌دهی',
+  trustworthiness: tk('قابل‌اعتماد بودن'),
+  punctuality: tk('وقت‌شناسی'),
+  manner: tk('رفتار'),
+  responsibility: tk('مسئولیت‌پذیری'),
+  negotiation: tk('مذاکره'),
+  responsiveness: tk('پاسخ‌دهی'),
 };
 
 /** One-line hint per criterion, so the user knows what they are scoring. */
 export const CRITERION_HINT: Record<RatingCriterion, string> = {
-  trustworthiness: 'حرف و قرارش را نگه می‌دارد؟',
-  punctuality: 'سر وقت می‌آید و کار را می‌رساند؟',
-  manner: 'برخوردش چطور است؟',
-  responsibility: 'کار را تا آخر می‌برد؟',
-  negotiation: 'در چانه‌زنی و توافق چطور است؟',
-  responsiveness: 'چقدر جواب می‌دهد و در دسترس است؟',
+  trustworthiness: tk('حرف و قرارش را نگه می‌دارد؟'),
+  punctuality: tk('سر وقت می‌آید و کار را می‌رساند؟'),
+  manner: tk('برخوردش چطور است؟'),
+  responsibility: tk('کار را تا آخر می‌برد؟'),
+  negotiation: tk('در چانه‌زنی و توافق چطور است؟'),
+  responsiveness: tk('چقدر جواب می‌دهد و در دسترس است؟'),
 };
 
 export const SCORES = [1, 2, 3, 4, 5] as const;
@@ -70,4 +71,4 @@ export function newRating(input: { personId: string; criterion: RatingCriterion;
 }
 
 /** Score as stars for display: "۴ از ۵". */
-export const scoreText = (score: number) => `${fa(score)} از ۵`;
+export const scoreText = (score: number) => tx('{a1} از ۵', { a1: fa(score) });

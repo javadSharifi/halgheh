@@ -10,6 +10,7 @@ import { taskReminders } from './reminders';
 import { listTodos } from './todoFilters';
 import { importAll } from './db';
 import { base64ToBytes, bytesToBase64, makeZip, readZip } from './zip';
+import { tx } from './i18n';
 
 export const isNative = Capacitor.isNativePlatform();
 
@@ -80,7 +81,7 @@ async function push({ remind }: NativePrefs) {
   }
   if (!planned.length) return;
 
-  await LocalNotifications.createChannel({ id: 'reminders', name: 'یادآوری', importance: 3 });
+  await LocalNotifications.createChannel({ id: 'reminders', name: tx('یادآوری'), importance: 3 });
   await LocalNotifications.schedule({
     notifications: planned.map(({ at, ...n }) => ({
       ...n,
@@ -103,14 +104,14 @@ export async function syncWidget() {
 
     const weekday = label(t, 'persian', 0, { weekday: 'long' });
     const dayMonth = label(t, 'persian', 0, { day: 'numeric', month: 'long' });
-    const fullDate = `${weekday}، ${dayMonth}`;
+    const fullDate = tx('{a1}، {a2}', { a1: weekday, a2: dayMonth });
 
-    let summary = 'کارهای امروز';
+    let summary = tx('کارهای امروز');
     if (todays.length > 0) {
       if (openTasks.length === 0) {
-        summary = 'همهٔ کارهای امروز انجام شدند!';
+        summary = tx('همهٔ کارهای امروز انجام شدند!');
       } else {
-        summary = `${fa(openTasks.length)} کار باقی‌مانده از ${fa(todays.length)} کار`;
+        summary = tx('{a1} کار باقی‌مانده از {a2} کار', { a1: fa(openTasks.length), a2: fa(todays.length) });
       }
     }
 
@@ -160,7 +161,7 @@ export async function shareBackup() {
     directory: Directory.Cache,
     encoding: Encoding.UTF8,
   });
-  await Share.share({ title: 'پشتیبان حلقه', url: uri });
+  await Share.share({ title: tx('پشتیبان حلقه'), url: uri });
 }
 
 /**
@@ -200,7 +201,7 @@ export async function shareBackupZip(): Promise<{ photos: number; missing: numbe
   const name = `halgheh-backup-${today()}.zip`;
   if (isNative) {
     const { uri } = await Filesystem.writeFile({ path: name, data: base64, directory: Directory.Cache });
-    await Share.share({ title: 'پشتیبان حلقه', url: uri });
+    await Share.share({ title: tx('پشتیبان حلقه'), url: uri });
   } else {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

@@ -5,6 +5,7 @@ import { Icon } from '../Icon';
 import { BalanceChips } from '../ledger/ExchangeItem';
 import { money } from '../ledger/shared';
 import { STR } from '../strings/rulebook';
+import { tx } from '../i18n';
 
 /** Tab 4: open exchanges with this person, the brief entry, and their photos. */
 export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls, openLedger, openBrief, onExchange }: {
@@ -25,16 +26,16 @@ export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls,
     <div className="tab-pane">
       <section>
         <div className="section-head">
-          <h2>دادوستد</h2>
-          <button className="text-btn" onClick={() => onExchange('new')}><Icon name="plus" size={14} stroke={2.4} />{STR.ledger.quickAdd}</button>
+          <h2>{tx('دادوستد')}</h2>
+          <button className="text-btn" onClick={() => onExchange('new')}><Icon name="plus" size={14} stroke={2.4} />{tx(STR.ledger.quickAdd)}</button>
         </div>
         {myBalance ? (
           <div className="pp-balance">
             <BalanceChips earn={myBalance.earn} owe={myBalance.owe} />
-            <small className="hint">{STR.ledger.moneyOnlyChip}</small>
+            <small className="hint">{tx(STR.ledger.moneyOnlyChip)}</small>
           </div>
         ) : (
-          <p className="hint">{STR.ledger.nothingForPerson}</p>
+          <p className="hint">{tx(STR.ledger.nothingForPerson)}</p>
         )}
         {openExchanges.length > 0 && (
           <div className="glass set-list">
@@ -46,7 +47,7 @@ export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls,
                 <span className="set-name">
                   {e.title}
                   <small className="set-sub">
-                    {STR.ledger[e.direction]}
+                    {tx(STR.ledger[e.direction])}
                     {e.kind === 'money' && e.amount !== undefined ? ` · ${money(e.amount)}` : ''}
                     {e.dueOn ? ` · ${dueText(e.dueOn, today(), fa)}` : ''}
                   </small>
@@ -56,26 +57,26 @@ export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls,
             ))}
           </div>
         )}
-        <button className="text-btn pp-ledger" onClick={openLedger}>{STR.ledger.title}</button>
+        <button className="text-btn pp-ledger" onClick={openLedger}>{tx(STR.ledger.title)}</button>
       </section>
 
       <section>
         <div className="section-head">
-          <h2>{STR.brief.title}</h2>
-          <button className="pill-btn" onClick={openBrief}><Icon name="note" size={15} stroke={2.2} />{STR.brief.entry}</button>
+          <h2>{tx(STR.brief.title)}</h2>
+          <button className="pill-btn" onClick={openBrief}><Icon name="note" size={15} stroke={2.2} />{tx(STR.brief.entry)}</button>
         </div>
-        <p className="hint">{STR.brief.readOnly}</p>
+        <p className="hint">{tx(STR.brief.readOnly)}</p>
       </section>
 
       <section>
         <div className="section-head">
-          <h2>عکس‌ها</h2>
-          <span className="hint">{photos.length ? `${fa(photos.length)} عکس` : ''}</span>
+          <h2>{tx('عکس‌ها')}</h2>
+          <span className="hint">{photos.length ? tx('{a1} عکس', { a1: fa(photos.length) }) : ''}</span>
         </div>
         {photos.length === 0 ? (
           <div className="glass empty-state small">
-            <b>عکسی به او وصل نیست</b>
-            <p className="hint">در گالری، هنگام ویرایش عکس، این فرد را انتخاب کن.</p>
+            <b>{tx('عکسی به او وصل نیست')}</b>
+            <p className="hint">{tx('در گالری، هنگام ویرایش عکس، این فرد را انتخاب کن.')}</p>
           </div>
         ) : (
           <div className="photo-grid person-photos">
@@ -93,9 +94,9 @@ export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls,
       </section>
 
       <section>
-        <h2 className="sec-title">بعداً</h2>
+        <h2 className="sec-title">{tx('بعداً')}</h2>
         <div className="glass set-list">
-          <div className="soon-row"><span className="tile purple" aria-hidden="true"><Icon name="image" size={16} stroke={1.9} /></span><span>عکس‌ها</span><em>G2</em></div>
+          <div className="soon-row"><span className="tile purple" aria-hidden="true"><Icon name="image" size={16} stroke={1.9} /></span><span>{tx('عکس‌ها')}</span><em>G2</em></div>
         </div>
       </section>
     </div>

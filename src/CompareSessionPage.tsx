@@ -10,9 +10,10 @@ import { addItem, deleteItem, deleteSession, itemsOf, saveItem, setCheck } from 
 import { differences as differencesOf, orderItems as orderByRules, parsePrice, statsFor, strictFailures, uncheckedCount } from './domain/compare';
 import { Toggle } from './Toggle';
 import type { CheckState } from './domain/rules/constants';
+import { tx } from './i18n';
 
 /** Formats a price in Toman with Persian digits; a missing price is "ثبت نشده"-style silence, never a zero. */
-export const priceText = (price: number | undefined) => (price === undefined ? '' : `${fa(price)} ${STR.compare.priceUnit}`);
+export const priceText = (price: number | undefined) => (price === undefined ? '' : `${fa(price)} ${tx(STR.compare.priceUnit)}`);
 
 /**
  * Phase 5: the comparison session. Items, their counts, the quick-check walk, the matrix, the two-item comparison and the
@@ -54,11 +55,11 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
     return (
       <>
         <header className="dd-head">
-          <button className="icon-btn" aria-label={STR.feature.close} onClick={onBack}><Icon name="chevronRight" /></button>
-          <span>{STR.compare.title}</span>
+          <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onBack}><Icon name="chevronRight" /></button>
+          <span>{tx(STR.compare.title)}</span>
           <span className="head-spacer" />
         </header>
-        <p className="hint">{STR.compare.noSessions}</p>
+        <p className="hint">{tx(STR.compare.noSessions)}</p>
       </>
     );
   }
@@ -75,16 +76,16 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
   };
 
   const removeItem = async (item: CompareItem) => {
-    const ok = await ask({ title: STR.compare.deleteItemTitle(item.name), message: STR.compare.deleteItemBody, confirm: STR.feature.delete, icon: 'trash' });
+    const ok = await ask({ title: tx(STR.compare.deleteItemTitle(item.name)), message: tx(STR.compare.deleteItemBody), confirm: tx(STR.feature.delete), icon: 'trash' });
     if (ok) await deleteItem(item);
   };
 
   return (
     <>
       <header className="dd-head">
-        <button className="icon-btn" aria-label={STR.feature.close} onClick={onBack}><Icon name="chevronRight" /></button>
+        <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onBack}><Icon name="chevronRight" /></button>
         <span>{session.title}</span>
-        <button className="icon-btn" aria-label={STR.compare.matrix} onClick={() => setMatrix(true)}><Icon name="toolbox" size={19} stroke={1.9} /></button>
+        <button className="icon-btn" aria-label={tx(STR.compare.matrix)} onClick={() => setMatrix(true)}><Icon name="toolbox" size={19} stroke={1.9} /></button>
       </header>
 
       {session.status === 'decided' && chosen && (
@@ -92,9 +93,9 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={20} stroke={1.9} /></span>
           <div>
             <b>{chosen.name}</b>
-            <span className="set-sub">{STR.compare.chosen}{session.decisionNote ? ` · ${session.decisionNote}` : ''}</span>
+            <span className="set-sub">{tx(STR.compare.chosen)}{session.decisionNote ? ` · ${session.decisionNote}` : ''}</span>
           </div>
-          <button className="text-btn" onClick={async () => { const { reopen } = await import('./ruleData'); await reopen(session); }}>{STR.compare.reopen}</button>
+          <button className="text-btn" onClick={async () => { const { reopen } = await import('./ruleData'); await reopen(session); }}>{tx(STR.compare.reopen)}</button>
         </section>
       )}
 
@@ -104,17 +105,17 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
           <input
             value={quickName}
             maxLength={120}
-            placeholder={STR.compare.itemNamePlaceholder}
-            aria-label={STR.compare.addItem}
+            placeholder={tx(STR.compare.itemNamePlaceholder)}
+            aria-label={tx(STR.compare.addItem)}
             onChange={(e) => setQuickName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void addQuick(); }}
             enterKeyHint="done"
           />
         </label>
-        <button className="mini-btn" disabled={!quickName.trim()} onClick={() => void addQuick()}>{STR.compare.addItem}</button>
+        <button className="mini-btn" disabled={!quickName.trim()} onClick={() => void addQuick()}>{tx(STR.compare.addItem)}</button>
       </section>
 
-      {ordered.length === 0 && <p className="hint empty">{STR.compare.noItems}</p>}
+      {ordered.length === 0 && <p className="hint empty">{tx(STR.compare.noItems)}</p>}
 
       <div className="glass compare-list">
         {ordered.map((item) => {
@@ -128,22 +129,22 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
                   {[item.shopName, priceText(item.price), item.seenOn !== today() ? label(item.seenOn, 'persian', 0, { day: 'numeric', month: 'long' }) : ''].filter(Boolean).join(' · ')}
                 </span>
                 <span className="ci-counts">
-                  <em className="ci-pass"><Icon name="check" size={12} stroke={3} />{STR.compare.checkedOf(st.pass, st.total)}</em>
-                  {st.fail > 0 && <em className="ci-fail"><Icon name="close" size={12} stroke={3} />{STR.compare.failedCount(st.fail)}</em>}
-                  {st.unknown > 0 && <em className="ci-unknown"><Icon name="info" size={12} stroke={2.2} />{STR.compare.unknownCount(st.unknown)}</em>}
+                  <em className="ci-pass"><Icon name="check" size={12} stroke={3} />{tx(STR.compare.checkedOf(st.pass, st.total))}</em>
+                  {st.fail > 0 && <em className="ci-fail"><Icon name="close" size={12} stroke={3} />{tx(STR.compare.failedCount(st.fail))}</em>}
+                  {st.unknown > 0 && <em className="ci-unknown"><Icon name="info" size={12} stroke={2.2} />{tx(STR.compare.unknownCount(st.unknown))}</em>}
                 </span>
                 {strict.length > 0 && (
-                  <span className="ci-strict"><Icon name="target" size={12} stroke={2.2} />{STR.compare.strictFail}</span>
+                  <span className="ci-strict"><Icon name="target" size={12} stroke={2.2} />{tx(STR.compare.strictFail)}</span>
                 )}
               </button>
               <div className="ci-actions">
-                <button className="icon-btn small" aria-label={`${STR.compare.checkMode}: ${item.name}`} onClick={() => onOpenCheck(item.id)}>
+                <button className="icon-btn small" aria-label={`${tx(STR.compare.checkMode)}: ${item.name}`} onClick={() => onOpenCheck(item.id)}>
                   <Icon name="listChecks" size={17} stroke={1.9} />
                 </button>
-                <button className="icon-btn small" aria-label={`${STR.compare.decide}: ${item.name}`} onClick={() => setDecideFor(item)}>
+                <button className="icon-btn small" aria-label={`${tx(STR.compare.decide)}: ${item.name}`} onClick={() => setDecideFor(item)}>
                   <Icon name="target" size={17} stroke={1.9} />
                 </button>
-                <button className="icon-btn small danger" aria-label={`${STR.feature.delete} ${item.name}`} onClick={() => void removeItem(item)}>
+                <button className="icon-btn small danger" aria-label={`${tx(STR.feature.delete)} ${item.name}`} onClick={() => void removeItem(item)}>
                   <Icon name="trash" size={16} stroke={2} />
                 </button>
               </div>
@@ -153,11 +154,11 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
       </div>
 
       <div className="set-actions compare-actions">
-        <button disabled={mine.length < 2} onClick={() => setTwo(true)}><Icon name="contrast" size={17} stroke={1.9} />{STR.compare.compareTwo}</button>
+        <button disabled={mine.length < 2} onClick={() => setTwo(true)}><Icon name="contrast" size={17} stroke={1.9} />{tx(STR.compare.compareTwo)}</button>
         <button className="danger-btn" onClick={async () => {
-          const ok = await ask({ title: STR.compare.deleteSessionTitle(session.title), message: STR.compare.deleteSessionBody, confirm: STR.feature.delete, icon: 'trash' });
+          const ok = await ask({ title: tx(STR.compare.deleteSessionTitle(session.title)), message: tx(STR.compare.deleteSessionBody), confirm: tx(STR.feature.delete), icon: 'trash' });
           if (ok) { await deleteSession(session); onBack(); }
-        }}><Icon name="trash" size={16} stroke={2} />{STR.feature.delete}</button>
+        }}><Icon name="trash" size={16} stroke={2} />{tx(STR.feature.delete)}</button>
       </div>
 
       {changesHint(rulesOf.length)}
@@ -182,7 +183,7 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
 
 function changesHint(ruleCount: number) {
   if (ruleCount > 0) return null;
-  return <p className="hint">{STR.compare.noRules}</p>;
+  return <p className="hint">{tx(STR.compare.noRules)}</p>;
 }
 
 /** Item details: name, shop, price, seen-on date and note. The quick-check entry lives here too. */
@@ -217,7 +218,7 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
       else await addItem(session, patch);
       onClose();
     } catch {
-      setErr(STR.feature.saveFailed);
+      setErr(tx(STR.feature.saveFailed));
       setBusy(false);
     }
   };
@@ -227,32 +228,32 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet item-sheet" role="dialog" aria-modal="true" aria-labelledby="item-sheet-title">
         <div className="bf-head">
-          <span id="item-sheet-title">{item ? STR.compare.itemDetails : STR.compare.addItem}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
+          <span id="item-sheet-title">{item ? tx(STR.compare.itemDetails) : tx(STR.compare.addItem)}</span>
+          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
 
         <label className={`bf-name${!valid && v.name !== '' ? ' bad' : ''}`}>
-          <span>{STR.feature.ruleTitle}</span>
-          <input autoFocus value={v.name} maxLength={120} onChange={(e) => set({ name: e.target.value })} placeholder={STR.compare.itemNamePlaceholder} enterKeyHint="done" />
+          <span>{tx(STR.feature.ruleTitle)}</span>
+          <input autoFocus value={v.name} maxLength={120} onChange={(e) => set({ name: e.target.value })} placeholder={tx(STR.compare.itemNamePlaceholder)} enterKeyHint="done" />
         </label>
 
         <label className="bf-name">
-          <span>{STR.compare.shop} ({STR.compare.optional})</span>
+          <span>{tx(STR.compare.shop)} ({tx(STR.compare.optional)})</span>
           <input value={v.shopName} maxLength={80} onChange={(e) => set({ shopName: e.target.value })} />
         </label>
 
         <div className="rf-row">
           <span className="tile peach" aria-hidden="true"><Icon name="tag" size={17} stroke={1.9} /></span>
-          <span className="rf-name">{STR.compare.price}</span>
+          <span className="rf-name">{tx(STR.compare.price)}</span>
           <span className="rf-value">
-            <input className="price-input" dir="ltr" inputMode="numeric" value={v.price} onChange={(e) => set({ price: e.target.value })} aria-label={STR.compare.price} placeholder="0" />
-            <em className="price-unit">{STR.compare.priceUnit}</em>
+            <input className="price-input" dir="ltr" inputMode="numeric" value={v.price} onChange={(e) => set({ price: e.target.value })} aria-label={tx(STR.compare.price)} placeholder="0" />
+            <em className="price-unit">{tx(STR.compare.priceUnit)}</em>
           </span>
         </div>
 
         <div className="rf-row">
           <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
-          <span className="rf-name">{STR.compare.seenOn}</span>
+          <span className="rf-name">{tx(STR.compare.seenOn)}</span>
           <button type="button" className="rf-value as-text" onClick={() => setPicking(true)}>
             {label(v.seenOn, 'persian', 0, { day: 'numeric', month: 'long' })}
             <Icon name="chevronLeft" size={16} stroke={2} />
@@ -260,20 +261,20 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
         </div>
 
         <label className="bf-name bf-name-top">
-          <span>{STR.compare.note} ({STR.compare.optional})</span>
+          <span>{tx(STR.compare.note)} ({tx(STR.compare.optional)})</span>
           <textarea className="rf-text" value={v.note} maxLength={1000} onChange={(e) => set({ note: e.target.value })} />
         </label>
 
         {err && <p className="form-error" role="alert">{err}</p>}
 
         <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? 'در حال ذخیره…' : STR.feature.save}
+          <Icon name="check" size={18} stroke={2.4} />{busy ? tx('در حال ذخیره…') : tx(STR.feature.save)}
         </button>
 
         {item && (
           <button className="text-btn item-check-link" onClick={() => onCheck(item.id)}>
             <Icon name="listChecks" size={15} stroke={1.9} />
-            {STR.compare.checkMode} · {STR.compare.checkProgress(rules.length - uncheckedCount(item.id, rules, checks), rules.length)}
+            {tx(STR.compare.checkMode)} · {tx(STR.compare.checkProgress(rules.length - uncheckedCount(item.id, rules, checks), rules.length))}
           </button>
         )}
       </section>
@@ -284,7 +285,7 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
 
 const stateIcon = (s: CheckState) => (s === 'pass' ? 'check' : s === 'fail' ? 'close' : 'info');
 const stateClass = (s: CheckState) => (s === 'pass' ? 'pass' : s === 'fail' ? 'fail' : 'unknown');
-const stateLabel = (s: CheckState) => (s === 'pass' ? STR.compare.pass : s === 'fail' ? STR.compare.fail : STR.compare.unknown);
+const stateLabel = (s: CheckState) => (s === 'pass' ? tx(STR.compare.pass) : s === 'fail' ? tx(STR.compare.fail) : tx(STR.compare.unknown));
 /** The matrix's tap order. `unknown` is a real state, so it is reachable in the cycle instead of being skipped. */
 const nextState = (s: CheckState): CheckState => (s === 'pass' ? 'fail' : s === 'fail' ? 'unknown' : 'pass');
 
@@ -301,15 +302,15 @@ function MatrixSheet({ session, items, rules, checks, onClose }: {
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet matrix-sheet" role="dialog" aria-modal="true" aria-labelledby="matrix-title">
         <div className="bf-head">
-          <span id="matrix-title">{STR.compare.matrixTitle}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
+          <span id="matrix-title">{tx(STR.compare.matrixTitle)}</span>
+          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
 
-        <div className="matrix-wrap" role="group" aria-label={STR.compare.matrixTitle} tabIndex={0}>
+        <div className="matrix-wrap" role="group" aria-label={tx(STR.compare.matrixTitle)} tabIndex={0}>
           <table className="matrix">
             <thead>
               <tr>
-                <th className="mx-rule-col" scope="col">{STR.feature.ruleTitle}</th>
+                <th className="mx-rule-col" scope="col">{tx(STR.feature.ruleTitle)}</th>
                 {items.map((it) => <th key={it.id} scope="col" title={it.name}>{it.name}</th>)}
               </tr>
             </thead>
@@ -318,7 +319,7 @@ function MatrixSheet({ session, items, rules, checks, onClose }: {
                 <tr key={rule.id}>
                   <th scope="row" className="mx-rule-col">
                     {rule.title}
-                    {rule.strict && <em className="rule-chip strict">{STR.feature.strict}</em>}
+                    {rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}
                   </th>
                   {items.map((it) => {
                     const c = checks.find((x) => x.itemId === it.id && x.ruleId === rule.id);
@@ -329,7 +330,7 @@ function MatrixSheet({ session, items, rules, checks, onClose }: {
                       <td key={it.id}>
                         <button
                           className={`mx-state ${stateClass(s)}`}
-                          aria-label={`${it.name}، ${rule.title}: ${stateLabel(s)}`}
+                          aria-label={tx('{a1}، {a2}: {a3}', { a1: it.name, a2: rule.title, a3: stateLabel(s) })}
                           title={stateLabel(s)}
                           onClick={() => void setCheck(it.id, rule.id, nextState(s))}
                         >
@@ -343,14 +344,14 @@ function MatrixSheet({ session, items, rules, checks, onClose }: {
             </tbody>
             <tfoot>
               <tr>
-                <th scope="row" className="mx-rule-col">{STR.compare.matrixSummary}</th>
+                <th scope="row" className="mx-rule-col">{tx(STR.compare.matrixSummary)}</th>
                 {items.map((it) => {
                   const st = statsFor(it.id, rules, checks);
                   return (
                     <td key={it.id} className="mx-sum">
                       <b>{fa(st.pass)}</b>
-                      <span>{STR.compare.failedCount(st.fail)}</span>
-                      <span>{STR.compare.unknownCount(st.unknown)}</span>
+                      <span>{tx(STR.compare.failedCount(st.fail))}</span>
+                      <span>{tx(STR.compare.unknownCount(st.unknown))}</span>
                     </td>
                   );
                 })}
@@ -358,8 +359,8 @@ function MatrixSheet({ session, items, rules, checks, onClose }: {
             </tfoot>
           </table>
         </div>
-        <p className="hint matrix-hint">{STR.compare.unknownNotZero}</p>
-        <p className="hint matrix-hint">{STR.compare.archivedHidden}</p>
+        <p className="hint matrix-hint">{tx(STR.compare.unknownNotZero)}</p>
+        <p className="hint matrix-hint">{tx(STR.compare.archivedHidden)}</p>
       </section>
     </>
   );
@@ -386,12 +387,12 @@ function TwoSheet({ items, rules, checks, onClose }: {
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet two-sheet" role="dialog" aria-modal="true" aria-labelledby="two-title">
         <div className="bf-head">
-          <span id="two-title">{STR.compare.compareTwoTitle}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
+          <span id="two-title">{tx(STR.compare.compareTwoTitle)}</span>
+          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
 
         <div className="two-pickers">
-          {[{ label: STR.compare.columnA, value: aId, set: setAId }, { label: STR.compare.columnB, value: bId, set: setBId }].map(({ label, value, set }) => (
+          {[{ label: tx(STR.compare.columnA), value: aId, set: setAId }, { label: tx(STR.compare.columnB), value: bId, set: setBId }].map(({ label, value, set }) => (
             <label key={label} className="two-pick">
               <span>{label}</span>
               <select value={value} onChange={(e) => set(e.target.value)} aria-label={label}>
@@ -403,36 +404,36 @@ function TwoSheet({ items, rules, checks, onClose }: {
 
         <div className="rf-row">
           <span className="tile blue" aria-hidden="true"><Icon name="contrast" size={17} stroke={1.9} /></span>
-          <span className="rf-name">{STR.compare.onlyDiff}</span>
-          <Toggle on={onlyDiff} label={STR.compare.onlyDiff} onChange={setOnlyDiff} />
+          <span className="rf-name">{tx(STR.compare.onlyDiff)}</span>
+          <Toggle on={onlyDiff} label={tx(STR.compare.onlyDiff)} onChange={setOnlyDiff} />
         </div>
 
         {stA && stB && (
           <div className="two-heads">
             <div className="two-head">
               <b>{a?.name}</b>
-              <span>{STR.compare.checkedOf(stA.pass, stA.total)} · {STR.compare.failedCount(stA.fail)} · {STR.compare.unknownCount(stA.unknown)}</span>
+              <span>{tx(STR.compare.checkedOf(stA.pass, stA.total))} · {tx(STR.compare.failedCount(stA.fail))} · {tx(STR.compare.unknownCount(stA.unknown))}</span>
               {a?.price !== undefined && <span>{priceText(a.price)}</span>}
             </div>
             <div className="two-head">
               <b>{b?.name}</b>
-              <span>{STR.compare.checkedOf(stB.pass, stB.total)} · {STR.compare.failedCount(stB.fail)} · {STR.compare.unknownCount(stB.unknown)}</span>
+              <span>{tx(STR.compare.checkedOf(stB.pass, stB.total))} · {tx(STR.compare.failedCount(stB.fail))} · {tx(STR.compare.unknownCount(stB.unknown))}</span>
               {b?.price !== undefined && <span>{priceText(b.price)}</span>}
             </div>
           </div>
         )}
 
         {diffs.length === 0 ? (
-          <p className="hint">{STR.compare.noDiff}</p>
+          <p className="hint">{tx(STR.compare.noDiff)}</p>
         ) : (
           <div className="two-list">
             {diffs.map(({ rule, a: sa, b: sb }) => (
               <div key={rule.id} className="two-row">
-                <span className="two-rule">{rule.title}{rule.strict && <em className="rule-chip strict">{STR.feature.strict}</em>}</span>
-                <span className={`mx-state ${stateClass(sa)}`} aria-label={`${a?.name}: ${STR.compare[sa === 'pass' ? 'pass' : sa === 'fail' ? 'fail' : 'unknown']}`}>
+                <span className="two-rule">{rule.title}{rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}</span>
+                <span className={`mx-state ${stateClass(sa)}`} aria-label={`${a?.name}: ${tx(STR.compare[sa === 'pass' ? 'pass' : sa === 'fail' ? 'fail' : 'unknown'])}`}>
                   <Icon name={stateIcon(sa)} size={15} stroke={2.4} />
                 </span>
-                <span className={`mx-state ${stateClass(sb)}`} aria-label={`${b?.name}: ${STR.compare[sb === 'pass' ? 'pass' : sb === 'fail' ? 'fail' : 'unknown']}`}>
+                <span className={`mx-state ${stateClass(sb)}`} aria-label={`${b?.name}: ${tx(STR.compare[sb === 'pass' ? 'pass' : sb === 'fail' ? 'fail' : 'unknown'])}`}>
                   <Icon name={stateIcon(sb)} size={15} stroke={2.4} />
                 </span>
               </div>
@@ -465,16 +466,16 @@ function DecideSheet({ session, item, onClose }: { session: CompareSession; item
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="decide-title">
         <div className="bf-head">
-          <span id="decide-title">{STR.compare.decide}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
+          <span id="decide-title">{tx(STR.compare.decide)}</span>
+          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
         <p className="hint">{item.name}</p>
         <label className="bf-name bf-name-top">
-          <span>{STR.compare.decisionNote}</span>
-          <textarea className="rf-text" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder={STR.compare.decisionNotePlaceholder} />
+          <span>{tx(STR.compare.decisionNote)}</span>
+          <textarea className="rf-text" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder={tx(STR.compare.decisionNotePlaceholder)} />
         </label>
         <button className="primary" disabled={busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />{STR.compare.decide}
+          <Icon name="check" size={18} stroke={2.4} />{tx(STR.compare.decide)}
         </button>
       </section>
     </>

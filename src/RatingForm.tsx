@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import { DatePicker } from './DatePicker';
 import { CRITERION_HINT, CRITERION_LABEL, SCORES, currentOf, historyOf, newRating, scoreText } from './ratings';
 import type { RatingCriterion } from './db';
+import { tx } from './i18n';
 
 /**
  * Rate one criterion for one person (R2). Saving appends a new event: it never edits the previous one, so the history
@@ -34,13 +35,13 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
       await put('ratings', newRating({ personId, criterion, score, note, ratedAt }, uid()));
       onClose();
     } catch {
-      setErr('ذخیره نشد؛ دوباره تلاش کن.');
+      setErr(tx('ذخیره نشد؛ دوباره تلاش کن.'));
       setBusy(false);
     }
   };
 
   const removeOne = async (row: Rating) => {
-    if (!(await ask({ title: 'این ثبت حذف شود؟', message: 'فقط همین یک مورد از تاریخچه پاک می‌شود؛ بقیه می‌مانند.', confirm: 'حذف' }))) return;
+    if (!(await ask({ title: tx('این ثبت حذف شود؟'), message: tx('فقط همین یک مورد از تاریخچه پاک می‌شود؛ بقیه می‌مانند.'), confirm: tx('حذف') }))) return;
     await del('ratings', row.id);
   };
 
@@ -49,14 +50,14 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet rating-sheet" role="dialog" aria-modal="true" aria-labelledby="rating-title">
         <div className="bf-head">
-          <span id="rating-title">{CRITERION_LABEL[criterion]}</span>
-          <button className="text-btn" onClick={onClose}>بستن</button>
+          <span id="rating-title">{tx(CRITERION_LABEL[criterion])}</span>
+          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
         </div>
 
         <div className="pe-scroll">
-          <p className="hint pe-hint">{CRITERION_HINT[criterion]}</p>
+          <p className="hint pe-hint">{tx(CRITERION_HINT[criterion])}</p>
 
-          <div className="score-row" role="radiogroup" aria-label={`امتیاز ${CRITERION_LABEL[criterion]}`}>
+          <div className="score-row" role="radiogroup" aria-label={tx('امتیاز {a1}', { a1: tx(CRITERION_LABEL[criterion]) })}>
             {SCORES.map((s) => (
               <button
                 key={s}
@@ -71,17 +72,17 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
             ))}
           </div>
           <p className="hint pe-hint">
-            {current ? `امتیاز فعلی: ${scoreText(current.score)} — ثبت تازه امتیاز فعلی را عوض می‌کند، قبلی در تاریخچه می‌ماند.` : 'هنوز امتیازی برای این مورد ثبت نشده.'}
+            {current ? tx('امتیاز فعلی: {a1} — ثبت تازه امتیاز فعلی را عوض می‌کند، قبلی در تاریخچه می‌ماند.', { a1: scoreText(current.score) }) : tx('هنوز امتیازی برای این مورد ثبت نشده.')}
           </p>
 
           <label className="bf-name bf-name-top">
-            <span>یادداشت (اختیاری)</span>
-            <textarea className="rf-text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="چرا این امتیاز؟" maxLength={500} />
+            <span>{tx('یادداشت (اختیاری)')}</span>
+            <textarea className="rf-text" value={note} onChange={(e) => setNote(e.target.value)} placeholder={tx('چرا این امتیاز؟')} maxLength={500} />
           </label>
 
           <div className="rf-row">
             <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
-            <span className="rf-name">تاریخ</span>
+            <span className="rf-name">{tx('تاریخ')}</span>
             <button type="button" className="rf-value as-text" onClick={() => setPicking(true)}>
               {ratedAt}
               <Icon name="chevronLeft" size={16} stroke={2} />
@@ -90,7 +91,7 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
 
           {history.length > 0 && (
             <>
-              <p className="field-label">تاریخچهٔ این مورد</p>
+              <p className="field-label">{tx('تاریخچهٔ این مورد')}</p>
               <div className="rate-history">
                 {history.map((h) => (
                   <div key={h.id} className="rate-event">
@@ -99,7 +100,7 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
                       <b>{h.ratedAt}</b>
                       {h.note && <span>{h.note}</span>}
                     </span>
-                    <button className="icon-btn small" aria-label="حذف این ثبت" onClick={() => void removeOne(h)}><Icon name="close" size={15} stroke={2.2} /></button>
+                    <button className="icon-btn small" aria-label={tx('حذف این ثبت')} onClick={() => void removeOne(h)}><Icon name="close" size={15} stroke={2.2} /></button>
                   </div>
                 ))}
               </div>
@@ -111,7 +112,7 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
 
         <button className="primary" disabled={score < 1 || busy} onClick={() => void save()}>
           <Icon name="check" size={18} stroke={2.4} />
-          {busy ? 'در حال ذخیره…' : current ? 'ثبت امتیاز تازه' : 'ثبت امتیاز'}
+          {busy ? tx('در حال ذخیره…') : current ? tx('ثبت امتیاز تازه') : tx('ثبت امتیاز')}
         </button>
       </section>
       {picking && <DatePicker value={ratedAt} onPick={(d) => { setRatedAt(d); setPicking(false); }} onClose={() => setPicking(false)} />}

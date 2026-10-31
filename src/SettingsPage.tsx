@@ -11,9 +11,10 @@ import { DEFAULT_URL, getCfg } from './sync';
 import { PinFlow } from './Lock';
 import { setBio, useLock } from './lockStore';
 import { Toggle as Switch } from './Toggle';
+import { LANGS, tx, tk } from './i18n';
 
-const WEEK_STARTS: [WeekStart, string][] = [[6, 'شنبه'], [0, 'یکشنبه'], [1, 'دوشنبه']];
-const THEMES: [Theme, string, IconName][] = [['light', 'روشن', 'sun'], ['dark', 'تیره', 'moon'], ['auto', 'خودکار', 'contrast']];
+const WEEK_STARTS: [WeekStart, string][] = [[6, tk('شنبه')], [0, tk('یکشنبه')], [1, tk('دوشنبه')]];
+const THEMES: [Theme, string, IconName][] = [['light', tk('روشن'), 'sun'], ['dark', tk('تیره'), 'moon'], ['auto', tk('خودکار'), 'contrast']];
 
 function Row({ icon, tone, name, children }: { icon: IconName; tone: 'blue' | 'purple' | 'green'; name: string; children: React.ReactNode }) {
   return (
@@ -26,7 +27,7 @@ function Row({ icon, tone, name, children }: { icon: IconName; tone: 'blue' | 'p
 }
 
 export function SettingsPage({ openSync }: { openSync: () => void }) {
-  const { weekStart, theme, remind } = useSettings();
+  const { weekStart, theme, remind, lang } = useSettings();
   const lock = useLock();
   const [pinFlow, setPinFlow] = useState<'set' | 'change' | 'off' | null>(null);
   const [canBio, setCanBio] = useState(false);
@@ -37,12 +38,12 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
   const online = navigator.onLine;
 
   const toggleRemind = async (on: boolean) => {
-    if (on && !(await askNotifications())) return setMsg('اجازه نمایش اعلان داده نشد. از تنظیمات اندروید فعالش کنید.');
+    if (on && !(await askNotifications())) return setMsg(tx('اجازه نمایش اعلان داده نشد. از تنظیمات اندروید فعالش کنید.'));
     setMsg('');
     updateSettings({ remind: on });
   };
   const download = async () => {
-    if (isNative) return shareBackup().catch(() => setMsg('ساخت پشتیبان ناموفق بود.'));
+    if (isNative) return shareBackup().catch(() => setMsg(tx('ساخت پشتیبان ناموفق بود.')));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([await exportAll()], { type: 'application/json' }));
     a.download = `halgheh-backup-${new Date().toLocaleDateString('sv')}.json`;
@@ -55,13 +56,14 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
     setMsg('');
     try {
       const r = await shareBackupZip();
+      const bytes = formatBytes(r.bytes);
       setMsg(
-        `پشتیبان کامل ساخته شد: ${fa(r.photos)} عکس` +
-          (r.missing ? ` · ${fa(r.missing)} فایل روی این گوشی نبود` : '') +
-          ` · ${formatBytes(r.bytes)}`,
+        r.missing
+          ? tx('پشتیبان کامل ساخته شد: {a1} عکس · {a2} فایل روی این گوشی نبود · {a3}', { a1: fa(r.photos), a2: fa(r.missing), a3: bytes })
+          : tx('پشتیبان کامل ساخته شد: {a1} عکس · {a2}', { a1: fa(r.photos), a2: bytes }),
       );
     } catch {
-      setMsg('ساخت پشتیبان کامل ناموفق بود.');
+      setMsg(tx('ساخت پشتیبان کامل ناموفق بود.'));
     } finally {
       setZipBusy(false);
     }
@@ -72,37 +74,42 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
       // B3: one control for both formats; a .zip carries the photo files too
       if (file.name.toLowerCase().endsWith('.zip') || file.type.includes('zip')) {
         const r = await restoreBackupZip(file);
-        setMsg(`پشتیبان بازیابی شد${r.photos ? ` · ${fa(r.photos)} عکس` : ''}.`);
+        setMsg(r.photos ? tx('پشتیبان بازیابی شد · {a1} عکس.', { a1: fa(r.photos) }) : tx('پشتیبان بازیابی شد.'));
       } else {
         await importAll(await file.text());
-        setMsg('پشتیبان بازیابی شد.');
+        setMsg(tx('پشتیبان بازیابی شد.'));
       }
     } catch {
-      setMsg('فایل پشتیبان معتبر نیست.');
+      setMsg(tx('فایل پشتیبان معتبر نیست.'));
     }
   };
 
-  const syncStatus = !cfg ? 'غیرفعال' : !online ? `آفلاین${pending ? ` · ${fa(pending)} در صف` : ''}` : pending ? `${fa(pending)} در صف` : 'همگام شد';
+  const syncStatus = !cfg ? tx('غیرفعال') : !online ? (pending ? tx('آفلاین · {a1} در صف', { a1: fa(pending) }) : tx('آفلاین')) : pending ? tx('{a1} در صف', { a1: fa(pending) }) : tx('همگام شد');
   const syncTone = !cfg ? '' : !online || pending ? 'warn' : 'ok';
 
   return (
     <>
-      <div className="page-head"><h1>تنظیمات</h1></div>
+      <div className="page-head"><h1>{tx('تنظیمات')}</h1></div>
 
       <section>
-        <h2 className="sec-title">برنامه</h2>
+        <h2 className="sec-title">{tx('برنامه')}</h2>
         <div className="glass set-list">
-          <Row icon="alignLeft" tone="green" name="شروع هفته">
+          <Row icon="alignLeft" tone="green" name={tx('شروع هفته')}>
             <span className="set-value">{WEEK_STARTS.find(([v]) => v === weekStart)?.[1]}<Icon name="chevronLeft" size={16} stroke={2} />
-              <Choice className="pick-hit" label="شروع هفته" value={weekStart} options={WEEK_STARTS} onChange={(w) => updateSettings({ weekStart: w })} />
+              <Choice className="pick-hit" label={tx('شروع هفته')} value={weekStart} options={WEEK_STARTS} onChange={(w) => updateSettings({ weekStart: w })} />
+            </span>
+          </Row>
+          <Row icon="moreCircle" tone="blue" name={tx('زبان برنامه')}>
+            <span className="set-value">{LANGS.find(([v]) => v === lang)?.[1]}<Icon name="chevronLeft" size={16} stroke={2} />
+              <Choice className="pick-hit" label={tx('زبان برنامه')} value={lang} options={LANGS} onChange={(l) => updateSettings({ lang: l })} />
             </span>
           </Row>
         </div>
       </section>
 
       <section>
-        <h2 className="sec-title">ظاهر</h2>
-        <div className="glass theme-row" role="radiogroup" aria-label="پوسته">
+        <h2 className="sec-title">{tx('ظاهر')}</h2>
+        <div className="glass theme-row" role="radiogroup" aria-label={tx('پوسته')}>
           {THEMES.map(([k, n, icon]) => (
             <button key={k} role="radio" aria-checked={theme === k} className={theme === k ? 'on' : ''} onClick={() => updateSettings({ theme: k })}><Icon name={icon} size={18} stroke={1.9} />{n}</button>
           ))}
@@ -111,46 +118,46 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
 
       {isNative && (
         <section>
-          <h2 className="sec-title">اعلان‌ها</h2>
+          <h2 className="sec-title">{tx('اعلان‌ها')}</h2>
           <div className="glass set-list">
-            <Row icon="bell" tone="blue" name="یادآوری کارها و تولدها"><Switch on={remind} label="یادآوری کارها و تولدها" onChange={toggleRemind} /></Row>
+            <Row icon="bell" tone="blue" name={tx('یادآوری کارها و تولدها')}><Switch on={remind} label={tx('یادآوری کارها و تولدها')} onChange={toggleRemind} /></Row>
           </div>
         </section>
       )}
 
       <section>
-        <h2 className="sec-title">امنیت</h2>
+        <h2 className="sec-title">{tx('امنیت')}</h2>
         <div className="glass set-list">
-          <Row icon="lock" tone="purple" name="قفل برنامه"><Switch on={!!lock} label="قفل برنامه" onChange={(on) => setPinFlow(on ? 'set' : 'off')} /></Row>
+          <Row icon="lock" tone="purple" name={tx('قفل برنامه')}><Switch on={!!lock} label={tx('قفل برنامه')} onChange={(on) => setPinFlow(on ? 'set' : 'off')} /></Row>
           {lock && (
             <>
               <button className="set-row as-btn" onClick={() => setPinFlow('change')}>
                 <span className="tile blue" aria-hidden="true"><Icon name="settings" size={17} stroke={1.9} /></span>
-                <span className="set-name">تغییر پین</span>
+                <span className="set-name">{tx('تغییر پین')}</span>
                 <Icon name="chevronLeft" size={16} stroke={2} />
               </button>
-              {canBio && <Row icon="smartphone" tone="green" name="باز کردن با اثر انگشت"><Switch on={lock.bio} label="باز کردن با اثر انگشت" onChange={setBio} /></Row>}
+              {canBio && <Row icon="smartphone" tone="green" name={tx('باز کردن با اثر انگشت')}><Switch on={lock.bio} label={tx('باز کردن با اثر انگشت')} onChange={setBio} /></Row>}
             </>
           )}
         </div>
-        <p className="hint set-msg">پین فقط روی همین گوشی می‌ماند. اگر فراموشش کنی راه بازیابی نیست، فقط پاک کردن دادهٔ برنامه.</p>
+        <p className="hint set-msg">{tx('پین فقط روی همین گوشی می‌ماند. اگر فراموشش کنی راه بازیابی نیست، فقط پاک کردن دادهٔ برنامه.')}</p>
       </section>
 
       <section>
-        <h2 className="sec-title">داده و همگام‌سازی</h2>
+        <h2 className="sec-title">{tx('داده و همگام‌سازی')}</h2>
         <div className="glass set-list">
           {DEFAULT_URL && (
             <button className="set-row as-btn" onClick={openSync}>
               <span className="tile blue" aria-hidden="true"><Icon name="refresh" size={17} stroke={1.9} /></span>
-              <span className="set-name">همگام‌سازی</span>
+              <span className="set-name">{tx('همگام‌سازی')}</span>
               <span className={`sync-state ${syncTone}`}><i />{syncStatus}</span>
               <Icon name="chevronLeft" size={16} stroke={2} />
             </button>
           )}
           <div className="set-actions">
-            <button onClick={() => void backupZip()} disabled={zipBusy}><Icon name="archive" size={18} stroke={1.9} />{zipBusy ? 'در حال ساخت…' : 'پشتیبان کامل (با عکس)'}</button>
-            <button onClick={download}><Icon name="download" size={18} stroke={1.9} />فقط داده (JSON)</button>
-            <label className="btn"><Icon name="upload" size={18} stroke={1.9} />بازیابی از فایل<input type="file" accept="application/json,.zip,application/zip" hidden onChange={(e) => upload(e.target.files?.[0])} /></label>
+            <button onClick={() => void backupZip()} disabled={zipBusy}><Icon name="archive" size={18} stroke={1.9} />{zipBusy ? tx('در حال ساخت…') : tx('پشتیبان کامل (با عکس)')}</button>
+            <button onClick={download}><Icon name="download" size={18} stroke={1.9} />{tx('فقط داده (JSON)')}</button>
+            <label className="btn"><Icon name="upload" size={18} stroke={1.9} />{tx('بازیابی از فایل')}<input type="file" accept="application/json,.zip,application/zip" hidden onChange={(e) => upload(e.target.files?.[0])} /></label>
           </div>
         </div>
         {msg && <p className="hint set-msg" role="status">{msg}</p>}

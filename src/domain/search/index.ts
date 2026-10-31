@@ -2,6 +2,7 @@ import type { Birthday, Exchange, Interaction, Person, PersonNote, PersonSkill, 
 import { nextOccurrence } from '../../format';
 import { normPhone } from '../../phone';
 import { normalize } from '../../search';
+import { tx } from '../../i18n';
 
 /**
  * Section 6 of TASKS.md, as pure functions with no UI and no Dexie import: build an index from rows, run a query over
@@ -118,7 +119,7 @@ export function buildIndex(s: Snap): Index {
   for (const n of s.notes) {
     const fields: string[] = [];
     push(fields, n.text);
-    docs.push({ kind: 'note', id: n.id, personId: n.personId, title: nameOf.get(n.personId) ?? 'یادداشت', fields });
+    docs.push({ kind: 'note', id: n.id, personId: n.personId, title: nameOf.get(n.personId) ?? tx('یادداشت'), fields });
   }
 
   for (const t of s.tasks) {

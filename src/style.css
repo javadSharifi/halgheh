@@ -1146,6 +1146,9 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .person-actions.foot .danger-btn { flex: 1; }
 
 /* ---- Person Editor Modern Dialog ---- */
+.pe-page { display: flex; flex-direction: column; }
+.pe-page .pe-header { position: sticky; top: 0; z-index: 2; }
+.pe-page .pe-content { overflow: visible; flex: none; padding: 14px 2px 24px; }
 .person-editor-sheet {
   position: fixed;
   z-index: 35;
@@ -1666,7 +1669,6 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 .cat-row .icon-btn.small svg { transform: rotate(180deg); }
 .cat-row .icon-btn.small:last-of-type svg { transform: none; }
 .cat-hint, .cat-count { margin: 4px 4px 0; }
-.more-gap { margin-top: 8px; }
 
 /* ---- rulebook review session (Phase 3) ---- */
 .review-invite { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 22px; margin-bottom: 14px; }

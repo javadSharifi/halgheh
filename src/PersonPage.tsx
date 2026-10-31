@@ -21,6 +21,7 @@ import { OverviewTab } from './person/OverviewTab';
 import { ActivityTab } from './person/ActivityTab';
 import { EvaluationTab } from './person/EvaluationTab';
 import { LedgerTab } from './person/LedgerTab';
+import { tx } from './i18n';
 
 export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
   id: string;
@@ -61,9 +62,9 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
   if (bundle === null) {
     return (
       <>
-        <div className="page-head"><h1>پیدا نشد</h1></div>
-        <p className="hint">این فرد پاک شده است.</p>
-        <button onClick={onBack}>بازگشت</button>
+        <div className="page-head"><h1>{tx('پیدا نشد')}</h1></div>
+        <p className="hint">{tx('این فرد پاک شده است.')}</p>
+        <button onClick={onBack}>{tx('بازگشت')}</button>
       </>
     );
   }
@@ -77,9 +78,9 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
 
   const remove = async () => {
     if (!(await ask({
-      title: `«${p.displayName}» حذف شود؟`,
-      message: 'یادداشت‌ها، تعامل‌ها، برچسب‌ها و تولدِ او هم پاک می‌شوند. این کار قابل بازگشت نیست؛ اگر فقط نمی‌خواهی در فهرست باشد، بایگانی کن.',
-      confirm: 'حذف',
+      title: tx('«{a1}» حذف شود؟', { a1: p.displayName }),
+      message: tx('یادداشت‌ها، تعامل‌ها، برچسب‌ها و تولدِ او هم پاک می‌شوند. این کار قابل بازگشت نیست؛ اگر فقط نمی‌خواهی در فهرست باشد، بایگانی کن.'),
+      confirm: tx('حذف'),
       icon: 'trash',
     }))) return;
     // everything hanging off the person goes with them; the birthday row is theirs too (only the profile links one)
@@ -109,25 +110,25 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
   return (
     <>
       <header className="dd-head">
-        <button className="icon-btn" aria-label="بازگشت" onClick={onBack}><Icon name="chevronRight" /></button>
-        <span>پروفایل مخاطب</span>
-        <button className="text-btn" aria-label="ویرایش پروفایل" onClick={() => setEditing(true)}>
+        <button className="icon-btn" aria-label={tx('بازگشت')} onClick={onBack}><Icon name="chevronRight" /></button>
+        <span>{tx('پروفایل مخاطب')}</span>
+        <button className="text-btn" aria-label={tx('ویرایش پروفایل')} onClick={() => setEditing(true)}>
           <Icon name="edit" size={16} stroke={2.2} />
-          <span>ویرایش</span>
+          <span>{tx('ویرایش')}</span>
         </button>
       </header>
 
       <PersonHero person={p} onEdit={() => setEditing(true)} openBrief={openBrief} />
 
       {/* نوار دسته‌بندی تب‌ها */}
-      <div className="profile-tabs" role="tablist" aria-label="دسته‌بندی‌های پروفایل">
+      <div className="profile-tabs" role="tablist" aria-label={tx('دسته‌بندی‌های پروفایل')}>
         <button
           role="tab"
           aria-selected={tab === 'overview'}
           className={`pt-tab${tab === 'overview' ? ' active' : ''}`}
           onClick={() => setTab('overview')}
         >
-          <span>اطلاعات</span>
+          <span>{tx('اطلاعات')}</span>
         </button>
         <button
           role="tab"
@@ -135,7 +136,7 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
           className={`pt-tab${tab === 'activity' ? ' active' : ''}`}
           onClick={() => setTab('activity')}
         >
-          <span>فعالیت</span>
+          <span>{tx('فعالیت')}</span>
           {(askedTasks.length + interactions.length) > 0 && (
             <span className="pt-badge">{fa(askedTasks.length + interactions.length)}</span>
           )}
@@ -146,7 +147,7 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
           className={`pt-tab${tab === 'evaluation' ? ' active' : ''}`}
           onClick={() => setTab('evaluation')}
         >
-          <span>ارزیابی</span>
+          <span>{tx('ارزیابی')}</span>
           {(mySkills.length + checks.length) > 0 && (
             <span className="pt-badge">{fa(mySkills.length + checks.length)}</span>
           )}
@@ -157,7 +158,7 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
           className={`pt-tab${tab === 'ledger' ? ' active' : ''}`}
           onClick={() => setTab('ledger')}
         >
-          <span>مالی و عکس</span>
+          <span>{tx('مالی و عکس')}</span>
           {(openExchanges.length + photos.length) > 0 && (
             <span className="pt-badge">{fa(openExchanges.length + photos.length)}</span>
           )}

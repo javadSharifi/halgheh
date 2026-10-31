@@ -6,16 +6,17 @@ import { Icon } from '../Icon';
 import { STR } from '../strings/rulebook';
 import { deleteExchange, reopenExchange } from '../ledgerData';
 import { dueText, isMoney, isOverdue, isSettled, remainingOf } from '../domain/ledger';
+import { tx } from '../i18n';
 
 /** Balance chips showing earn, owe and net */
 export function BalanceChips({ earn, owe }: { earn: number; owe: number }) {
   const net = earn - owe;
   return (
     <span className="balance-chips">
-      {earn > 0 && <em className="bal earn">طلب: {formatToman(earn)}</em>}
-      {owe > 0 && <em className="bal owe">بدهی: {formatToman(owe)}</em>}
+      {earn > 0 && <em className="bal earn">{tx('طلب: {a1}', { a1: formatToman(earn) })}</em>}
+      {owe > 0 && <em className="bal owe">{tx('بدهی: {a1}', { a1: formatToman(owe) })}</em>}
       <em className={`bal net${net === 0 ? ' zero' : net > 0 ? ' pos' : ' neg'}`}>
-        {net === 0 ? 'بی‌حساب' : `${net > 0 ? 'طلب خالص' : 'بدهی خالص'}: ${formatToman(Math.abs(net))}`}
+        {net === 0 ? tx('بی‌حساب') : tx('{a1}: {a2}', { a1: net > 0 ? tx('طلب خالص') : tx('بدهی خالص'), a2: formatToman(Math.abs(net)) })}
       </em>
     </span>
   );
@@ -76,22 +77,22 @@ export function ExchangeItem({
               />
               {isCash
                 ? exchange.direction === 'gave'
-                  ? 'طلب شما (دادید)'
-                  : 'بدهی شما (گرفتید)'
+                  ? tx('طلب شما (دادید)')
+                  : tx('بدهی شما (گرفتید)')
                 : exchange.kind === 'item'
-                ? 'امانت کالا'
-                : 'لطف و خدمت'}
+                ? tx('امانت کالا')
+                : tx('لطف و خدمت')}
             </span>
 
             {exchange.dueOn && !settled && (
               <span className={`ledger-item-due-badge ${overdue ? 'overdue' : ''}`}>
                 <Icon name="clock" size={12} stroke={2.2} />
                 {due}
-                {overdue ? ' (سررسید گذشته)' : ''}
+                {overdue ? tx('{a1} (سررسید گذشته)', { a1: due }) : due}
               </span>
             )}
 
-            {settled && <span className="ledger-item-settled-badge">تسویه شده</span>}
+            {settled && <span className="ledger-item-settled-badge">{tx('تسویه شده')}</span>}
           </div>
 
           {isCash && totalAmount > 0 && (
@@ -100,7 +101,7 @@ export function ExchangeItem({
                 {formatToman(totalAmount)}
               </b>
               {!settled && left !== undefined && left > 0 && left !== totalAmount && (
-                <small className="ledger-item-rem">باقیمانده: {formatToman(left)}</small>
+                <small className="ledger-item-rem">{tx('باقیمانده: {a1}', { a1: formatToman(left) })}</small>
               )}
             </div>
           )}
@@ -117,8 +118,8 @@ export function ExchangeItem({
               <i style={{ width: `${progressPercent}%` }} />
             </div>
             <div className="ledger-item-progress-labels">
-              <span>{formatToman(paidAmount)} پرداخت شده</span>
-              <span>{fa(progressPercent)}٪</span>
+              <span>{tx('{a1} پرداخت شده', { a1: formatToman(paidAmount) })}</span>
+              <span>{fa(progressPercent)}{tx('٪')}</span>
             </div>
           </div>
         )}
@@ -131,8 +132,8 @@ export function ExchangeItem({
         {settled ? (
           <button
             className="icon-btn small on"
-            title="بازگشایی مجدد دادوستد"
-            aria-label={`بازگشایی مجدد دادوستد: ${exchange.title}`}
+            title={tx('بازگشایی مجدد دادوستد')}
+            aria-label={tx('بازگشایی مجدد دادوستد: {a1}', { a1: exchange.title })}
             onClick={(e) => {
               e.stopPropagation();
               void reopenExchange(exchange);
@@ -143,22 +144,22 @@ export function ExchangeItem({
         ) : (
           <button
             className="icon-btn small ledger-settle-btn"
-            title="تسویه یا پرداخت"
-            aria-label={`تسویه یا پرداخت: ${exchange.title}`}
+            title={tx('تسویه یا پرداخت')}
+            aria-label={tx('تسویه یا پرداخت: {a1}', { a1: exchange.title })}
             onClick={(e) => {
               e.stopPropagation();
               onSettle();
             }}
           >
             <Icon name="checkCircle" size={16} stroke={2.2} />
-            <span className="ledger-btn-text-hide-sm">تسویه</span>
+            <span className="ledger-btn-text-hide-sm">{tx('تسویه')}</span>
           </button>
         )}
 
         <button
           className="icon-btn small"
-          title="ویرایش دادوستد"
-          aria-label={`ویرایش: ${exchange.title}`}
+          title={tx('ویرایش دادوستد')}
+          aria-label={tx('ویرایش: {a1}', { a1: exchange.title })}
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
@@ -169,15 +170,15 @@ export function ExchangeItem({
 
         <button
           className="icon-btn small danger"
-          title="حذف دادوستد"
-          aria-label={`حذف: ${exchange.title}`}
+          title={tx('حذف دادوستد')}
+          aria-label={tx('حذف: {a1}', { a1: exchange.title })}
           onClick={async (e) => {
             e.stopPropagation();
             if (
               await ask({
-                title: STR.ledger.deleteTitle,
-                message: STR.ledger.deleteBody,
-                confirm: STR.feature.delete,
+                title: tx(STR.ledger.deleteTitle),
+                message: tx(STR.ledger.deleteBody),
+                confirm: tx(STR.feature.delete),
                 icon: 'trash',
               })
             ) {

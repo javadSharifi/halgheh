@@ -1,4 +1,5 @@
 import type { Interaction, Person, PersonSkill, Rating, Relationship, Skill, Tag, PersonTag, PersonNote } from './db';
+import { locale, tx, tk } from './i18n';
 import { normalize } from './search';
 import { queryWords } from './domain/search';
 import { STATUS_RANK, type EvidenceStatus } from './skills';
@@ -50,17 +51,17 @@ export type Input = {
 };
 
 const FIELD_LABEL = {
-  name: 'نام',
-  nickname: 'نام مستعار',
-  occupation: 'شغل',
-  workplace: 'محل کار',
-  city: 'شهر',
-  skill: 'مهارت',
-  tag: 'برچسب',
-  phone: 'تلفن',
-  email: 'ایمیل',
-  note: 'یادداشت',
-  interaction: 'تعامل',
+  name: tk('نام'),
+  nickname: tk('نام مستعار'),
+  occupation: tk('شغل'),
+  workplace: tk('محل کار'),
+  city: tk('شهر'),
+  skill: tk('مهارت'),
+  tag: tk('برچسب'),
+  phone: tk('تلفن'),
+  email: tk('ایمیل'),
+  note: tk('یادداشت'),
+  interaction: tk('تعامل'),
 } as const;
 
 /** Trust is one criterion only; this constant makes that explicit and searchable. */
@@ -99,17 +100,17 @@ function matchWord(
   const has = (v: string | undefined) => !!v && normalize(v).n.includes(word);
   // skills first: a skill match is what makes someone a specialist, so it must not be shadowed by a weaker field
   const hitSkills = skills.filter(({ skill }) => has(skill.name) || skill.aliases.some(has));
-  if (hitSkills.length) return { kind: 'skill' as const, labels: [FIELD_LABEL.skill], skills: hitSkills };
-  if (has(person.displayName) || has(person.firstName) || has(person.lastName)) return { kind: 'other' as const, labels: [FIELD_LABEL.name], skills: [] };
-  if (has(person.nickname)) return { kind: 'other' as const, labels: [FIELD_LABEL.nickname], skills: [] };
-  if (has(person.occupation)) return { kind: 'other' as const, labels: [FIELD_LABEL.occupation], skills: [] };
-  if (has(person.workplace)) return { kind: 'other' as const, labels: [FIELD_LABEL.workplace], skills: [] };
-  if (has(person.city)) return { kind: 'other' as const, labels: [FIELD_LABEL.city], skills: [] };
-  if (person.phones.some(has)) return { kind: 'other' as const, labels: [FIELD_LABEL.phone], skills: [] };
-  if (person.emails.some(has)) return { kind: 'other' as const, labels: [FIELD_LABEL.email], skills: [] };
-  if (personTags.some((t) => has(t.name))) return { kind: 'other' as const, labels: [FIELD_LABEL.tag], skills: [] };
-  if (notes.some((n) => has(n.text))) return { kind: 'other' as const, labels: [FIELD_LABEL.note], skills: [] };
-  if (interactions.some((i) => has(i.summary) || has(i.outcome))) return { kind: 'other' as const, labels: [FIELD_LABEL.interaction], skills: [] };
+  if (hitSkills.length) return { kind: 'skill' as const, labels: [tx(FIELD_LABEL.skill)], skills: hitSkills };
+  if (has(person.displayName) || has(person.firstName) || has(person.lastName)) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.name)], skills: [] };
+  if (has(person.nickname)) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.nickname)], skills: [] };
+  if (has(person.occupation)) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.occupation)], skills: [] };
+  if (has(person.workplace)) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.workplace)], skills: [] };
+  if (has(person.city)) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.city)], skills: [] };
+  if (person.phones.some(has)) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.phone)], skills: [] };
+  if (person.emails.some(has)) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.email)], skills: [] };
+  if (personTags.some((t) => has(t.name))) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.tag)], skills: [] };
+  if (notes.some((n) => has(n.text))) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.note)], skills: [] };
+  if (interactions.some((i) => has(i.summary) || has(i.outcome))) return { kind: 'other' as const, labels: [tx(FIELD_LABEL.interaction)], skills: [] };
   return null;
 }
 
@@ -181,7 +182,7 @@ export function compareHits(a: Hit, b: Hit) {
   const la = a.why.lastContact ?? '';
   const lb = b.why.lastContact ?? '';
   if (la !== lb) return lb.localeCompare(la); // most recent interaction first
-  return a.person.displayName.localeCompare(b.person.displayName, 'fa');
+  return a.person.displayName.localeCompare(b.person.displayName, locale());
 }
 
 /**
@@ -196,7 +197,7 @@ export function introducers(hits: Hit[], data: Input, links: Relationship[], max
   // "علی (مکانیک)" as section 6 asks for the path display
   const withTrade = (id: string) => {
     const p = byId.get(id);
-    const name = p?.displayName ?? '؟';
+    const name = p?.displayName ?? tx('؟');
     return p?.occupation ? `${name} (${p.occupation})` : name;
   };
   const out: Suggestion[] = [];
@@ -217,7 +218,7 @@ export function introducers(hits: Hit[], data: Input, links: Relationship[], max
   const seen = new Set<string>();
   return out
     .filter((s) => (seen.has(s.pathText) ? false : (seen.add(s.pathText), true)))
-    .sort((a, b) => a.path.people.length - b.path.people.length || a.pathText.localeCompare(b.pathText, 'fa'));
+    .sort((a, b) => a.path.people.length - b.path.people.length || a.pathText.localeCompare(b.pathText, locale()));
 }
 
 /** Re-exported so the page does not need to import from two domain modules. */

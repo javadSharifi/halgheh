@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import { STR } from './strings/rulebook';
 import { setCheck } from './ruleData';
 import type { CheckState } from './domain/rules/constants';
+import { tx } from './i18n';
 
 /**
  * Phase 5, step 3: the quick check, one hand, in the shop. Every non-archived rule of the category is a card for one item
@@ -46,7 +47,7 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
       setNoteOpen(false);
       setIndex((i) => (i === null ? i : i + 1));
     } catch {
-      setErr(STR.feature.saveFailed);
+      setErr(tx(STR.feature.saveFailed));
     } finally {
       setBusy(false);
     }
@@ -54,8 +55,8 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
 
   const head = (
     <header className="dd-head">
-      <button className="icon-btn check-back" aria-label={STR.compare.backToSession} onClick={onClose}><Icon name="chevronRight" /></button>
-      <span>{STR.compare.checkModeTitle}</span>
+      <button className="icon-btn check-back" aria-label={tx(STR.compare.backToSession)} onClick={onClose}><Icon name="chevronRight" /></button>
+      <span>{tx(STR.compare.checkModeTitle)}</span>
       <span className="head-spacer" />
     </header>
   );
@@ -72,7 +73,7 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
     return (
       <>
         {head}
-        <p className="hint">{STR.compare.noItems}</p>
+        <p className="hint">{tx(STR.compare.noItems)}</p>
       </>
     );
   }
@@ -80,7 +81,7 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
     return (
       <>
         {head}
-        <p className="hint">{STR.compare.noRules}</p>
+        <p className="hint">{tx(STR.compare.noRules)}</p>
       </>
     );
   }
@@ -91,11 +92,11 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
         {head}
         <section className="glass empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.7} /></span>
-          <b>{STR.compare.checkDone}</b>
+          <b>{tx(STR.compare.checkDone)}</b>
           <p className="hint">{item.name}</p>
         </section>
         <div className="rf-foot">
-          <button className="primary big-btn" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{STR.feature.close}</button>
+          <button className="primary big-btn" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{tx(STR.feature.close)}</button>
         </div>
       </>
     );
@@ -106,47 +107,47 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
       {head}
 
       <div className="review-progress">
-        <span role="status">{STR.compare.checkProgress(answeredCount, rules.length)}</span>
+        <span role="status">{tx(STR.compare.checkProgress(answeredCount, rules.length))}</span>
         <div className="review-bar" aria-hidden="true"><i style={{ width: `${(index / rules.length) * 100}%` }} /></div>
       </div>
 
-      <p className="check-for">{STR.compare.checkFor(item.name)}</p>
+      <p className="check-for">{tx(STR.compare.checkFor(item.name))}</p>
 
       <section className="glass review-card check-card" aria-live="polite">
-        {current.strict && <span className="rule-chip strict">{STR.feature.strict}</span>}
+        {current.strict && <span className="rule-chip strict">{tx(STR.feature.strict)}</span>}
         <h2>{current.title}</h2>
         {current.why && <p className="read-why">{current.why}</p>}
       </section>
 
       {noteOpen ? (
         <label className="bf-name bf-name-top review-note">
-          <span>{STR.review.optionalNote}</span>
+          <span>{tx(STR.review.optionalNote)}</span>
           <textarea className="rf-text" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
         </label>
       ) : (
         <button className="text-btn review-note-btn" onClick={() => setNoteOpen(true)}>
-          <Icon name="plus" size={13} stroke={2.4} />{STR.review.optionalNote}
+          <Icon name="plus" size={13} stroke={2.4} />{tx(STR.review.optionalNote)}
         </button>
       )}
 
       {err && <p className="form-error" role="alert">{err}</p>}
 
-      <div className="check-actions" role="group" aria-label={STR.compare.checkModeTitle}>
-        <button className="check-btn pass" disabled={busy} aria-label={STR.compare.pass} onClick={() => void answer('pass')}>
+      <div className="check-actions" role="group" aria-label={tx(STR.compare.checkModeTitle)}>
+        <button className="check-btn pass" disabled={busy} aria-label={tx(STR.compare.pass)} onClick={() => void answer('pass')}>
           <Icon name="check" size={30} stroke={2.6} />
-          <span>{STR.compare.pass}</span>
+          <span>{tx(STR.compare.pass)}</span>
         </button>
-        <button className="check-btn fail" disabled={busy} aria-label={STR.compare.fail} onClick={() => void answer('fail')}>
+        <button className="check-btn fail" disabled={busy} aria-label={tx(STR.compare.fail)} onClick={() => void answer('fail')}>
           <Icon name="close" size={30} stroke={2.6} />
-          <span>{STR.compare.fail}</span>
+          <span>{tx(STR.compare.fail)}</span>
         </button>
-        <button className="check-btn unknown" disabled={busy} aria-label={STR.compare.unknown} onClick={() => void answer('unknown')}>
+        <button className="check-btn unknown" disabled={busy} aria-label={tx(STR.compare.unknown)} onClick={() => void answer('unknown')}>
           <Icon name="info" size={28} stroke={2.2} />
-          <span>{STR.compare.unknown}</span>
+          <span>{tx(STR.compare.unknown)}</span>
         </button>
       </div>
 
-      <p className="hint check-hint">{STR.compare.unknownNotZero}</p>
+      <p className="hint check-hint">{tx(STR.compare.unknownNotZero)}</p>
     </>
   );
 }

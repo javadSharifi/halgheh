@@ -9,6 +9,7 @@ import { latestPlan } from './domain/rules/breaks';
 import { recordReview } from './ruleData';
 import { BreakSheet } from './BreakSheet';
 import type { ReviewResult } from './domain/rules/constants';
+import { tx } from './i18n';
 
 /**
  * Phase 3: the scheduled review session. Active recall: the rule's title is shown first and the reason stays hidden until
@@ -54,7 +55,7 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
       if (result === 'broke') setBreakFor(answered);
       else setIndex((i) => i + 1);
     } catch {
-      setErr(STR.feature.saveFailed);
+      setErr(tx(STR.feature.saveFailed));
     } finally {
       setBusy(false);
     }
@@ -62,8 +63,8 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
 
   const head = (
     <header className="dd-head">
-      <button className="icon-btn" aria-label={STR.feature.close} onClick={onClose}><Icon name="chevronRight" /></button>
-      <span>{STR.review.sessionTitle}</span>
+      <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onClose}><Icon name="chevronRight" /></button>
+      <span>{tx(STR.review.sessionTitle)}</span>
       <span className="head-spacer" />
     </header>
   );
@@ -83,8 +84,8 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
         {head}
         <section className="glass empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.7} /></span>
-          <b>{STR.review.emptyTitle}</b>
-          <p className="hint">{STR.review.emptyBody}</p>
+          <b>{tx(STR.review.emptyTitle)}</b>
+          <p className="hint">{tx(STR.review.emptyBody)}</p>
         </section>
       </>
     );
@@ -96,11 +97,11 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
         {head}
         <section className="glass empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.7} /></span>
-          <b>{STR.review.finishedTitle}</b>
-          <p className="hint">{remaining > 0 ? STR.review.stillDue(remaining) : STR.review.allDone}</p>
+          <b>{tx(STR.review.finishedTitle)}</b>
+          <p className="hint">{remaining > 0 ? tx(STR.review.stillDue(remaining)) : tx(STR.review.allDone)}</p>
         </section>
         <div className="rf-foot">
-          <button className="primary big-btn" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{STR.feature.close}</button>
+          <button className="primary big-btn" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{tx(STR.feature.close)}</button>
         </div>
       </>
     );
@@ -111,41 +112,41 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
       {head}
 
       <div className="review-progress">
-        <span role="status">{STR.review.progress(index + 1, queue.length)}</span>
+        <span role="status">{tx(STR.review.progress(index + 1, queue.length))}</span>
         <div className="review-bar" aria-hidden="true"><i style={{ width: `${(index / queue.length) * 100}%` }} /></div>
       </div>
 
       <section className="glass review-card" aria-live="polite">
-        <span className="review-box">{STR.feature.box} {fa(current.box + 1)}</span>
+        <span className="review-box">{tx(STR.feature.box)} {fa(current.box + 1)}</span>
         <h2>{current.title}</h2>
         {showWhy && current.why && (
           <div className="review-why">
-            <span className="field-label">{STR.feature.why}</span>
+            <span className="field-label">{tx(STR.feature.why)}</span>
             <p>{current.why}</p>
           </div>
         )}
-        {showWhy && !current.why && <p className="hint">{STR.feature.whyPlaceholder}</p>}
+        {showWhy && !current.why && <p className="hint">{tx(STR.feature.whyPlaceholder)}</p>}
         {/* Part 1: the latest "next time" plan is only revealed together with the reason, never before the tap */}
         {showWhy && plan && (
           <div className="review-why review-plan">
-            <span className="field-label">{STR.breaks.latestPlan}</span>
+            <span className="field-label">{tx(STR.breaks.latestPlan)}</span>
             <p>{plan}</p>
           </div>
         )}
         <button className="text-btn review-show" onClick={() => setShowWhy((x) => !x)} aria-expanded={showWhy}>
           <Icon name={showWhy ? 'close' : 'note'} size={15} stroke={1.9} />
-          {showWhy ? STR.review.hideWhy : STR.review.showWhy}
+          {showWhy ? tx(STR.review.hideWhy) : tx(STR.review.showWhy)}
         </button>
       </section>
 
       {noteOpen ? (
         <label className="bf-name bf-name-top review-note">
-          <span>{STR.review.optionalNote}</span>
+          <span>{tx(STR.review.optionalNote)}</span>
           <textarea className="rf-text" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
         </label>
       ) : (
         <button className="text-btn review-note-btn" onClick={() => setNoteOpen(true)}>
-          <Icon name="plus" size={13} stroke={2.4} />{STR.review.optionalNote}
+          <Icon name="plus" size={13} stroke={2.4} />{tx(STR.review.optionalNote)}
         </button>
       )}
 

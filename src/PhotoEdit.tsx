@@ -4,6 +4,7 @@ import { type Photo, type Person, type Tag, db, put } from './db';
 import { today } from './cal';
 import { Icon } from './Icon';
 import { DatePicker } from './DatePicker';
+import { locale, tx } from './i18n';
 
 /** Edit a photo's metadata (G1): title, note, date, an optional person link and tags. G2 wires the same fields into search. */
 export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => void }) {
@@ -22,7 +23,7 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
   const set = (patch: Partial<typeof v>) => setV((x) => ({ ...x, ...patch }));
 
   const valid = v.title.trim() !== '';
-  const sortedPeople = [...people].filter((p) => !p.archivedAt).sort((a, b) => a.displayName.localeCompare(b.displayName, 'fa'));
+  const sortedPeople = [...people].filter((p) => !p.archivedAt).sort((a, b) => a.displayName.localeCompare(b.displayName, locale()));
 
   const toggleTag = (id: string) =>
     set({ tagIds: v.tagIds.includes(id) ? v.tagIds.filter((x) => x !== id) : [...v.tagIds, id] });
@@ -40,7 +41,7 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
       await put('photos', row);
       onClose();
     } catch {
-      setErr('ذخیره نشد؛ دوباره تلاش کن.');
+      setErr(tx('ذخیره نشد؛ دوباره تلاش کن.'));
       setBusy(false);
     }
   };
@@ -50,17 +51,17 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet photo-sheet" role="dialog" aria-modal="true" aria-labelledby="photo-title">
         <div className="bf-head">
-          <span id="photo-title">ویرایش عکس</span>
-          <button className="text-btn" onClick={onClose}>بستن</button>
+          <span id="photo-title">{tx('ویرایش عکس')}</span>
+          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
         </div>
 
         <div className="pe-scroll">
-          <label className="bf-name"><span>عنوان</span><input autoFocus value={v.title} maxLength={120} onChange={(e) => set({ title: e.target.value })} /></label>
-          <label className="bf-name bf-name-top"><span>یادداشت</span><textarea className="rf-text" value={v.note} onChange={(e) => set({ note: e.target.value })} maxLength={600} /></label>
+          <label className="bf-name"><span>{tx('عنوان')}</span><input autoFocus value={v.title} maxLength={120} onChange={(e) => set({ title: e.target.value })} /></label>
+          <label className="bf-name bf-name-top"><span>{tx('یادداشت')}</span><textarea className="rf-text" value={v.note} onChange={(e) => set({ note: e.target.value })} maxLength={600} /></label>
 
           <div className="rf-row">
             <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
-            <span className="rf-name">تاریخ</span>
+            <span className="rf-name">{tx('تاریخ')}</span>
             <button type="button" className="rf-value as-text" onClick={() => setPicking(true)}>
               {v.takenAt}
               <Icon name="chevronLeft" size={16} stroke={2} />
@@ -69,16 +70,16 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
 
           <div className="rf-row">
             <span className="tile green" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
-            <span className="rf-name">شخص</span>
-            <select className="as-value" aria-label="شخص" value={v.personId} onChange={(e) => set({ personId: e.target.value })}>
-              <option value="">بدون شخص</option>
+            <span className="rf-name">{tx('شخص')}</span>
+            <select className="as-value" aria-label={tx('شخص')} value={v.personId} onChange={(e) => set({ personId: e.target.value })}>
+              <option value="">{tx('بدون شخص')}</option>
               {sortedPeople.map((p: Person) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
             </select>
           </div>
 
           {tags.length > 0 && (
             <>
-              <p className="field-label">برچسب‌ها</p>
+              <p className="field-label">{tx('برچسب‌ها')}</p>
               <div className="tag-chips">
                 {tags.map((t: Tag) => (
                   <button key={t.id} type="button" className={`tag-chip${v.tagIds.includes(t.id) ? ' on c1' : ''}`} aria-pressed={v.tagIds.includes(t.id)} onClick={() => toggleTag(t.id)}>
@@ -94,7 +95,7 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
 
         <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
           <Icon name="check" size={18} stroke={2.4} />
-          {busy ? 'در حال ذخیره…' : 'ذخیره'}
+          {busy ? tx('در حال ذخیره…') : tx('ذخیره')}
         </button>
       </section>
       {picking && <DatePicker value={v.takenAt} onPick={(d) => { set({ takenAt: d }); setPicking(false); }} onClose={() => setPicking(false)} />}

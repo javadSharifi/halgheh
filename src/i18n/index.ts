@@ -71,3 +71,6 @@ export function applyLang(l: Lang) {
   document.documentElement.lang = l;
   document.documentElement.dir = dir(l);
 }
+
+/** Joins the non-empty parts with a translated middle dot: join([a, cond && b]) -> 'a · b'. */
+export const join = (parts: (string | false | undefined)[]) => parts.filter(Boolean).join(` ${tx('·')} `);
