@@ -5,6 +5,7 @@ import { fa, label, today } from './cal';
 import { faDigits, isTime, personLabel } from './format';
 import { ask } from './confirm';
 import { Icon } from './Icon';
+import { Button } from './ui';
 import { counts, doneDateFor, doneKey, FILTERS, isOverdue, listTodos, overdue, type TodoFilter } from './todoFilters';
 import { tn, tx } from './i18n';
 
@@ -91,13 +92,23 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
       )}
       {!done && (
         snoozedNow(task) ? (
-          <button className="icon-btn small on" aria-label={tx('لغو یادآوری بعدی {a1}', { a1: task.title })} onClick={() => void clearSnooze(task)}>
-            <Icon name="bell" size={17} stroke={1.9} />
-          </button>
+          <Button
+            variant="ghost"
+            icon="bell"
+            size="icon-sm"
+            className="icon-btn small on"
+            aria-label={tx('لغو یادآوری بعدی {a1}', { a1: task.title })}
+            onClick={() => void clearSnooze(task)}
+          />
         ) : (
-          <button className="icon-btn small" aria-label={tx('یادآوری {a1} را یک ساعت بعد بیاور', { a1: task.title })} onClick={() => void snoozeTodo(task, 1)}>
-            <Icon name="clock" size={17} stroke={1.9} />
-          </button>
+          <Button
+            variant="ghost"
+            icon="clock"
+            size="icon-sm"
+            className="icon-btn small"
+            aria-label={tx('یادآوری {a1} را یک ساعت بعد بیاور', { a1: task.title })}
+            onClick={() => void snoozeTodo(task, 1)}
+          />
         )
       )}
     </div>
@@ -107,7 +118,9 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
     <>
       <div className="page-head">
         <h1>{tx('کارها')}</h1>
-        <button className="pill-btn" onClick={() => openForm(null)}><Icon name="plus" size={16} stroke={2.4} />{tx('افزودن')}</button>
+        <Button variant="primary" size="sm" icon="plus" onClick={() => openForm(null)}>
+          {tx('افزودن')}
+        </Button>
       </div>
 
       <div className="tabs" role="tablist" aria-label={tx('فیلتر کارها')}>
@@ -131,7 +144,14 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
                   <span className="t-title"><bdi>{task.title}</bdi></span>
                   <span className="t-sub"><em className="late-chip">{tx('عقب‌افتاده')}</em>{label(task.on!, 'persian', 0, { day: 'numeric', month: 'long' })}{isTime(task.time) ? ` · ${faDigits(task.time)}` : ''}</span>
                 </button>
-                <button className="icon-btn small" aria-label={tx('یادآوری {a1} را یک ساعت بعد بیاور', { a1: task.title })} onClick={() => void snoozeTodo(task, 1)}><Icon name="clock" size={17} stroke={1.9} /></button>
+                <Button
+                  variant="ghost"
+                  icon="clock"
+                  size="icon-sm"
+                  className="icon-btn small"
+                  aria-label={tx('یادآوری {a1} را یک ساعت بعد بیاور', { a1: task.title })}
+                  onClick={() => void snoozeTodo(task, 1)}
+                />
               </div>
             ))}
           </div>
