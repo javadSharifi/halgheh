@@ -9,6 +9,7 @@
     "test": "vitest run",
     "verify": "tsc --noEmit && vitest run",
     "android:apk": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=\"$(cd .. && node scripts/jdk.mjs)\" ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk} ./gradlew assembleDebug",
+    "android:live": "./scripts/dev-android.sh",
     "android:release": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=\"$(cd .. && node scripts/jdk.mjs)\" ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk} ./gradlew assembleRelease && mkdir -p ../release && cp app/build/outputs/apk/release/app-release.apk ../release/halgheh.apk",
     "version": "node -e \"const v=require('./package.json').version.split('.').map(Number);console.log(v[0]*10000+v[1]*100+v[2])\"",
     "jdk": "node scripts/jdk.mjs"
@@ -28,6 +29,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@babel/parser": "7.29.9",
     "@capacitor/cli": "^8.5.3",
     "@cloudflare/workers-types": "^5.20261021.1",
     "@types/react": "^19.3.0",
