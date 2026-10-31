@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/i18n-check.mjs && tsc --noEmit && vite build",
     "test": "vitest run",
     "verify": "tsc --noEmit && vitest run",
     "android:apk": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=\"$(cd .. && node scripts/jdk.mjs)\" ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk} ./gradlew assembleDebug",
     "android:live": "./scripts/dev-android.sh",
     "android:release": "pnpm build && cap sync android </dev/null && cd android && JAVA_HOME=\"$(cd .. && node scripts/jdk.mjs)\" ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk} ./gradlew assembleRelease && mkdir -p ../release && cp app/build/outputs/apk/release/app-release.apk ../release/halgheh.apk",
     "version": "node -e \"const v=require('./package.json').version.split('.').map(Number);console.log(v[0]*10000+v[1]*100+v[2])\"",
-    "jdk": "node scripts/jdk.mjs"
+    "jdk": "node scripts/jdk.mjs",
+    "i18n": "node scripts/i18n-check.mjs"
   },
   "dependencies": {
     "@capacitor-community/contacts": "8.0.0",

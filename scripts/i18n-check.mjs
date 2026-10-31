@@ -52,7 +52,9 @@ for (const file of files('src')) {
 
 const phSet = (s) => new Set([...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]));
 const same = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
-const badKey = (k) => BAD_CHARS.test(k) || k !== k.trim() || /\s{2,}/.test(k);
+// keys that must show the Arabic letters they are talking about
+const KEY_OK = new Set(['هجی را ساده‌تر کن یا فقط بخشی از نام را بنویس؛ ي/ك عربی و نیم‌فاصله اهمیتی ندارند.']);
+const badKey = (k) => !KEY_OK.has(k) && (BAD_CHARS.test(k) || k !== k.trim() || /\s{2,}/.test(k));
 
 for (const [k, { at, fn }] of used) {
   if (badKey(k)) errors.push(`${at}  Arabic letter or stray space in key: «${k}»`);
