@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Rule, db } from './db';
 import { fa, today } from './cal';
 import { Icon } from './Icon';
+import { Button, Card } from './ui';
 import { STR } from './strings/rulebook';
 import { addRule, dueLabel, orderCategories, orderRules } from './ruleData';
 import { orderByBreaks } from './domain/rules/breaks';
@@ -138,12 +139,10 @@ export function RulebookPage({
       <div className="page-head">
         <h1>{tx(STR.feature.title)}</h1>
         <div className="head-tools">
-          <button className="icon-btn" aria-label={tx(STR.categories.manageTitle)} onClick={() => setManaging(true)}>
-            <Icon name="alignLeft" size={19} stroke={1.9} />
-          </button>
-          <button className="pill-btn" onClick={() => setEditing('new')}>
-            <Icon name="plus" size={16} stroke={2.4} />{tx(STR.feature.addRule)}
-          </button>
+          <Button variant="ghost" size="icon-md" aria-label={tx(STR.categories.manageTitle)} onClick={() => setManaging(true)} icon="alignLeft" />
+          <Button variant="primary" size="sm" onClick={() => setEditing('new')} icon="plus">
+            {tx(STR.feature.addRule)}
+          </Button>
         </div>
       </div>
 
@@ -154,16 +153,16 @@ export function RulebookPage({
         </button>
       </div>
 
-      <section className="glass review-invite">
+      <Card className="review-invite">
         <span className="tile green" aria-hidden="true"><Icon name="repeat" size={18} stroke={1.9} /></span>
         <span className="review-invite-body">
           <b>{dueHere > 0 ? tx(STR.today.cardTitle(dueHere)) : tx(STR.review.emptyTitle)}</b>
           <span className="hint">{dueHere > 0 ? tx(STR.today.cardBody) : tx(STR.review.emptyBody)}</span>
         </span>
-        <button className="pill-btn" disabled={dueHere === 0} onClick={() => (openReview ? openReview() : setReviewing(true))}>
-          <Icon name="repeat" size={15} stroke={2.2} />{tx(STR.review.start)}
-        </button>
-      </section>
+        <Button variant="primary" size="sm" disabled={dueHere === 0} onClick={() => (openReview ? openReview() : setReviewing(true))} icon="repeat">
+          {tx(STR.review.start)}
+        </Button>
+      </Card>
 
       {activeCategory?.compareEnabled && (
         <div className="compare-invite">
@@ -187,15 +186,15 @@ export function RulebookPage({
       )}
 
       {rules.length === 0 && categories.length > 0 ? (
-        <section className="glass empty-state">
+        <Card className="empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="listChecks" size={24} stroke={1.7} /></span>
           <b>{tx(STR.feature.emptyTitle)}</b>
           <p className="hint">{tx(STR.feature.emptyBody)}</p>
-        </section>
+        </Card>
       ) : null}
 
       {activeCategory && (
-        <section className="glass rule-quick">
+        <Card className="rule-quick">
           <label className="rule-quick-field">
             <Icon name="plus" size={16} stroke={2.2} />
             <input
@@ -208,8 +207,8 @@ export function RulebookPage({
               enterKeyHint="done"
             />
           </label>
-          <button className="mini-btn" disabled={!quick.trim()} onClick={() => void addQuick()}>{tx(STR.feature.save)}</button>
-        </section>
+          <Button variant="primary" size="sm" disabled={!quick.trim()} onClick={() => void addQuick()}>{tx(STR.feature.save)}</Button>
+        </Card>
       )}
 
       <section>
@@ -295,11 +294,11 @@ export function RulebookPage({
 function managedHint(categoryCount: number) {
   if (categoryCount > 0) return null;
   return (
-    <section className="glass empty-state">
+    <Card className="empty-state">
       <span className="tile purple" aria-hidden="true"><Icon name="listChecks" size={24} stroke={1.7} /></span>
       <b>{tx(STR.feature.emptyTitle)}</b>
       <p className="hint">{tx(STR.feature.emptyBody)}</p>
-    </section>
+    </Card>
   );
 }
 

@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './db';
 import { fa, label } from './cal';
 import { Icon } from './Icon';
+import { Button, Card } from './ui';
 import { CRITERION_LABEL } from './ratings';
 import { STATUS_LABEL } from './skills';
 import { introducers, whoCan, type Hit } from './whoCanEngine';
@@ -41,7 +42,7 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
   const trustOf = (h: Hit) => h.why.trust;
   const lastOf = (h: Hit) => (h.why.lastContact ? label(h.why.lastContact, 'persian', 0, { day: 'numeric', month: 'long' }) : null);
 
-  const Card = ({ hit }: { hit: Hit }) => (
+  const WhoHitCard = ({ hit }: { hit: Hit }) => (
     <button className="glass who-card" onClick={() => openPerson(hit.person.id)}>
       <span className={`avatar p${PALETTE(hit.person.displayName)}`} aria-hidden="true">{hit.person.displayName.slice(0, 1)}</span>
       <span className="who-body">
@@ -67,7 +68,7 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
   return (
     <>
       <header className="dd-head">
-        <button className="icon-btn" aria-label={tx('بازگشت')} onClick={onClose}><Icon name="chevronRight" /></button>
+        <Button variant="ghost" size="icon-md" aria-label={tx('بازگشت')} onClick={onClose} icon="chevronRight" />
         <span>{tx('چه کسی می‌تواند')}</span>
         <span className="head-spacer" />
       </header>
@@ -82,24 +83,24 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
       </form>
 
       {!searching && (
-        <section className="glass empty-state search-empty">
+        <Card className="empty-state search-empty">
           <span className="tile purple" aria-hidden="true"><Icon name="toolbox" size={24} stroke={1.8} /></span>
           <b>{tx('چه کاری را می‌خواهی انجام دهد؟')}</b>
           <p className="hint">{tx('یک مهارت بنویس تا ببینی چه کسی آن را بلد است، و اگر خودت کسی را نمی‌شناسی، چه کسی می‌تواند معرفی کند.')}</p>
-        </section>
+        </Card>
       )}
 
       {searching && hitList.length === 0 && (
-        <section className="glass empty-state search-empty">
+        <Card className="empty-state search-empty">
           <b>{tx('کسی پیدا نشد')}</b>
           <p className="hint">{tx('کلمهٔ دیگری امتحان کن، یا در پروفایل افراد مهارتشان را ثبت کن.')}</p>
-        </section>
+        </Card>
       )}
 
       {specialists.length > 0 && (
         <section>
           <h2 className="sec-title">{tx('متخصص‌ها')}<small>{tn('{n} نفر', specialists.length)}</small></h2>
-          <div className="who-list">{specialists.map((h) => <Card key={h.person.id} hit={h} />)}</div>
+          <div className="who-list">{specialists.map((h) => <WhoHitCard key={h.person.id} hit={h} />)}</div>
         </section>
       )}
 
@@ -132,7 +133,7 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
       {others.length > 0 && (
         <section>
           <h2 className="sec-title">{tx('بقیه')}<small>{tn('{n} نفر', others.length)}</small></h2>
-          <div className="who-list">{others.map((h) => <Card key={h.person.id} hit={h} />)}</div>
+          <div className="who-list">{others.map((h) => <WhoHitCard key={h.person.id} hit={h} />)}</div>
         </section>
       )}
     </>
