@@ -71,14 +71,18 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
       <section className="sheet cat-sheet" role="dialog" aria-modal="true" aria-labelledby="cat-sheet-title">
         <div className="bf-head">
           <span id="cat-sheet-title">{pending ? tx(STR.categories.deleteTitle(tx(pending.name))) : tx(STR.categories.manageTitle)}</span>
-          <button className="text-btn" onClick={() => (pending ? setPending(null) : onClose())}>{pending ? tx(STR.feature.cancel) : tx(STR.feature.close)}</button>
+          <Button variant="ghost" size="sm" onClick={() => (pending ? setPending(null) : onClose())}>
+            {pending ? tx(STR.feature.cancel) : tx(STR.feature.close)}
+          </Button>
         </div>
 
         {!pending && (
           <>
             <div className="cat-add">
               <input value={adding} maxLength={60} onChange={(e) => setAdding(e.target.value)} placeholder={tx(STR.categories.namePlaceholder)} aria-label={tx(STR.categories.add)} enterKeyHint="done" />
-              <button className="mini-btn" disabled={!adding.trim()} onClick={() => void add()}><Icon name="plus" size={14} stroke={2.4} />{tx(STR.categories.add)}</button>
+              <Button variant="primary" size="sm" icon="plus" disabled={!adding.trim()} onClick={() => void add()}>
+                {tx(STR.categories.add)}
+              </Button>
             </div>
 
             <div className="cat-list">
@@ -91,7 +95,7 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
                       onSubmit={(e) => { e.preventDefault(); void rename(); }}
                     >
                       <input autoFocus value={renaming.name} maxLength={60} onChange={(e) => setRenaming({ id: cat.id, name: e.target.value })} aria-label={tx(STR.categories.rename)} />
-                      <button type="submit" className="icon-btn small" aria-label={tx(STR.feature.save)}><Icon name="check" size={17} stroke={2.4} /></button>
+                      <Button type="submit" variant="ghost" size="icon-sm" icon="check" aria-label={tx(STR.feature.save)} />
                     </form>
                   ) : (
                     <button className="cat-name" onClick={() => setRenaming({ id: cat.id, name: cat.name })}>
@@ -102,15 +106,32 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
                   <span className="cat-compare" title={tx(STR.categories.compareToggle)}>
                     <Toggle on={!!cat.compareEnabled} label={`${tx(STR.categories.compareToggle)} ${tx(cat.name)}`} onChange={(on) => void setCompareEnabled(cat, on)} />
                   </span>
-                  <button className="icon-btn small" aria-label={`${tx(STR.categories.moveUp)} ${tx(cat.name)}`} disabled={i === 0} onClick={() => void moveCategory(categories, cat.id, -1)}>
-                    <Icon name="chevronDown" size={17} stroke={2} />
-                  </button>
-                  <button className="icon-btn small" aria-label={`${tx(STR.categories.moveDown)} ${tx(cat.name)}`} disabled={i === categories.length - 1} onClick={() => void moveCategory(categories, cat.id, 1)}>
-                    <Icon name="chevronDown" size={17} stroke={2} />
-                  </button>
-                  <button className="icon-btn small danger" aria-label={`${tx(STR.feature.delete)} ${tx(cat.name)}`} onClick={() => void remove(cat)}>
-                    <Icon name="trash" size={16} stroke={2} />
-                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    icon="chevronDown"
+                    className="icon-btn small"
+                    aria-label={`${tx(STR.categories.moveUp)} ${tx(cat.name)}`}
+                    disabled={i === 0}
+                    onClick={() => void moveCategory(categories, cat.id, -1)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    icon="chevronDown"
+                    className="icon-btn small"
+                    aria-label={`${tx(STR.categories.moveDown)} ${tx(cat.name)}`}
+                    disabled={i === categories.length - 1}
+                    onClick={() => void moveCategory(categories, cat.id, 1)}
+                  />
+                  <Button
+                    variant="danger"
+                    size="icon-sm"
+                    icon="trash"
+                    className="icon-btn small danger"
+                    aria-label={`${tx(STR.feature.delete)} ${tx(cat.name)}`}
+                    onClick={() => void remove(cat)}
+                  />
                 </div>
               ))}
             </div>
