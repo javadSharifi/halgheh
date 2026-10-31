@@ -3,6 +3,7 @@ import { type Exchange, type Person } from '../db';
 import { today, addDays, wd, parts, label } from '../cal';
 import { formatToman, formatNumberFa, tomanWords, toLatinDigits, personLabel } from '../format';
 import { Icon } from '../Icon';
+import { Button } from '../ui';
 import { DatePicker } from '../DatePicker';
 import { STR } from '../strings/rulebook';
 import { addExchange, saveExchange } from '../ledgerData';
@@ -134,9 +135,9 @@ export function ExchangeSheet({
             </span>
             <small className="sheet-sub-title">{tx('ثبت طلب، بدهی، امانت و تعهدات متقابل')}</small>
           </div>
-          <button className="text-btn" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose}>
             {tx(STR.feature.close)}
-          </button>
+          </Button>
         </div>
 
         <div className="pe-scroll ledger-sheet-content">
@@ -413,13 +414,15 @@ export function ExchangeSheet({
 
         {/* Modal Footer Actions */}
         <div className="ledger-sheet-footer">
-          <button
-            type="button"
-            className="primary ledger-submit-btn"
+          <Button
+            variant="primary"
+            block
+            size="lg"
+            className="ledger-submit-btn"
             disabled={!valid || busy}
             onClick={() => void save()}
+            icon="check"
           >
-            <Icon name="check" size={18} stroke={2.4} />
             {busy
               ? tx('در حال ذخیره…')
               : exchange
@@ -427,18 +430,21 @@ export function ExchangeSheet({
               : direction === 'gave'
               ? tx('ثبت طلب {a1}', { a1: parsedAmount ? `(${formatToman(parsedAmount)})` : '' })
               : tx('ثبت بدهی {a1}', { a1: parsedAmount ? `(${formatToman(parsedAmount)})` : '' })}
-          </button>
+          </Button>
 
           {exchange && onStartCheck && (
-            <button
-              type="button"
-              className="text-btn ledger-check-link"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ledger-check-link"
               onClick={() => {
                 const open = checks?.find((c) => c.personId === exchange.personId && c.status === 'open');
                 if (open) onStartCheck(open.id);
               }}
+              icon="listChecks"
             >
-              <Icon name="listChecks" size={15} stroke={2} />{tx('بررسی قوانین این شخص')}</button>
+              {tx('بررسی قوانین این شخص')}
+            </Button>
           )}
         </div>
       </section>
