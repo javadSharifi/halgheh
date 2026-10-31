@@ -4,6 +4,7 @@ import { label } from '../cal';
 import { formatToman, formatNumberFa, tomanWords, toLatinDigits } from '../format';
 import { ask } from '../confirm';
 import { Icon } from '../Icon';
+import { Button, Card } from '../ui';
 import { STR } from '../strings/rulebook';
 import { addSettlement, deleteSettlement, settleExchange } from '../ledgerData';
 import { isMoney, remainingOf } from '../domain/ledger';
@@ -75,15 +76,15 @@ export function SettleSheet({
               <bdi>{exchange.title}</bdi> ({personName})
             </small>
           </div>
-          <button className="text-btn" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose}>
             {tx(STR.feature.close)}
-          </button>
+          </Button>
         </div>
 
         <div className="pe-scroll ledger-sheet-content">
           {/* Summary Card */}
           {isMoney(exchange) && exchange.amount !== undefined && (
-            <div className="glass ledger-settle-summary">
+            <Card className="ledger-settle-summary">
               <div className="ledger-settle-sum-row">
                 <span>{tx('کل مبلغ دادوستد:')}</span>
                 <b>{formatToman(exchange.amount)}</b>
@@ -96,7 +97,7 @@ export function SettleSheet({
                 <span>{tx('باقیمانده برای تسویه:')}</span>
                 <b className="left-amount">{formatToman(left)}</b>
               </div>
-            </div>
+            </Card>
           )}
 
           {canPartial && (
@@ -173,14 +174,14 @@ export function SettleSheet({
                     </span>
                     <b className="ledger-history-amount">{formatToman(s.amount)}</b>
                     {s.note && <span className="ledger-history-note">({s.note})</span>}
-                    <button
-                      type="button"
-                      className="icon-btn small danger"
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="danger"
                       onClick={() => void removeSettlement(s)}
-                      title={tx('حذف این پرداخت')}
-                    >
-                      <Icon name="trash" size={14} stroke={2} />
-                    </button>
+                      aria-label={tx('حذف این پرداخت')}
+                      icon="trash"
+                    />
                   </div>
                 ))}
               </div>
@@ -189,19 +190,21 @@ export function SettleSheet({
         </div>
 
         <div className="ledger-sheet-footer">
-          <button
-            type="button"
-            className="primary ledger-submit-btn"
+          <Button
+            variant="primary"
+            block
+            size="lg"
+            className="ledger-submit-btn"
             disabled={busy || (mode === 'partial' && !parsedPartial)}
             onClick={() => void save()}
+            icon="check"
           >
-            <Icon name="check" size={18} stroke={2.4} />
             {busy
               ? tx('در حال ثبت…')
               : mode === 'partial'
               ? tx('ثبت پرداخت {a1}', { a1: parsedPartial ? `(${formatToman(parsedPartial)})` : '' })
               : tx('تسویه کامل ({a1})', { a1: formatToman(left) })}
-          </button>
+          </Button>
         </div>
       </section>
     </>
