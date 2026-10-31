@@ -4,6 +4,7 @@ import { type Person, type Rule, type RuleCheck, type RuleCheckItem, type RuleCa
 import { fa, label } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
+import { Button, Card, InputField } from './ui';
 import { Toggle } from './Toggle';
 import { STR, CHECK_ITEM_LABEL } from './strings/rulebook';
 import { normalize } from './search';
@@ -72,7 +73,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
     return (
       <>
         <header className="dd-head">
-          <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onBack}><Icon name="chevronRight" /></button>
+          <Button variant="ghost" size="icon-md" aria-label={tx(STR.feature.close)} onClick={onBack} icon="chevronRight" />
           <span>{tx(STR.personCheck.title)}</span>
           <span className="head-spacer" />
         </header>
@@ -97,9 +98,9 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
 
   const head = (
     <header className="dd-head">
-      <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onBack}><Icon name="chevronRight" /></button>
+      <Button variant="ghost" size="icon-md" aria-label={tx(STR.feature.close)} onClick={onBack} icon="chevronRight" />
       <span>{tx(STR.personCheck.title)}</span>
-      <button className="icon-btn" aria-label={tx(STR.personCheck.cardMode)} onClick={() => setCardMode(true)}><Icon name="listChecks" size={19} stroke={1.9} /></button>
+      <Button variant="ghost" size="icon-md" aria-label={tx(STR.personCheck.cardMode)} onClick={() => setCardMode(true)} icon="listChecks" />
     </header>
   );
 
@@ -107,11 +108,11 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
     return (
       <>
         {head}
-        <section className="glass empty-state">
+        <Card className="empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="listChecks" size={24} stroke={1.7} /></span>
           <b>{tx(STR.personCheck.empty)}</b>
           <p className="hint">{tx(STR.personCheck.emptyBody)}</p>
-        </section>
+        </Card>
       </>
     );
   }
@@ -124,7 +125,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
         {renaming ? (
           <form className="cat-rename check-rename" onSubmit={(e) => { e.preventDefault(); void saveTitle(); }}>
             <input autoFocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} aria-label={tx(STR.personCheck.titleLabel)} placeholder={tx(STR.personCheck.titlePlaceholder)} />
-            <button type="submit" className="icon-btn small" aria-label={tx(STR.feature.save)}><Icon name="check" size={17} stroke={2.4} /></button>
+            <Button variant="ghost" size="icon-sm" type="submit" aria-label={tx(STR.feature.save)} icon="check" />
           </form>
         ) : (
           <button className="check-title" onClick={() => setRenaming(true)}>
@@ -190,13 +191,13 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
                       <bdi>{rule.title}</bdi>
                       {rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}
                     </span>
-                    <button
-                      className="icon-btn small"
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       aria-label={`${tx(STR.personCheck.note)}: ${rule.title}`}
                       onClick={() => { setNoteFor(rule.id); setNote(items.find((i) => i.ruleId === rule.id)?.note ?? ''); }}
-                    >
-                      <Icon name="note" size={15} stroke={1.9} />
-                    </button>
+                      icon="note"
+                    />
                   </div>
                   {rule.why && <p className="cr-why">{rule.why}</p>}
                   <div className="cr-states" role="radiogroup" aria-label={rule.title}>
@@ -226,21 +227,21 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
       ))}
 
       <div className="rf-foot check-foot">
-        <button className="big-btn" onClick={() => setCardMode(true)}>
-          <Icon name="listChecks" size={17} stroke={1.9} />{tx(STR.personCheck.cardMode)}
-        </button>
+        <Button size="lg" onClick={() => setCardMode(true)} icon="listChecks">
+          {tx(STR.personCheck.cardMode)}
+        </Button>
         {closed ? (
-          <button className="primary big-btn" onClick={() => void reopenPersonCheck(check)}>
-            <Icon name="undo" size={17} stroke={2.2} />{tx(STR.personCheck.reopen)}
-          </button>
+          <Button variant="primary" size="lg" onClick={() => void reopenPersonCheck(check)} icon="undo">
+            {tx(STR.personCheck.reopen)}
+          </Button>
         ) : (
-          <button className="primary big-btn" onClick={() => void closePersonCheck(check)}>
-            <Icon name="check" size={18} stroke={2.4} />{tx(STR.personCheck.close)}
-          </button>
+          <Button variant="primary" size="lg" onClick={() => void closePersonCheck(check)} icon="check">
+            {tx(STR.personCheck.close)}
+          </Button>
         )}
       </div>
       <div className="set-actions">
-        <button className="danger-btn" onClick={() => void removeCheck()}><Icon name="trash" size={16} stroke={2} />{tx(STR.feature.delete)}</button>
+        <Button variant="danger" block onClick={() => void removeCheck()} icon="trash">{tx(STR.feature.delete)}</Button>
       </div>
 
       {noteFor && (
@@ -288,13 +289,20 @@ function NoteSheet({ ruleTitle, note, onSave, onClose }: { ruleTitle: string; no
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="check-note-title">
         <div className="bf-head">
           <span id="check-note-title">{tx(STR.personCheck.note)} · {ruleTitle}</span>
-          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx(STR.feature.close)}</Button>
         </div>
-        <label className="bf-name bf-name-top">
-          <span>{tx(STR.personCheck.note)}</span>
-          <textarea className="rf-text" autoFocus value={text} maxLength={1000} onChange={(e) => setText(e.target.value)} />
-        </label>
-        <button className="primary" onClick={() => onSave(text)}><Icon name="check" size={18} stroke={2.4} />{tx(STR.feature.save)}</button>
+        <InputField
+          multiline
+          autoFocus
+          rows={3}
+          label={tx(STR.personCheck.note)}
+          value={text}
+          maxLength={1000}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <Button variant="primary" block onClick={() => onSave(text)} icon="check">
+          {tx(STR.feature.save)}
+        </Button>
       </section>
     </>
   );

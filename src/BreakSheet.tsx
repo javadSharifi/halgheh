@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Person, type Rule, type RuleBreak, db } from './db';
 import { fa, label, today } from './cal';
 import { Icon } from './Icon';
+import { Button, InputField } from './ui';
 import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { ask } from './confirm';
@@ -63,24 +64,36 @@ export function BreakSheet({ rule, seedPersonId, onClose, onSaved }: {
       <section className="sheet break-sheet" role="dialog" aria-modal="true" aria-labelledby="break-title">
         <div className="bf-head">
           <span id="break-title">{tx(STR.breaks.sheetTitleFor(rule.title))}</span>
-          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx(STR.feature.close)}</Button>
         </div>
 
         <div className="pe-scroll">
-          <label className="bf-name bf-name-top">
-            <span>{tx(STR.breaks.whatHappened)}</span>
-            <textarea className="rf-text" value={v.whatHappened} maxLength={2000} onChange={(e) => set({ whatHappened: e.target.value })} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx(STR.breaks.whatHappened)}
+            value={v.whatHappened}
+            maxLength={2000}
+            onChange={(e) => set({ whatHappened: e.target.value })}
+          />
 
-          <label className="bf-name bf-name-top">
-            <span>{tx(STR.breaks.whyBroke)}</span>
-            <textarea className="rf-text" value={v.whyBroke} maxLength={2000} onChange={(e) => set({ whyBroke: e.target.value })} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx(STR.breaks.whyBroke)}
+            value={v.whyBroke}
+            maxLength={2000}
+            onChange={(e) => set({ whyBroke: e.target.value })}
+          />
 
-          <label className="bf-name bf-name-top">
-            <span>{tx(STR.breaks.nextTimePlan)}</span>
-            <textarea className="rf-text" value={v.nextTimePlan} maxLength={2000} onChange={(e) => set({ nextTimePlan: e.target.value })} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx(STR.breaks.nextTimePlan)}
+            value={v.nextTimePlan}
+            maxLength={2000}
+            onChange={(e) => set({ nextTimePlan: e.target.value })}
+          />
 
           <div className="rf-row">
             <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
@@ -109,12 +122,12 @@ export function BreakSheet({ rule, seedPersonId, onClose, onSaved }: {
           {err && <p className="form-error" role="alert">{err}</p>}
         </div>
 
-        <button className="primary" disabled={busy} onClick={() => void save(false)}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? tx('در حال ذخیره…') : tx(STR.breaks.save)}
-        </button>
-        <button className="big-btn break-later" disabled={busy} onClick={() => void save(true)}>
-          <Icon name="clock" size={17} stroke={1.9} />{tx(STR.breaks.later)}
-        </button>
+        <Button variant="primary" block disabled={busy} onClick={() => void save(false)} icon="check">
+          {busy ? tx('در حال ذخیره…') : tx(STR.breaks.save)}
+        </Button>
+        <Button variant="secondary" block disabled={busy} onClick={() => void save(true)} icon="clock">
+          {tx(STR.breaks.later)}
+        </Button>
         <p className="hint break-hint">{tx(STR.breaks.savedEmpty)}</p>
       </section>
       {picking && <DatePicker value={v.brokenOn} onPick={(d) => { set({ brokenOn: d }); setPicking(false); }} onClose={() => setPicking(false)} />}
@@ -163,12 +176,8 @@ export function BreakTimeline({ rule, breaks, onEdit, todayIso }: {
               <div className="break-head">
                 <b>{label(b.brokenOn, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' })}</b>
                 <span className="break-actions">
-                  <button className="icon-btn small" aria-label={tx(STR.breaks.editTitle)} onClick={() => onEdit(b)}>
-                    <Icon name="note" size={15} stroke={1.9} />
-                  </button>
-                  <button className="icon-btn small danger" aria-label={`${tx(STR.feature.delete)}: ${b.brokenOn}`} onClick={() => void remove(b)}>
-                    <Icon name="trash" size={15} stroke={2} />
-                  </button>
+                  <Button variant="ghost" size="icon-sm" aria-label={tx(STR.breaks.editTitle)} onClick={() => onEdit(b)} icon="note" />
+                  <Button variant="ghost" size="icon-sm" className="danger" aria-label={`${tx(STR.feature.delete)}: ${b.brokenOn}`} onClick={() => void remove(b)} icon="trash" />
                 </span>
               </div>
               {b.whatHappened && <p className="break-text">{b.whatHappened}</p>}
