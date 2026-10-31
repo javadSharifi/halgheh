@@ -1254,7 +1254,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--card2);
   border: 1px solid var(--line-2);
 }
@@ -1292,9 +1292,9 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .pe-input {
   width: 100%;
   height: 48px;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   padding: 0 14px;
-  font-size: 14.5px;
+  font-size: var(--text-body);
   font-weight: 600;
   color: var(--ink-strong);
   background: var(--field);
@@ -1304,7 +1304,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 }
 .pe-input:focus {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-tint);
+  box-shadow: var(--focus-ring);
   outline: none;
 }
 .pe-field.has-error .pe-input {

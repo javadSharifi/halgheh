@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { type Birthday, type Person, db, del, put, uid } from './db';
+import { type Birthday, type Gender, type Person, db, del, put, uid } from './db';
 import { BirthdayFields, type BirthdayDraft, draftOf, emptyDraft, readDraft, rowOf } from './BirthdayFields';
+import { fa } from './cal';
 import { personNameValid, splitPhones } from './phone';
+import { pickOne } from './contacts';
 import { ask } from './confirm';
 import { Icon } from './Icon';
-import { tn, tx } from './i18n';
+import { tk, tn, tx } from './i18n';
+import { Button } from './ui';
+
+const GENDERS: [Gender, string][] = [['f', tk('زن')], ['m', tk('مرد')], ['o', tk('دیگر')]];
+const CADENCES = [7, 30, 90, 180];
+
 
 export type PersonEdit = {
   person: Person;
@@ -47,6 +54,8 @@ export function PersonEditor({
     firstName: p.firstName ?? '',
     lastName: p.lastName ?? '',
     nickname: p.nickname ?? '',
+    gender: p.gender,
+    cadenceDays: p.cadenceDays,
     city: p.city ?? '',
     occupation: p.occupation ?? '',
     workplace: p.workplace ?? '',
@@ -61,6 +70,24 @@ export function PersonEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const set = (patch: Partial<typeof f>) => setF((x) => ({ ...x, ...patch }));
+
+  /** Fill the empty form from one contact; the phone's picker needs no permission dialog. */
+  const pickPerson = async () => {
+    try {
+      const pick = await pickOne();
+      if (!pick) return;
+      setDisplayNameTouched(true);
+      set({
+        displayName: [pick.given, pick.family].filter(Boolean).join(' ') || pick.phones[0] || '',
+        firstName: pick.given ?? '',
+        lastName: pick.family ?? '',
+        phones: pick.phones.join(`${tx('،')} `),
+        emails: pick.emails.join(`${tx('،')} `),
+      });
+    } catch {
+      // no picker on the web build or the plugin refused; typing the name still works
+    }
+  };
 
   const people = useLiveQuery(() => db.people.toArray(), []) ?? [];
   const squeeze = (s: string) => s.replace(/\s+/g, ' ').trim().toLocaleLowerCase('fa');
@@ -91,6 +118,8 @@ export function PersonEditor({
         firstName: trim(f.firstName),
         lastName: trim(f.lastName),
         nickname: trim(f.nickname),
+        gender: f.gender,
+        cadenceDays: f.cadenceDays,
         city: trim(f.city),
         occupation: trim(f.occupation),
         workplace: trim(f.workplace),
@@ -99,7 +128,7 @@ export function PersonEditor({
         createdAt: p.createdAt || now,
         updatedAt: now,
       };
-      for (const k of ['firstName', 'lastName', 'nickname', 'city', 'occupation', 'workplace'] as const) {
+      for (const k of ['firstName', 'lastName', 'nickname', 'gender', 'cadenceDays', 'city', 'occupation', 'workplace'] as const) {
         if (nextPerson[k] === undefined) delete nextPerson[k];
       }
       await put('people', nextPerson);
@@ -168,11 +197,18 @@ export function PersonEditor({
           {error && <p className="pe-error-text" role="alert">{error}</p>}
 
           {isNew && onImportContacts && (
-            <button className="set-row as-btn" type="button" aria-haspopup="dialog" onClick={onImportContacts}>
-              <span className="tile purple" aria-hidden="true"><Icon name="smartphone" size={17} stroke={1.9} /></span>
-              <span className="set-name">{tx('افزودن از مخاطبین')}</span>
-              <Icon name="chevronLeft" size={16} stroke={2} />
-            </button>
+            <>
+              <button className="set-row as-btn" type="button" onClick={pickPerson}>
+                <span className="tile purple" aria-hidden="true"><Icon name="smartphone" size={17} stroke={1.9} /></span>
+                <span className="set-name">{tx('انتخاب از مخاطبین')}</span>
+                <Icon name="chevronLeft" size={16} stroke={2} />
+              </button>
+              <button className="set-row as-btn" type="button" aria-haspopup="dialog" onClick={onImportContacts}>
+                <span className="tile peach" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
+                <span className="set-name">{tx('آوردن همهٔ مخاطبین')}</span>
+                <Icon name="chevronLeft" size={16} stroke={2} />
+              </button>
+            </>
           )}
 
           {/* بخش ۱: مشخصات فردی */}
@@ -255,6 +291,22 @@ export function PersonEditor({
                 onChange={(e) => set({ nickname: e.target.value })}
                 placeholder={tx('مثلاً مهندس، عمو علی')}
               />
+            </div>
+
+            <div className="pe-field">
+              <label className="pe-label"><span>{tx('جنسیت')}</span></label>
+              <div className="radios" role="radiogroup" aria-label={tx('جنسیت')}>
+                {GENDERS.map(([g, n]) => (
+                  <button
+                    key={g}
+                    type="button"
+                    role="radio"
+                    aria-checked={f.gender === g}
+                    className={f.gender === g ? 'on' : ''}
+                    onClick={() => set({ gender: f.gender === g ? undefined : g })}
+                  >{tx(n)}</button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -379,21 +431,45 @@ export function PersonEditor({
             )}
 
             {data?.birthday && bdayOpen && (
-              <button type="button" className="pe-del-btn" onClick={clearBirthday}>{tx('حذف کامل تولد از یادآورها')}</button>
+              <Button variant="danger" block size="sm" onClick={clearBirthday}>
+                {tx('حذف کامل تولد از یادآورها')}
+              </Button>
             )}
+          </div>
+
+          {/* بخش ۵: حفظ ارتباط */}
+          <div className="pe-section">
+            <div className="pe-section-title">
+              <Icon name="repeat" size={16} />
+              <span>{tx('حفظ ارتباط')}</span>
+            </div>
+
+            <div className="pe-field">
+              <label className="pe-label"><span>{tx('هر چند وقت یک بار یادت بیندازد')}</span></label>
+              <select
+                className="pe-input"
+                value={f.cadenceDays ?? ''}
+                onChange={(e) => set({ cadenceDays: e.target.value ? Number(e.target.value) : undefined })}
+              >
+                <option value="">{tx('بدون یادآوری')}</option>
+                {CADENCES.map((d) => <option key={d} value={d}>{tx('هر {a1} روز', { a1: fa(d) })}</option>)}
+              </select>
+              <span className="pe-helper">{tx('اگر بیشتر از این مدت تماسی با این فرد ثبت نشود، در «امروز» یادت می‌اندازد.')}</span>
+            </div>
           </div>
 
           {/* دکمه ذخیره انتهای فرم برای راحتی بیشتر کاربر */}
           <div className="pe-bottom-save">
-            <button
-              type="button"
-              className="primary pe-save-btn"
+            <Button
+              variant="primary"
+              block
+              size="lg"
               disabled={!valid || busy}
               onClick={save}
+              icon="check"
             >
-              <Icon name="check" size={18} stroke={2.4} />
-              <span>{busy ? tx('در حال ذخیره…') : isNew ? tx('ثبت و افزودن فرد') : tx('ذخیره تغییرات')}</span>
-            </button>
+              {busy ? tx('در حال ذخیره…') : isNew ? tx('ثبت و افزودن فرد') : tx('ذخیره تغییرات')}
+            </Button>
           </div>
         </div>
       </section>
