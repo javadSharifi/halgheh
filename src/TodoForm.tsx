@@ -5,7 +5,7 @@ import { LEADS, faDigits, isTime, leadLabel, personLabel } from './format';
 import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { Icon } from './Icon';
-import { InputField } from './InputField';
+import { InputField } from './ui';
 import { askNotifications, isNative } from './native';
 import { getSettings, updateSettings } from './settings';
 import { removeTask } from './Todos';

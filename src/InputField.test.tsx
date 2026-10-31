@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { InputField } from './InputField';
+import { InputField } from './ui';
 
 test('InputField renders label above input and displays placeholder', () => {
   const html = renderToStaticMarkup(
