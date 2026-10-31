@@ -8,7 +8,7 @@ import { pickOne } from './contacts';
 import { ask } from './confirm';
 import { Icon } from './Icon';
 import { tk, tn, tx } from './i18n';
-import { Button } from './ui';
+import { Button, Select } from './ui';
 
 const GENDERS: [Gender, string][] = [['f', tk('زن')], ['m', tk('مرد')], ['o', tk('دیگر')]];
 const CADENCES = [7, 30, 90, 180];
@@ -444,18 +444,16 @@ export function PersonEditor({
               <span>{tx('حفظ ارتباط')}</span>
             </div>
 
-            <div className="pe-field">
-              <label className="pe-label"><span>{tx('هر چند وقت یک بار یادت بیندازد')}</span></label>
-              <select
-                className="pe-input"
-                value={f.cadenceDays ?? ''}
-                onChange={(e) => set({ cadenceDays: e.target.value ? Number(e.target.value) : undefined })}
-              >
-                <option value="">{tx('بدون یادآوری')}</option>
-                {CADENCES.map((d) => <option key={d} value={d}>{tx('هر {a1} روز', { a1: fa(d) })}</option>)}
-              </select>
-              <span className="pe-helper">{tx('اگر بیشتر از این مدت تماسی با این فرد ثبت نشود، در «امروز» یادت می‌اندازد.')}</span>
-            </div>
+            <Select
+              label={tx('هر چند وقت یک بار یادت بیندازد')}
+              hint={tx('اگر بیشتر از این مدت تماسی با این فرد ثبت نشود، در «امروز» یادت می‌اندازد.')}
+              value={f.cadenceDays ?? ''}
+              onChange={(e) => set({ cadenceDays: e.target.value ? Number(e.target.value) : undefined })}
+              options={[
+                { value: '', label: tx('بدون یادآوری') },
+                ...CADENCES.map((d) => ({ value: d, label: tx('هر {a1} روز', { a1: fa(d) }) })),
+              ]}
+            />
           </div>
 
           {/* دکمه ذخیره انتهای فرم برای راحتی بیشتر کاربر */}

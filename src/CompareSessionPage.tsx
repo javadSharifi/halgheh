@@ -11,7 +11,7 @@ import { differences as differencesOf, orderItems as orderByRules, parsePrice, s
 import { Toggle } from './Toggle';
 import type { CheckState } from './domain/rules/constants';
 import { tx } from './i18n';
-import { InputField, Button } from './ui';
+import { InputField, Button, Select } from './ui';
 
 /** Formats a price in Toman with Persian digits; a missing price is "ثبت نشده"-style silence, never a zero. */
 export const priceText = (price: number | undefined) => (price === undefined ? '' : `${fa(price)} ${tx(STR.compare.priceUnit)}`);
@@ -400,17 +400,19 @@ function TwoSheet({ items, rules, checks, onClose }: {
       <section className="sheet two-sheet" role="dialog" aria-modal="true" aria-labelledby="two-title">
         <div className="bf-head">
           <span id="two-title">{tx(STR.compare.compareTwoTitle)}</span>
-          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx(STR.feature.close)}</Button>
         </div>
 
         <div className="two-pickers">
           {[{ label: tx(STR.compare.columnA), value: aId, set: setAId }, { label: tx(STR.compare.columnB), value: bId, set: setBId }].map(({ label, value, set }) => (
-            <label key={label} className="two-pick">
-              <span>{label}</span>
-              <select value={value} onChange={(e) => set(e.target.value)} aria-label={label}>
-                {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-              </select>
-            </label>
+            <Select
+              key={label}
+              label={label}
+              value={value}
+              onChange={(e) => set(e.target.value)}
+              aria-label={label}
+              options={items.map((i) => ({ value: i.id, label: i.name }))}
+            />
           ))}
         </div>
 
