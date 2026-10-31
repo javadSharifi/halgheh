@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import { DatePicker } from './DatePicker';
 import { locale, tx } from './i18n';
 import { personLabel } from './format';
+import { InputField, Button } from './ui';
 
 /** Edit a photo's metadata (G1): title, note, date, an optional person link and tags. G2 wires the same fields into search. */
 export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => void }) {
@@ -57,8 +58,21 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
         </div>
 
         <div className="pe-scroll">
-          <label className="bf-name"><span>{tx('عنوان')}</span><input autoFocus value={v.title} maxLength={120} onChange={(e) => set({ title: e.target.value })} /></label>
-          <label className="bf-name bf-name-top"><span>{tx('یادداشت')}</span><textarea className="rf-text" value={v.note} onChange={(e) => set({ note: e.target.value })} maxLength={600} /></label>
+          <InputField
+            label={tx('عنوان')}
+            autoFocus
+            value={v.title}
+            maxLength={120}
+            onChange={(e) => set({ title: e.target.value })}
+          />
+          <InputField
+            label={tx('یادداشت')}
+            multiline
+            rows={3}
+            value={v.note}
+            maxLength={600}
+            onChange={(e) => set({ note: e.target.value })}
+          />
 
           <div className="rf-row">
             <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
@@ -94,10 +108,9 @@ export function PhotoEdit({ photo, onClose }: { photo?: Photo; onClose: () => vo
           {err && <p className="form-error" role="alert">{err}</p>}
         </div>
 
-        <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />
+        <Button variant="primary" block disabled={!valid || busy} onClick={() => void save()} icon="check">
           {busy ? tx('در حال ذخیره…') : tx('ذخیره')}
-        </button>
+        </Button>
       </section>
       {picking && <DatePicker value={v.takenAt} onPick={(d) => { set({ takenAt: d }); setPicking(false); }} onClose={() => setPicking(false)} />}
     </>

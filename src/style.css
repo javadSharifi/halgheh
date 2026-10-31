@@ -3246,6 +3246,10 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
   outline: none;
   box-shadow: var(--focus-ring);
 }
+.ui-btn-block {
+  width: 100%;
+  display: flex;
+}
 
 /* Button Variants */
 .ui-btn-primary {

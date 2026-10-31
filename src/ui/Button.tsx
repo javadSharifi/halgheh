@@ -11,6 +11,7 @@ interface StandardButtonProps extends BaseButtonProps {
   variant?: ButtonVariant;
   icon?: IconName;
   iconPosition?: 'start' | 'end';
+  block?: boolean;
   children?: ReactNode;
   'aria-label'?: string;
 }
@@ -20,6 +21,7 @@ interface IconButtonProps extends BaseButtonProps {
   variant?: ButtonVariant;
   icon: IconName;
   iconPosition?: never;
+  block?: boolean;
   children?: never;
   'aria-label': string; // Mandatory for accessibility on icon-only buttons
 }
@@ -32,6 +34,7 @@ export function Button({
   size = 'md',
   icon,
   iconPosition = 'start',
+  block,
   className = '',
   disabled,
   children,
@@ -51,7 +54,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`ui-btn ui-btn-${variant} ui-btn-${size}${isIconOnly ? ' ui-btn-icon' : ''} ${className}`.trim()}
+      className={`ui-btn ui-btn-${variant} ui-btn-${size}${block ? ' ui-btn-block' : ''}${isIconOnly ? ' ui-btn-icon' : ''} ${className}`.trim()}
       disabled={disabled}
       {...rest}
     >
