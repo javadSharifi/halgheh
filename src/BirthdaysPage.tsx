@@ -9,7 +9,7 @@ import { Choice } from './Choice';
 import { Icon } from './Icon';
 import { WishSheet } from './WishSheet';
 import { tn, tx } from './i18n';
-import { Card, Button } from './ui';
+import { Card, Button, InputField } from './ui';
 
 // avatar colour (p0..p2 in the stylesheet), picked by name so a person keeps the same colour
 const paletteOf = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
@@ -235,10 +235,11 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
           </span>
         </div>
         <div className="birthday-fields-group">
-          <label className="bf-name">
-            <span>{tx('نام مناسبت')}</span>
-            <input value={of.title} onChange={(e) => setOF({ ...of, title: e.target.value })} />
-          </label>
+          <InputField
+            label={tx('نام مناسبت')}
+            value={of.title}
+            onChange={(e) => setOF({ ...of, title: e.target.value })}
+          />
           <div className="radios bf-cal-radios" role="radiogroup" aria-label={tx('نوع تقویم')}>
             {CALS.map((c) => (
               <button key={c} role="radio" aria-checked={of.cal === c} className={of.cal === c ? 'on' : ''} onClick={() => setOF({ ...of, cal: c })}>{tx(CAL_NAMES[c])}</button>
