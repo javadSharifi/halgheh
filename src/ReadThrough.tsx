@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Rule, db } from './db';
 import { fa, today } from './cal';
 import { Icon } from './Icon';
+import { Button, Card } from './ui';
 import { Toggle } from './Toggle';
 import { STR } from './strings/rulebook';
 import { orderRules, recordReview } from './ruleData';
@@ -44,7 +45,7 @@ export function ReadThrough({ categoryId, categoryName, onClose }: { categoryId?
 
   const head = (
     <header className="dd-head">
-      <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onClose}><Icon name="chevronRight" /></button>
+      <Button variant="ghost" size="icon-md" aria-label={tx(STR.feature.close)} onClick={onClose} icon="chevronRight" />
       <span>{title}</span>
       <span className="head-spacer" />
     </header>
@@ -62,10 +63,10 @@ export function ReadThrough({ categoryId, categoryName, onClose }: { categoryId?
     return (
       <>
         {head}
-        <section className="glass empty-state small">
+        <Card className="empty-state small">
           <b>{tx(STR.review.emptyTitle)}</b>
           <p className="hint">{tx(STR.review.emptyBody)}</p>
-        </section>
+        </Card>
       </>
     );
   }
@@ -73,13 +74,15 @@ export function ReadThrough({ categoryId, categoryName, onClose }: { categoryId?
     return (
       <>
         {head}
-        <section className="glass empty-state">
+        <Card className="empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.7} /></span>
           <b>{tx(STR.review.readThroughDone)}</b>
           <p className="hint">{countAsReview ? `${fa(recorded)} ${tx(STR.feature.reviewCount)} ${tx(STR.review.recordAsReview)}` : tx(STR.review.readThroughNoChange)}</p>
-        </section>
+        </Card>
         <div className="rf-foot">
-          <button className="primary big-btn" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{tx(STR.feature.close)}</button>
+          <Button variant="primary" block size="lg" onClick={onClose} icon="check">
+            {tx(STR.feature.close)}
+          </Button>
         </div>
       </>
     );
@@ -94,11 +97,11 @@ export function ReadThrough({ categoryId, categoryName, onClose }: { categoryId?
         <div className="review-bar" aria-hidden="true"><i style={{ width: `${(index / list.length) * 100}%` }} /></div>
       </div>
 
-      <section className="glass review-card read" aria-live="polite">
+      <Card className="review-card read" aria-live="polite">
         <h2>{current.title}</h2>
         {current.why ? <p className="read-why">{current.why}</p> : <p className="hint">{tx(STR.feature.whyPlaceholder)}</p>}
         <span className="review-box">{fa(current.box + 1)} · {tx(STR.feature.box)}</span>
-      </section>
+      </Card>
 
       <div className="rf-row read-toggle">
         <span className="tile blue" aria-hidden="true"><Icon name="checkCircle" size={17} stroke={1.9} /></span>
@@ -110,13 +113,12 @@ export function ReadThrough({ categoryId, categoryName, onClose }: { categoryId?
       </div>
 
       <div className="read-actions">
-        <button className="big-btn" disabled={index === 0 || busy} onClick={() => void go(-1)}>
-          <Icon name="chevronRight" size={18} stroke={2.2} />{tx(STR.review.readThroughPrev)}
-        </button>
-        <button className="primary big-btn" disabled={busy} onClick={() => void go(1)}>
+        <Button size="lg" disabled={index === 0 || busy} onClick={() => void go(-1)} icon="chevronRight">
+          {tx(STR.review.readThroughPrev)}
+        </Button>
+        <Button variant="primary" size="lg" iconPosition="end" disabled={busy} onClick={() => void go(1)} icon="chevronLeft">
           {index === list.length - 1 ? tx(STR.review.readThroughDone) : tx(STR.review.readThroughNext)}
-          <Icon name="chevronLeft" size={18} stroke={2.2} />
-        </button>
+        </Button>
       </div>
     </>
   );

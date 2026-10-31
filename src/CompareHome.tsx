@@ -5,6 +5,7 @@ import { db } from './db';
 import { fa, label } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
+import { Button } from './ui';
 import { Toggle } from './Toggle';
 import { STR } from './strings/rulebook';
 import { addSession, itemsOf, orderSessions, setCompareEnabled, deleteSession } from './ruleData';
@@ -50,7 +51,7 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
       <section className="sheet compare-home" role="dialog" aria-modal="true" aria-labelledby="compare-home-title">
         <div className="bf-head">
           <span id="compare-home-title">{tx(STR.compare.title)} · {tx(category.name)}</span>
-          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx(STR.feature.close)}</Button>
         </div>
 
         <div className="rf-row">
@@ -66,9 +67,9 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
             {rulesHere.length === 0 && <p className="hint">{tx(STR.compare.noRules)}</p>}
             <div className="cat-add">
               <input value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder={tx(STR.compare.sessionTitlePlaceholder)} aria-label={tx(STR.compare.newSession)} enterKeyHint="done" />
-              <button className="mini-btn" disabled={busy || rulesHere.length === 0} onClick={() => void create()}>
-                <Icon name="plus" size={14} stroke={2.4} />{tx(STR.compare.newSession)}
-              </button>
+              <Button variant="primary" size="sm" disabled={busy || rulesHere.length === 0} onClick={() => void create()} icon="plus">
+                {tx(STR.compare.newSession)}
+              </Button>
             </div>
 
             <p className="field-label">{tx(STR.compare.sessions)}</p>
@@ -90,9 +91,7 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
                       </span>
                       <Icon name="chevronLeft" size={16} stroke={2} />
                     </button>
-                    <button className="icon-btn small danger" aria-label={`${tx(STR.feature.delete)} ${s.title}`} onClick={() => void remove(s)}>
-                      <Icon name="trash" size={16} stroke={2} />
-                    </button>
+                    <Button variant="ghost" size="icon-sm" className="danger" aria-label={`${tx(STR.feature.delete)} ${s.title}`} onClick={() => void remove(s)} icon="trash" />
                   </div>
                 );
               })}

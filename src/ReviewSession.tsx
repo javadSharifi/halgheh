@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Rule, db } from './db';
 import { fa, today } from './cal';
 import { Icon } from './Icon';
+import { Button, Card, InputField } from './ui';
 import { STR, REVIEW_RESULT_LABEL } from './strings/rulebook';
 import { dueCount, dueRules } from './domain/rules/schedule';
 import { latestPlan } from './domain/rules/breaks';
@@ -63,7 +64,7 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
 
   const head = (
     <header className="dd-head">
-      <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onClose}><Icon name="chevronRight" /></button>
+      <Button variant="ghost" size="icon-md" aria-label={tx(STR.feature.close)} onClick={onClose} icon="chevronRight" />
       <span>{tx(STR.review.sessionTitle)}</span>
       <span className="head-spacer" />
     </header>
@@ -82,11 +83,11 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
     return (
       <>
         {head}
-        <section className="glass empty-state">
+        <Card className="empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.7} /></span>
           <b>{tx(STR.review.emptyTitle)}</b>
           <p className="hint">{tx(STR.review.emptyBody)}</p>
-        </section>
+        </Card>
       </>
     );
   }
@@ -95,13 +96,15 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
     return (
       <>
         {head}
-        <section className="glass empty-state">
+        <Card className="empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.7} /></span>
           <b>{tx(STR.review.finishedTitle)}</b>
           <p className="hint">{remaining > 0 ? tx(STR.review.stillDue(remaining)) : tx(STR.review.allDone)}</p>
-        </section>
+        </Card>
         <div className="rf-foot">
-          <button className="primary big-btn" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{tx(STR.feature.close)}</button>
+          <Button variant="primary" block size="lg" onClick={onClose} icon="check">
+            {tx(STR.feature.close)}
+          </Button>
         </div>
       </>
     );
@@ -116,7 +119,7 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
         <div className="review-bar" aria-hidden="true"><i style={{ width: `${(index / queue.length) * 100}%` }} /></div>
       </div>
 
-      <section className="glass review-card" aria-live="polite">
+      <Card className="review-card" aria-live="polite">
         <span className="review-box">{tx(STR.feature.box)} {fa(current.box + 1)}</span>
         <h2>{current.title}</h2>
         {showWhy && current.why && (
@@ -137,13 +140,17 @@ export function ReviewSession({ categoryId, onClose }: { categoryId?: string; on
           <Icon name={showWhy ? 'close' : 'note'} size={15} stroke={1.9} />
           {showWhy ? tx(STR.review.hideWhy) : tx(STR.review.showWhy)}
         </button>
-      </section>
+      </Card>
 
       {noteOpen ? (
-        <label className="bf-name bf-name-top review-note">
-          <span>{tx(STR.review.optionalNote)}</span>
-          <textarea className="rf-text" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
-        </label>
+        <InputField
+          multiline
+          rows={3}
+          label={tx(STR.review.optionalNote)}
+          value={note}
+          maxLength={500}
+          onChange={(e) => setNote(e.target.value)}
+        />
       ) : (
         <button className="text-btn review-note-btn" onClick={() => setNoteOpen(true)}>
           <Icon name="plus" size={13} stroke={2.4} />{tx(STR.review.optionalNote)}
