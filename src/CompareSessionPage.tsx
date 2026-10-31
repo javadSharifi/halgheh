@@ -11,6 +11,7 @@ import { differences as differencesOf, orderItems as orderByRules, parsePrice, s
 import { Toggle } from './Toggle';
 import type { CheckState } from './domain/rules/constants';
 import { tx } from './i18n';
+import { InputField, Button } from './ui';
 
 /** Formats a price in Toman with Persian digits; a missing price is "ثبت نشده"-style silence, never a zero. */
 export const priceText = (price: number | undefined) => (price === undefined ? '' : `${fa(price)} ${tx(STR.compare.priceUnit)}`);
@@ -232,15 +233,22 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
           <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
 
-        <label className={`bf-name${!valid && v.name !== '' ? ' bad' : ''}`}>
-          <span>{tx(STR.feature.ruleTitle)}</span>
-          <input autoFocus value={v.name} maxLength={120} onChange={(e) => set({ name: e.target.value })} placeholder={tx(STR.compare.itemNamePlaceholder)} enterKeyHint="done" />
-        </label>
+        <InputField
+          label={tx(STR.feature.ruleTitle)}
+          autoFocus
+          value={v.name}
+          maxLength={120}
+          onChange={(e) => set({ name: e.target.value })}
+          placeholder={tx(STR.compare.itemNamePlaceholder)}
+          enterKeyHint="done"
+        />
 
-        <label className="bf-name">
-          <span>{tx(STR.compare.shop)} ({tx(STR.compare.optional)})</span>
-          <input value={v.shopName} maxLength={80} onChange={(e) => set({ shopName: e.target.value })} />
-        </label>
+        <InputField
+          label={`${tx(STR.compare.shop)} (${tx(STR.compare.optional)})`}
+          value={v.shopName}
+          maxLength={80}
+          onChange={(e) => set({ shopName: e.target.value })}
+        />
 
         <div className="rf-row">
           <span className="tile peach" aria-hidden="true"><Icon name="tag" size={17} stroke={1.9} /></span>
@@ -260,16 +268,20 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
           </button>
         </div>
 
-        <label className="bf-name bf-name-top">
-          <span>{tx(STR.compare.note)} ({tx(STR.compare.optional)})</span>
-          <textarea className="rf-text" value={v.note} maxLength={1000} onChange={(e) => set({ note: e.target.value })} />
-        </label>
+        <InputField
+          label={`${tx(STR.compare.note)} (${tx(STR.compare.optional)})`}
+          multiline
+          rows={3}
+          value={v.note}
+          maxLength={1000}
+          onChange={(e) => set({ note: e.target.value })}
+        />
 
         {err && <p className="form-error" role="alert">{err}</p>}
 
-        <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? tx('در حال ذخیره…') : tx(STR.feature.save)}
-        </button>
+        <Button variant="primary" block disabled={!valid || busy} onClick={() => void save()} icon="check">
+          {busy ? tx('در حال ذخیره…') : tx(STR.feature.save)}
+        </Button>
 
         {item && (
           <button className="text-btn item-check-link" onClick={() => onCheck(item.id)}>
@@ -470,13 +482,18 @@ function DecideSheet({ session, item, onClose }: { session: CompareSession; item
           <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
         <p className="hint">{item.name}</p>
-        <label className="bf-name bf-name-top">
-          <span>{tx(STR.compare.decisionNote)}</span>
-          <textarea className="rf-text" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder={tx(STR.compare.decisionNotePlaceholder)} />
-        </label>
-        <button className="primary" disabled={busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />{tx(STR.compare.decide)}
-        </button>
+        <InputField
+          label={tx(STR.compare.decisionNote)}
+          multiline
+          rows={3}
+          value={note}
+          maxLength={1000}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={tx(STR.compare.decisionNotePlaceholder)}
+        />
+        <Button variant="primary" block disabled={busy} onClick={() => void save()} icon="check">
+          {tx(STR.compare.decide)}
+        </Button>
       </section>
     </>
   );
