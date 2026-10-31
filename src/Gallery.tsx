@@ -5,13 +5,14 @@ import { fa } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
 import { isNative } from './native';
-import { capacity, defaultTakenAt, orderPhotos, titleFromName } from './photos';
-import { base64Bytes, compress, pickImages, removeFile, saveFile } from './photoStore';
+import { capacity, defaultTakenAt, orderPhotos, thumbPathFor, titleFromName } from './photos';
+import { base64Bytes, compress, pickImages, removeFile, saveFile, saveThumb } from './photoStore';
 import { queueForUpload } from './photoSync';
 import { PhotoViewer } from './PhotoViewer';
 import { usePhotoUrls } from './usePhotoUrls';
 import { PhotoEdit } from './PhotoEdit';
 import { tn, tx } from './i18n';
+import { Card, Button } from './ui';
 
 /** The gallery tab (G1): grid of stored photos, add from the system picker, full-screen viewer, cap at 300. */
 export function Gallery({ onBack }: { onBack?: () => void } = {}) {
@@ -26,7 +27,7 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
   const order = useMemo(() => orderPhotos(photos), [photos]);
   const fileOf = useMemo(() => new Map(files.map((f) => [f.photoId, f])), [files]);
   const paths = useMemo(() => new Map(files.map((f) => [f.photoId, f.path])), [files]);
-  const urls = usePhotoUrls(order, paths);
+  const { full: urls, thumb } = usePhotoUrls(order, paths);
   const cap = capacity(photos.length);
 
   useEffect(() => () => { mounted.current = false; }, []);
@@ -48,8 +49,10 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
       const takenAt = defaultTakenAt();
       for (const [i, file] of list.entries()) {
         const id = uid();
-        const { data, width, height } = await compress(file.webPath);
+        const { data, width, height, thumb: thumbData } = await compress(file.webPath);
         const path = await saveFile(id, data);
+        // a phone out of space still keeps the photo; the grid then falls back to the full file
+        await saveThumb(path, thumbData).catch(() => {});
         const row: Photo = {
           id,
           title: titleFromName(file.name) || tx('عکس'),
@@ -77,6 +80,7 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
     const f = fileOf.get(p.id);
     if (f) {
       await removeFile(f.path);
+      await removeFile(thumbPathFor(f.path));
       await db.photoFiles.delete(p.id);
     }
     setViewing(null);
@@ -89,26 +93,35 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {onBack && (
-            <button className="icon-btn" style={{ margin: 0 }} aria-label={tx('بازگشت')} onClick={onBack}>
-              <Icon name="chevronRight" size={20} stroke={2} />
-            </button>
+            <Button
+              size="icon-md"
+              variant="ghost"
+              aria-label={tx('بازگشت')}
+              onClick={onBack}
+              icon="chevronRight"
+            />
           )}
           <h1>{tx('گالری')}</h1>
         </div>
         {isNative && (
-          <button className="pill-btn" disabled={!!busy || cap.full} onClick={() => void add()}>
-            <Icon name="plus" size={16} stroke={2.4} />
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!!busy || cap.full}
+            onClick={() => void add()}
+            icon="plus"
+          >
             {busy ? `${fa(busy.done)}/${fa(busy.total)}` : tx('افزودن عکس')}
-          </button>
+          </Button>
         )}
       </div>
 
       {!isNative && (
-        <section className="glass empty-state">
+        <Card variant="glass" className="empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="image" size={24} stroke={1.7} /></span>
           <b>{tx('گالری روی گوشی کار می‌کند')}</b>
           <p className="hint">{tx('افزودن عکس از گالری گوشی تنها در نسخهٔ اندرویدی در دسترس است.')}</p>
-        </section>
+        </Card>
       )}
 
       {err && <p className="form-error gallery-err" role="alert">{err}</p>}
@@ -116,20 +129,22 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
       {absent > 0 && <p className="hint gallery-err">{tn('{n} عکس پرونده‌اش روی این گوشی نیست؛ با همگام‌سازی بعدی می‌آید.', absent)}</p>}
 
       {isNative && photos.length === 0 && !busy && (
-        <section className="glass empty-state">
+        <Card variant="glass" className="empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="image" size={24} stroke={1.7} /></span>
           <b>{tx('عکسی نیست')}</b>
           <p className="hint">{tx('کارت ویزیت، مدارک و عکس‌هایی که به آدم‌ها مربوط‌اند اینجا نگه داشته می‌شوند.')}</p>
-          <button className="mini-btn primary" onClick={() => void add()}><Icon name="plus" size={14} stroke={2.4} />{tx('افزودن از گالری')}</button>
-        </section>
+          <Button variant="primary" size="sm" onClick={() => void add()} icon="plus">
+            {tx('افزودن از گالری')}
+          </Button>
+        </Card>
       )}
 
       {order.length > 0 && (
         <div className="photo-grid">
           {order.map((p) => (
             <button key={p.id} className="photo-cell" onClick={() => setViewing(p.id)} aria-label={p.title}>
-              {urls[p.id] ? (
-                <img src={urls[p.id]} alt="" loading="lazy" width={p.width} height={p.height} />
+              {thumb[p.id] ? (
+                <img src={thumb[p.id]} alt="" loading="lazy" width={p.width} height={p.height} />
               ) : (
                 <span className="photo-missing" aria-hidden="true"><Icon name="image" size={18} stroke={1.8} /></span>
               )}
