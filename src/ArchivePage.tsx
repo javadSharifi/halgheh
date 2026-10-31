@@ -5,6 +5,7 @@ import { fa } from './cal';
 import { Icon } from './Icon';
 import { tn, tx } from './i18n';
 import { personLabel } from './format';
+import { Card, Button } from './ui';
 
 const paletteOf = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
@@ -36,28 +37,36 @@ export function ArchivePage() {
         {rows.length > 0 && <span className="hint">{tn('{n} نفر', rows.length)}</span>}
       </div>
       {rows.length === 0 ? (
-        <section className="glass empty-state">
+        <Card variant="glass" className="empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="archive" size={24} stroke={1.7} /></span>
           <b>{tx('کسی بایگانی نشده')}</b>
           <p className="hint">{tx('افرادی که از فهرست اصلی کنار می‌گذارید، بدون پاک‌شدن داده‌ها اینجا می‌مانند.')}</p>
-        </section>
+        </Card>
       ) : (
-        <div className="glass set-list people-list">
+        <Card variant="glass" className="set-list people-list">
           {rows.map((p) => (
             <div className="person-row" key={p.id}>
               <span className={`avatar p${paletteOf(p.displayName)}`} aria-hidden="true">{p.displayName.trim().slice(0, 1)}</span>
               <span className="person-name"><bdi>{personLabel(p)}</bdi></span>
               <div className="person-actions">
-                <button className="icon-btn small" aria-label={tx('بازگرداندن {a1}', { a1: p.displayName })} onClick={() => restore(p)}>
-                  <Icon name="undo" size={18} stroke={2} />
-                </button>
-                <button className="icon-btn small danger" aria-label={tx('حذف {a1}', { a1: p.displayName })} onClick={() => remove(p)}>
-                  <Icon name="trash" size={18} stroke={2} />
-                </button>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={tx('بازگرداندن {a1}', { a1: p.displayName })}
+                  onClick={() => restore(p)}
+                  icon="undo"
+                />
+                <Button
+                  size="icon-sm"
+                  variant="danger"
+                  aria-label={tx('حذف {a1}', { a1: p.displayName })}
+                  onClick={() => remove(p)}
+                  icon="trash"
+                />
               </div>
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </>
   );
