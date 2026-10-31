@@ -1,5 +1,6 @@
 import { Icon, type IconName } from './Icon';
 import { tx } from './i18n';
+import { Card } from './ui';
 
 type Props = {
   openSettings: () => void;
@@ -7,7 +8,6 @@ type Props = {
   openArchive: () => void;
   openAbout: () => void;
   openTasks: () => void;
-  openBirthdays: () => void;
   openGallery: () => void;
 };
 
@@ -21,26 +21,25 @@ function Row({ icon, tone, name, onClick }: { icon: IconName; tone: 'blue' | 'pu
   );
 }
 
-export function MorePage({ openSettings, openSync, openArchive, openAbout, openTasks, openBirthdays, openGallery }: Props) {
+export function MorePage({ openSettings, openSync, openArchive, openAbout, openTasks, openGallery }: Props) {
   return (
     <>
       <div className="page-head"><h1>{tx('بیشتر')}</h1></div>
 
       <section>
-        <div className="glass set-list">
+        <Card variant="glass" className="set-list">
           <Row icon="image" tone="purple" name={tx('گالری')} onClick={openGallery} />
           <Row icon="settings" tone="blue" name={tx('تنظیمات')} onClick={openSettings} />
           <Row icon="cloudCheck" tone="purple" name={tx('حساب و پشتیبان')} onClick={openSync} />
           <Row icon="archive" tone="green" name={tx('افراد بایگانی‌شده')} onClick={openArchive} />
           <Row icon="info" tone="blue" name={tx('دربارهٔ حلقه')} onClick={openAbout} />
-        </div>
+        </Card>
       </section>
 
       <section>
-        <div className="glass set-list">
+        <Card variant="glass" className="set-list">
           <Row icon="listChecks" tone="blue" name={tx('همهٔ کارها')} onClick={openTasks} />
-          <Row icon="cakeCandles" tone="purple" name={tx('تولدها')} onClick={openBirthdays} />
-        </div>
+        </Card>
       </section>
     </>
   );
