@@ -2,6 +2,7 @@ import { fa } from '../cal';
 import type { Person, PersonSkill, Rating, RatingCriterion, Relationship, Rule, RuleCheck, RuleCheckItem, Skill } from '../db';
 import { checkCounts } from '../domain/rules/personCheck';
 import { Icon } from '../Icon';
+import { Button } from '../ui';
 import { PersonChecks } from '../PersonCheck';
 import { CRITERION_LABEL, SCORES, currentRatings, isScore } from '../ratings';
 import { REL_LABEL, closenessOf, linksOf } from '../relationships';
@@ -59,7 +60,7 @@ export function EvaluationTab({ personId, personSkills, skills, ratings, relatio
       <section>
         <div className="section-head">
           <h2>{tx('مهارت‌ها')}</h2>
-          <button className="text-btn" onClick={() => onSkill('new')}><Icon name="plus" size={14} stroke={2.4} />{tx('افزودن')}</button>
+          <Button variant="ghost" size="sm" icon="plus" onClick={() => onSkill('new')}>{tx('افزودن')}</Button>
         </div>
         {mySkills.length === 0 ? (
           <div className="glass empty-state small">
@@ -98,7 +99,7 @@ export function EvaluationTab({ personId, personSkills, skills, ratings, relatio
       <section>
         <div className="section-head">
           <h2>{tx('رابطه‌ها')}</h2>
-          <button className="text-btn" onClick={() => onRel('new')}><Icon name="plus" size={14} stroke={2.4} />{tx('افزودن')}</button>
+          <Button variant="ghost" size="sm" icon="plus" onClick={() => onRel('new')}>{tx('افزودن')}</Button>
         </div>
         {myLinks.length === 0 ? (
           <div className="glass empty-state small">
@@ -133,7 +134,7 @@ export function EvaluationTab({ personId, personSkills, skills, ratings, relatio
       <section>
         <div className="section-head">
           <h2>{tx(STR.personCheck.history)}</h2>
-          <button className="text-btn" onClick={onNewCheck}><Icon name="plus" size={14} stroke={2.4} />{tx(STR.personCheck.newTitle)}</button>
+          <Button variant="ghost" size="sm" icon="plus" onClick={onNewCheck}>{tx(STR.personCheck.newTitle)}</Button>
         </div>
         {newestCheck && (
           <p className="hint pp-sum">

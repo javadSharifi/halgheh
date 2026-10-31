@@ -2,6 +2,7 @@ import { fa, label } from '../cal';
 import type { Interaction, Task } from '../db';
 import { faDigits, isTime } from '../format';
 import { Icon } from '../Icon';
+import { Button } from '../ui';
 import { TYPE_NAME } from '../InteractionForm';
 import { isOverdue } from '../todoFilters';
 import { toggleTodo } from '../Todos';
@@ -22,7 +23,7 @@ export function ActivityTab({ askedTasks, askedDone, interactions, onTodo, onInt
       <section>
         <div className="section-head">
           <h2>{tx('کارهایی که گفته')}</h2>
-          <button className="text-btn" onClick={() => onTodo('new')}><Icon name="plus" size={14} stroke={2.4} />{tx('افزودن')}</button>
+          <Button variant="ghost" size="sm" icon="plus" onClick={() => onTodo('new')}>{tx('افزودن')}</Button>
         </div>
         {askedTasks.length === 0 ? (
           <div className="glass empty-state small">
@@ -64,7 +65,7 @@ export function ActivityTab({ askedTasks, askedDone, interactions, onTodo, onInt
       <section>
         <div className="section-head">
           <h2>{tx('تعامل‌ها')}</h2>
-          <button className="text-btn" onClick={() => onInteraction('new')}><Icon name="plus" size={14} stroke={2.4} />{tx('افزودن')}</button>
+          <Button variant="ghost" size="sm" icon="plus" onClick={() => onInteraction('new')}>{tx('افزودن')}</Button>
         </div>
         {interactions.length === 0 ? (
           <div className="glass empty-state small">

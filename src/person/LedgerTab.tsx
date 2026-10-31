@@ -2,6 +2,7 @@ import { fa, today } from '../cal';
 import type { Exchange, ExchangeSettlement, Photo } from '../db';
 import { balancesByPerson, dueText, isSettled, orderExchanges } from '../domain/ledger';
 import { Icon } from '../Icon';
+import { Button } from '../ui';
 import { BalanceChips } from '../ledger/ExchangeItem';
 import { money } from '../ledger/shared';
 import { STR } from '../strings/rulebook';
@@ -27,7 +28,7 @@ export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls,
       <section>
         <div className="section-head">
           <h2>{tx('دادوستد')}</h2>
-          <button className="text-btn" onClick={() => onExchange('new')}><Icon name="plus" size={14} stroke={2.4} />{tx(STR.ledger.quickAdd)}</button>
+          <Button variant="ghost" size="sm" icon="plus" onClick={() => onExchange('new')}>{tx(STR.ledger.quickAdd)}</Button>
         </div>
         {myBalance ? (
           <div className="pp-balance">
@@ -57,13 +58,13 @@ export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls,
             ))}
           </div>
         )}
-        <button className="text-btn pp-ledger" onClick={openLedger}>{tx(STR.ledger.title)}</button>
+        <Button variant="ghost" size="sm" className="pp-ledger" onClick={openLedger}>{tx(STR.ledger.title)}</Button>
       </section>
 
       <section>
         <div className="section-head">
           <h2>{tx(STR.brief.title)}</h2>
-          <button className="pill-btn" onClick={openBrief}><Icon name="note" size={15} stroke={2.2} />{tx(STR.brief.entry)}</button>
+          <Button variant="secondary" size="sm" icon="note" onClick={openBrief}>{tx(STR.brief.entry)}</Button>
         </div>
         <p className="hint">{tx(STR.brief.readOnly)}</p>
       </section>
