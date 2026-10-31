@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PersonNote } from './db';
 import { Icon } from './Icon';
+import { Button, Card } from './ui';
 import { tx } from './i18n';
 
 /**
@@ -34,7 +35,7 @@ export function NoteBox({ note, onSave }: { note: PersonNote | undefined; onSave
   };
 
   return (
-    <section className="glass note-box">
+    <Card className="note-box">
       <label className="note-label">
         <span className="field-label">{tx('یادداشت خصوصی')}</span>
         <textarea
@@ -53,8 +54,8 @@ export function NoteBox({ note, onSave }: { note: PersonNote | undefined; onSave
         ) : (
           <span className="hint">{text.trim() ? tx('خودکار ذخیره می‌شود') : tx('خالی')}</span>
         )}
-        <button className="text-btn" disabled={text === last.current} onClick={commit}>{tx('ذخیره')}</button>
+        <Button variant="ghost" size="sm" disabled={text === last.current} onClick={commit}>{tx('ذخیره')}</Button>
       </div>
-    </section>
+    </Card>
   );
 }

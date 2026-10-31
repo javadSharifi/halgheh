@@ -3,6 +3,7 @@ import { type Interaction, del, put, uid } from './db';
 import { ask } from './confirm';
 import { fullDate, label, today } from './cal';
 import { Icon } from './Icon';
+import { Button, InputField } from './ui';
 import { DatePicker } from './DatePicker';
 import { Choice } from './Choice';
 import { tx, tk } from './i18n';
@@ -73,7 +74,7 @@ export function InteractionForm({ personId, initial, onClose }: { personId: stri
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="interaction-title">
         <div className="bf-head">
           <span id="interaction-title">{initial ? tx('ویرایش تعامل') : tx('تعامل تازه')}</span>
-          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx('بستن')}</Button>
         </div>
 
         <div className="pe-scroll">
@@ -88,14 +89,22 @@ export function InteractionForm({ personId, initial, onClose }: { personId: stri
             {label(v.occurredAt, 'persian', 0, { weekday: 'long' })} · {fullDate(v.occurredAt, 'persian')}
           </button>
 
-          <label className="bf-name bf-name-top">
-            <span>{tx('چه شد')}</span>
-            <textarea className="rf-text" value={v.summary} onChange={(e) => set({ summary: e.target.value })} placeholder={tx('مثلاً دربارهٔ بازسازی خانه حرف زدیم')} />
-          </label>
-          <label className="bf-name bf-name-top">
-            <span>{tx('نتیجه (اختیاری)')}</span>
-            <textarea className="rf-text" value={v.outcome} onChange={(e) => set({ outcome: e.target.value })} placeholder={tx('مثلاً قرار شد نمونه‌کار بفرستد')} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx('چه شد')}
+            value={v.summary}
+            onChange={(e) => set({ summary: e.target.value })}
+            placeholder={tx('مثلاً دربارهٔ بازسازی خانه حرف زدیم')}
+          />
+          <InputField
+            multiline
+            rows={3}
+            label={tx('نتیجه (اختیاری)')}
+            value={v.outcome}
+            onChange={(e) => set({ outcome: e.target.value })}
+            placeholder={tx('مثلاً قرار شد نمونه‌کار بفرستد')}
+          />
 
           <div className="rf-row">
             <span className="tile purple" aria-hidden="true"><Icon name="bell" size={17} stroke={1.9} /></span>
@@ -104,21 +113,21 @@ export function InteractionForm({ personId, initial, onClose }: { personId: stri
               {v.followUpDate ? label(v.followUpDate, 'persian', 0, { day: 'numeric', month: 'long' }) : tx('ندارد')}
               <Icon name="chevronLeft" size={16} stroke={2} />
             </span>
-            <button className="icon-btn small" aria-label={tx('انتخاب تاریخ پیگیری')} onClick={() => setPicking('follow')}><Icon name="calendar" size={16} stroke={2} /></button>
-            {v.followUpDate && <button className="icon-btn small" aria-label={tx('حذف پیگیری')} onClick={() => set({ followUpDate: '' })}><Icon name="close" size={16} stroke={2} /></button>}
+            <Button variant="ghost" size="icon-sm" aria-label={tx('انتخاب تاریخ پیگیری')} onClick={() => setPicking('follow')} icon="calendar" />
+            {v.followUpDate && <Button variant="ghost" size="icon-sm" aria-label={tx('حذف پیگیری')} onClick={() => set({ followUpDate: '' })} icon="close" />}
           </div>
           {v.followUpDate && <p className="rf-note"><Icon name="info" size={13} stroke={2} />{tx('پیگیری در «امروز» فهرست می‌شود (T3).')}</p>}
           {future && <p className="rf-note"><Icon name="info" size={13} stroke={2} />{tx('این تاریخ در آینده است؛ به‌عنوان قرار ثبت می‌شود.')}</p>}
           {!valid && v.summary.trim() === '' && <p className="hint pe-hint">{tx('یک خط بنویس که چه شد؛ همین برای یادآوری کافی است.')}</p>}
         </div>
 
-        <button className="primary" disabled={!valid || busy} onClick={save}>
-          <Icon name="check" size={18} stroke={2.4} />
+        <Button variant="primary" block disabled={!valid || busy} onClick={save} icon="check">
           {busy ? tx('در حال ذخیره…') : initial ? tx('ذخیره') : tx('ثبت تعامل')}
-        </button>
+        </Button>
         {initial && (
-          <button className="danger-btn" disabled={busy} onClick={remove}>
-            <Icon name="trash" size={16} stroke={2} />{tx('حذف این تعامل')}</button>
+          <Button variant="danger" block disabled={busy} onClick={remove} icon="trash">
+            {tx('حذف این تعامل')}
+          </Button>
         )}
       </section>
       {picking && (
