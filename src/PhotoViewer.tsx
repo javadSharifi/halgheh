@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Photo } from './db';
 import { fa, label } from './cal';
 import { Icon } from './Icon';
+import { Button } from './ui';
 import { tx } from './i18n';
 
 /**
@@ -58,9 +59,9 @@ export function PhotoViewer({ photoId, photos, urls, title, onClose, onEdit, onR
   return (
     <div className="viewer" role="dialog" aria-modal="true" aria-label={photo.title}>
       <div className="viewer-bar">
-        <button className="icon-btn" aria-label={tx('بستن')} onClick={onClose}><Icon name="close" size={20} stroke={2.2} /></button>
+        <Button variant="ghost" size="icon-md" aria-label={tx('بستن')} onClick={onClose} icon="close" />
         <span className="viewer-title">{photo.title}</span>
-        <button className="icon-btn" aria-label={tx('ویرایش')} onClick={() => onEdit(photo)}><Icon name="settings" size={19} stroke={1.9} /></button>
+        <Button variant="ghost" size="icon-md" aria-label={tx('ویرایش')} onClick={() => onEdit(photo)} icon="settings" />
       </div>
 
       <div
@@ -102,7 +103,7 @@ export function PhotoViewer({ photoId, photos, urls, title, onClose, onEdit, onR
         <span>{label(photo.takenAt, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         {photo.note && <span className="viewer-note">{photo.note}</span>}
         <span className="viewer-count">{tx('{a1} از {a2}', { a1: fa(index + 1), a2: fa(photos.length) })}</span>
-        <button className="text-btn" onClick={() => onRemove(photo)}>{tx('حذف')}</button>
+        <Button variant="ghost" size="sm" onClick={() => onRemove(photo)}>{tx('حذف')}</Button>
       </div>
     </div>
   );

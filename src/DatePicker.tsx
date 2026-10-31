@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CALS, CAL_NAMES, type Cal, addDays, fa, gridCells, label, month, parts, today, wd, wdInitial } from './cal';
 import { Icon } from './Icon';
+import { Button } from './ui';
 import { useSettings } from './settings';
 import { tx } from './i18n';
 
@@ -23,9 +24,9 @@ export function DatePicker({ value, onPick, onClose }: { value: string; onPick: 
           ))}
         </div>
         <div className="month-head">
-          <button className="icon-btn" aria-label={tx('ماه قبل')} onClick={() => setAnchor(addDays(days[0], -1))}><Icon name="chevronRight" /></button>
+          <Button variant="ghost" size="icon-md" aria-label={tx('ماه قبل')} onClick={() => setAnchor(addDays(days[0], -1))} icon="chevronRight" />
           <div className="month-title"><b>{label(anchor, cal, 0, { month: 'long', year: 'numeric' })}</b></div>
-          <button className="icon-btn" aria-label={tx('ماه بعد')} onClick={() => setAnchor(addDays(days[days.length - 1], 1))}><Icon name="chevronLeft" /></button>
+          <Button variant="ghost" size="icon-md" aria-label={tx('ماه بعد')} onClick={() => setAnchor(addDays(days[days.length - 1], 1))} icon="chevronLeft" />
         </div>
         <div className="week-head" aria-hidden="true">
           {Array.from({ length: 7 }, (_, i) => (weekStart + i) % 7).map((w) => <span key={w} className={w === 5 ? 'fri' : ''}>{wdInitial(w)}</span>)}
@@ -44,8 +45,8 @@ export function DatePicker({ value, onPick, onClose }: { value: string; onPick: 
           ))}
         </div>
         <div className="sheet-actions">
-          <button onClick={() => { setAnchor(t); onPick(t); }}>{tx('امروز')}</button>
-          <button onClick={onClose}>{tx('بستن')}</button>
+          <Button variant="secondary" onClick={() => { setAnchor(t); onPick(t); }}>{tx('امروز')}</Button>
+          <Button variant="ghost" onClick={onClose}>{tx('بستن')}</Button>
         </div>
       </div>
     </>

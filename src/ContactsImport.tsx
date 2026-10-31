@@ -6,6 +6,7 @@ import { fa } from './cal';
 import { normalize } from './search';
 import { importPicks, markDuplicates, permissionText, toPicks, type Pick } from './contacts';
 import { Icon } from './Icon';
+import { Button } from './ui';
 import { tn, tx } from './i18n';
 
 type Phase = 'idle' | 'asking' | 'loading' | 'ready' | 'denied' | 'error' | 'saving' | 'done';
@@ -107,7 +108,7 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
       <section className="sheet contacts-sheet" role="dialog" aria-modal="true" aria-labelledby="contacts-title">
         <div className="bf-head">
           <span id="contacts-title">{tx('افزودن از مخاطبین')}</span>
-          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx('بستن')}</Button>
         </div>
 
         {(phase === 'asking' || phase === 'loading') && (
@@ -125,7 +126,7 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
         )}
 
         {(phase === 'denied' || phase === 'error') && (
-          <button className="mini-btn" onClick={() => void load()}><Icon name="refresh" size={14} stroke={2.2} />{tx('تلاش دوباره')}</button>
+          <Button variant="secondary" size="sm" onClick={() => void load()} icon="refresh">{tx('تلاش دوباره')}</Button>
         )}
 
         {(phase === 'ready' || phase === 'saving' || phase === 'done') && (
@@ -144,7 +145,7 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
 
                 <div className="contacts-meta">
                   <span>{dupCount ? tn('{n} مخاطب · {a1} از قبل هست', total, { a1: fa(dupCount) }) : tn('{n} مخاطب', total)}</span>
-                  <button className="text-btn" onClick={toggleAll}>{allShownChosen ? tx('برداشتن همه') : tx('انتخاب {a1}', { a1: query ? tx('نتایج') : tx('همه') })}</button>
+                  <Button variant="ghost" size="sm" onClick={toggleAll}>{allShownChosen ? tx('برداشتن همه') : tx('انتخاب {a1}', { a1: query ? tx('نتایج') : tx('همه') })}</Button>
                 </div>
 
                 <div className="contacts-list">
@@ -180,12 +181,11 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
               </p>
             )}
             {phase === 'done' ? (
-              <button className="primary" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{tx('بستن')}</button>
+              <Button variant="primary" block onClick={onClose} icon="check">{tx('بستن')}</Button>
             ) : (
-              <button className="primary" disabled={phase !== 'ready' || chosen.size === 0} onClick={() => void save()}>
-                <Icon name="plus" size={18} stroke={2.4} />
+              <Button variant="primary" block disabled={phase !== 'ready' || chosen.size === 0} onClick={() => void save()} icon="plus">
                 {phase === 'saving' ? tx('در حال ذخیره…') : chosen.size ? tx('افزودن {a1} نفر', { a1: fa(chosen.size) }) : tx('کسی انتخاب نشده')}
-              </button>
+              </Button>
             )}
           </>
         )}
