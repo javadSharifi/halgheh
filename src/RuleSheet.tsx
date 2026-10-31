@@ -12,6 +12,7 @@ import { replaySchedule } from './domain/rules/schedule';
 import { BreakSheet, BreakTimeline } from './BreakSheet';
 import { breaksOf } from './domain/rules/breaks';
 import { tx } from './i18n';
+import { InputField, Button } from './ui';
 
 /**
  * Phase 2: the rule editor. One sheet for every editable field — title, why, category, pin, strict — plus the rule's own
@@ -97,15 +98,25 @@ export function RuleSheet({ rule, categories, seedCategoryId, onClose }: { rule:
         </div>
 
         <div className="pe-scroll">
-          <label className={`bf-name${!valid && v.title !== '' ? ' bad' : ''}`}>
-            <span>{tx(STR.feature.ruleTitle)}</span>
-            <input autoFocus value={v.title} maxLength={200} onChange={(e) => set({ title: e.target.value })} placeholder={tx(STR.feature.quickAddPlaceholder)} enterKeyHint="done" />
-          </label>
+          <InputField
+            label={tx(STR.feature.ruleTitle)}
+            autoFocus
+            value={v.title}
+            maxLength={200}
+            onChange={(e) => set({ title: e.target.value })}
+            placeholder={tx(STR.feature.quickAddPlaceholder)}
+            enterKeyHint="done"
+          />
 
-          <label className="bf-name bf-name-top">
-            <span>{tx(STR.feature.why)}</span>
-            <textarea className="rf-text" value={v.why} onChange={(e) => set({ why: e.target.value })} placeholder={tx(STR.feature.whyPlaceholder)} maxLength={2000} />
-          </label>
+          <InputField
+            label={tx(STR.feature.why)}
+            multiline
+            rows={3}
+            value={v.why}
+            onChange={(e) => set({ why: e.target.value })}
+            placeholder={tx(STR.feature.whyPlaceholder)}
+            maxLength={2000}
+          />
 
           <div className="rf-row">
             <span className="tile purple" aria-hidden="true"><Icon name="tag" size={17} stroke={1.9} /></span>
@@ -176,10 +187,9 @@ export function RuleSheet({ rule, categories, seedCategoryId, onClose }: { rule:
           {err && <p className="form-error" role="alert">{err}</p>}
         </div>
 
-        <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />
+        <Button variant="primary" block disabled={!valid || busy} onClick={() => void save()} icon="check">
           {busy ? tx('در حال ذخیره…') : rule ? tx(STR.feature.save) : tx(STR.feature.addRule)}
-        </button>
+        </Button>
 
         {rule && (
           <button className="big-btn break-cta" onClick={() => setBreaking('new')}>
@@ -238,22 +248,34 @@ function EditBreakSheet({ rule, row, onClose }: { rule: Rule; row: RuleBreak; on
           <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
         <div className="pe-scroll">
-          <label className="bf-name bf-name-top">
-            <span>{tx(STR.breaks.whatHappened)}</span>
-            <textarea className="rf-text" value={v.whatHappened} maxLength={2000} onChange={(e) => set({ whatHappened: e.target.value })} />
-          </label>
-          <label className="bf-name bf-name-top">
-            <span>{tx(STR.breaks.whyBroke)}</span>
-            <textarea className="rf-text" value={v.whyBroke} maxLength={2000} onChange={(e) => set({ whyBroke: e.target.value })} />
-          </label>
-          <label className="bf-name bf-name-top">
-            <span>{tx(STR.breaks.nextTimePlan)}</span>
-            <textarea className="rf-text" value={v.nextTimePlan} maxLength={2000} onChange={(e) => set({ nextTimePlan: e.target.value })} />
-          </label>
+          <InputField
+            label={tx(STR.breaks.whatHappened)}
+            multiline
+            rows={3}
+            value={v.whatHappened}
+            maxLength={2000}
+            onChange={(e) => set({ whatHappened: e.target.value })}
+          />
+          <InputField
+            label={tx(STR.breaks.whyBroke)}
+            multiline
+            rows={3}
+            value={v.whyBroke}
+            maxLength={2000}
+            onChange={(e) => set({ whyBroke: e.target.value })}
+          />
+          <InputField
+            label={tx(STR.breaks.nextTimePlan)}
+            multiline
+            rows={3}
+            value={v.nextTimePlan}
+            maxLength={2000}
+            onChange={(e) => set({ nextTimePlan: e.target.value })}
+          />
         </div>
-        <button className="primary" disabled={busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? tx('در حال ذخیره…') : tx(STR.feature.save)}
-        </button>
+        <Button variant="primary" block disabled={busy} onClick={() => void save()} icon="check">
+          {busy ? tx('در حال ذخیره…') : tx(STR.feature.save)}
+        </Button>
       </section>
     </>
   );
