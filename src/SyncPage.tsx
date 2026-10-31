@@ -11,6 +11,8 @@ import { downloadMissingPhotos, photoQueueStatus, uploadPendingPhotos } from './
 import { STR } from './strings/rulebook';
 import { tk, tn, tx } from './i18n';
 
+import { Card, Button } from './ui';
+
 const errorText = (e: unknown) =>
   e instanceof HttpError
     ? e.status === 409 ? tx('با این ایمیل قبلاً حساب ساخته شده. وارد شوید.')
@@ -24,6 +26,7 @@ const KIND: Record<Outbox['t'], { icon: IconName; tone: string; name: string }> 
   tasks: { icon: 'repeat', tone: 'blue', name: tk('کار') },
   done: { icon: 'check', tone: 'blue', name: tk('انجام کار') },
   birthdays: { icon: 'cake', tone: 'peach', name: tk('تولد') },
+  occasions: { icon: 'calendarDays', tone: 'peach', name: tk('مناسبت‌ها') },
   people: { icon: 'users', tone: 'blue', name: tk('فرد') },
   tags: { icon: 'tag', tone: 'purple', name: tk('برچسب') },
   personTags: { icon: 'tag', tone: 'purple', name: tk('برچسب فرد') },
@@ -141,7 +144,7 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
         <span className="head-spacer" />
       </header>
 
-      <section className="glass sync-status" aria-label={tx('وضعیت اتصال')}>
+      <Card variant="glass" className="sync-status" aria-label={tx('وضعیت اتصال')}>
         <div className="flow" aria-hidden="true">
           <div className="dev-tile"><Icon name="smartphone" size={28} stroke={1.7} /><span className="badge-ok"><Icon name="check" size={12} stroke={3} /></span></div>
           <div className="link">
@@ -153,10 +156,10 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
         <b>{title}</b>
         <p>{text}</p>
         {err && <p className="form-error" role="alert">{err}</p>}
-      </section>
+      </Card>
 
       {!cfg && DEFAULT_URL && (
-        <section className="glass sync-card" aria-label={tx('حساب کاربری')}>
+        <Card variant="glass" className="sync-card" aria-label={tx('حساب کاربری')}>
           <div className="sc-head"><span><Icon name="cloudCheck" size={16} stroke={1.9} />{tx('حساب کاربری')}</span></div>
           <div className="radios rf-kind" role="radiogroup" aria-label={tx('ورود یا ساخت حساب')}>
             <button role="radio" aria-checked={mode === 'register'} className={mode === 'register' ? 'on' : ''} onClick={() => setMode('register')}>{tx('ساخت حساب')}</button>
@@ -175,10 +178,10 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
           ) : (
             <p className="hint">{tx('ایمیل تأیید نمی‌شود. اگر رمز را فراموش کرده‌ای راه بازیابی نیست. داده‌ها روی سرور رمزنگاری نمی‌شوند.')}</p>
           )}
-        </section>
+        </Card>
       )}
 
-      <section className="glass sync-card" aria-label={tx('دادهٔ محلی')}>
+      <Card variant="glass" className="sync-card" aria-label={tx('دادهٔ محلی')}>
         <div className="sc-head">
           <span><Icon name="database" size={16} stroke={1.9} />{tx('دادهٔ محلی')}</span>
           {data && <small>{tx('{a1} روی دستگاه', { a1: formatBytes(data.bytes) })}</small>}
@@ -188,10 +191,10 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
             <div key={k}><b>{fa(v ?? 0)}</b><span>{k}</span></div>
           ))}
         </div>
-      </section>
+      </Card>
 
       {cfg && photoQueue.total > 0 && (
-        <section className="glass sync-card" aria-label={tx('فایل عکس‌ها')}>
+        <Card variant="glass" className="sync-card" aria-label={tx('فایل عکس‌ها')}>
           <div className="sc-head">
             <span><Icon name="image" size={16} stroke={1.9} />{tx('فایل عکس‌ها')}</span>
             {photoQueue.pending > 0 ? <em className="chip-warn">{tx('{a1} در صف', { a1: fa(photoQueue.pending) })}</em> : <em className="chip-ok">{tx('همه آپلود شد')}</em>}
@@ -207,11 +210,11 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
             <button disabled={busy} onClick={() => run(async () => { await downloadMissingPhotos(); })}>
               <Icon name="download" size={17} stroke={1.9} />{tx('دریافت فایل‌های گمشده')}</button>
           </div>
-        </section>
+        </Card>
       )}
 
       {cfg && (
-        <section className="glass sync-pending" aria-label={tx('در انتظار همگام‌سازی')}>
+        <Card variant="glass" className="sync-pending" aria-label={tx('در انتظار همگام‌سازی')}>
           <div className="sc-head"><span>{tx('در انتظار همگام‌سازی')}</span>{n > 0 && <em className="chip-warn">{fa(n)}</em>}</div>
           {n === 0 && <p className="hint empty">{tx('چیزی در انتظار ارسال نیست.')}</p>}
           {pending.slice(0, SHOWN).map(({ o, title }) => {
@@ -227,26 +230,26 @@ export function SyncPage({ onBack }: { onBack: () => void }) {
             );
           })}
           {n > SHOWN && <p className="hint more">{tx('و {a1} مورد دیگر', { a1: fa(n - SHOWN) })}</p>}
-        </section>
+        </Card>
       )}
 
       {cfg && (
-        <section className="glass backup-row" aria-label={tx('پشتیبان ابری')}>
+        <Card variant="glass" className="backup-row" aria-label={tx('پشتیبان ابری')}>
           <span className="tile green" aria-hidden="true"><Icon name="cloudCheck" size={17} stroke={1.9} /></span>
           <div>
             <b>{tx('پشتیبان ابری')}</b>
             <span>{cfg.at ? tx('آخرین پشتیبان: {a1}، {a2}', { a1: label(new Date(cfg.at).toLocaleDateString('sv'), 'persian', 0, { weekday: 'long', day: 'numeric', month: 'long' }), a2: clock(cfg.at) }) : tx('هنوز پشتیبانی گرفته نشده است')}</span>
           </div>
           <em className="chip-ok">{tx('خودکار')}</em>
-        </section>
+        </Card>
       )}
 
       {cfg && (
-        <section className="glass sync-card" aria-label={tx('حساب کاربری')}>
+        <Card variant="glass" className="sync-card" aria-label={tx('حساب کاربری')}>
           <div className="sc-head"><span><Icon name="lock" size={16} stroke={1.9} />{tx('حساب کاربری')}</span></div>
           <p className="hint" dir="ltr" style={{ textAlign: 'start' }}>{cfg.email ?? tx('حساب قدیمی (با کلید)')}</p>
           <button className="danger-btn" disabled={busy} onClick={async () => (await ask({ title: tx('خروج از حساب؟'), message: tx('داده‌های همین دستگاه می‌مانند، ولی دیگر با سرور همگام نمی‌شوند. با ورود دوباره، همگام‌سازی ادامه پیدا می‌کند.'), confirm: tx('خروج'), icon: 'cloudOff' })) && run(disableSync)}>{tx('خروج از حساب')}</button>
-        </section>
+        </Card>
       )}
 
       {cfg && (
