@@ -1,10 +1,12 @@
-import { type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
 import { Icon, type IconName } from '../Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon-sm' | 'icon-md' | 'icon-lg';
 
-type BaseButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'>;
+type BaseButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+  ref?: Ref<HTMLButtonElement>;
+};
 
 interface StandardButtonProps extends BaseButtonProps {
   size?: 'sm' | 'md' | 'lg';
@@ -38,6 +40,7 @@ export function Button({
   className = '',
   disabled,
   children,
+  ref,
   ...rest
 }: ButtonProps) {
   const isIconOnly = size.startsWith('icon-');
@@ -53,6 +56,7 @@ export function Button({
 
   return (
     <button
+      ref={ref}
       type={type}
       className={`ui-btn ui-btn-${variant} ui-btn-${size}${block ? ' ui-btn-block' : ''}${isIconOnly ? ' ui-btn-icon' : ''} ${className}`.trim()}
       disabled={disabled}
