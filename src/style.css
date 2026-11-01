@@ -34,6 +34,7 @@
   --radius-2xl: 24px;
   --radius-sheet: 28px 28px 0 0;
   --radius-full: 9999px;
+  --radius-btn: var(--radius-full);
 
   --font-xs: 11px;
   --font-sm: 12px;
@@ -167,7 +168,7 @@ nav button { height: 58px; border: 0; border-radius: 0; background: none; box-sh
 nav button:active { transform: scale(0.94); }
 nav button.on { color: var(--blue-ink); font-weight: 700; background: none; border: 0; box-shadow: none; }
 .scrim { position: fixed; inset: 0; z-index: 15; }
-.icon-btn { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.icon-btn { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: var(--radius-btn); display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
 .list { padding: 6px; display: flex; flex-direction: column; }
 .row-btn { display: flex; align-items: center; gap: 12px; width: 100%; height: 56px; padding: 0 14px; border: 0; background: none; box-shadow: none; border-radius: 18px; font-weight: 600; text-align: start; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .row-btn > :nth-child(2) { flex: 1; }
@@ -175,7 +176,7 @@ nav button.on { color: var(--blue-ink); font-weight: 700; background: none; bord
 
 /* ---- calendar page ---- */
 .page-head { display: flex; align-items: center; justify-content: space-between; height: 44px; margin: 0 4px 16px; }
-.pill-btn { height: 44px; padding: 0 18px; border-radius: 22px; color: var(--blue-ink); }
+.pill-btn { height: 44px; padding: 0 18px; border-radius: var(--radius-btn); color: var(--blue-ink); }
 .month { padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; border-radius: 28px; }
 .month-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .month-head .icon-btn { margin: 0; flex: none; }
@@ -460,7 +461,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .bf-head { display: flex; align-items: center; justify-content: space-between; }
 .bf-head > span:first-child { font-size: 15px; font-weight: 700; }
 .inline-actions { display: flex; gap: 8px; }
-.mini-btn { height: 32px; min-height: 32px; padding: 0 14px; border-radius: 16px; font-size: 13px; font-weight: 700; }
+.mini-btn { height: 32px; min-height: 32px; padding: 0 14px; border-radius: var(--radius-btn); font-size: 13px; font-weight: 700; }
 .bf-name { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; }
 .bf-name > span { font-size: 12px; font-weight: 700; color: var(--ink-2); }
 .bf-name input { width: 100%; height: 48px; border-radius: 16px; padding: 0 14px; background: var(--field); border: 1px solid var(--line-2); box-shadow: inset 0 1px 0 var(--hi); font-size: 14.5px; font-weight: 600; color: var(--ink); transition: border-color 150ms ease-out, box-shadow 150ms ease-out; }
@@ -1567,7 +1568,7 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 .confirm-icon.danger { color: var(--fri); background: rgba(180, 74, 46, 0.12); }
 :root[data-theme='dark'] .confirm-icon.danger { background: rgba(255, 144, 120, 0.16); }
 .confirm-actions { display: flex; gap: 10px; width: 100%; margin-top: 12px; }
-.confirm-actions button { flex: 1; height: 48px; border-radius: 24px; font-size: 15px; }
+.confirm-actions button { flex: 1; height: 48px; border-radius: var(--radius-btn); font-size: 15px; }
 .danger-fill { color: #fff; font-weight: 700; background: linear-gradient(150deg, #e8795f 0%, #c85537 55%, #a8402a 100%); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 10px 20px -10px rgba(168, 64, 42, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes pop-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); } }
@@ -1713,7 +1714,7 @@ mark { background: rgba(62, 99, 221, 0.16); color: #2a46b8; border-radius: 4px; 
 .review-note { margin: 12px 0 0; }
 .review-note-btn { display: inline-flex; align-items: center; gap: 5px; margin: 10px 6px 0; font-size: 12.5px; font-weight: 600; color: var(--muted); }
 .review-actions { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 8px; }
-.review-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 54px; border-radius: 27px; font-size: 15px; font-weight: 700; }
+.review-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 54px; border-radius: var(--radius-btn); font-size: 15px; font-weight: 700; }
 .review-btn.remembered { color: #fff; background: linear-gradient(150deg, #3fae8a 0%, #25785f 100%); border: 1px solid rgba(255, 255, 255, 0.28); box-shadow: 0 10px 20px -12px rgba(37, 120, 95, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
 .review-btn.forgot { color: var(--peach-ink); background: var(--peach-tint); border: 1px solid rgba(232, 135, 92, 0.35); }
 .review-btn.broke { color: var(--fri); background: rgba(180, 74, 46, 0.1); border: 1px solid rgba(180, 74, 46, 0.3); }
@@ -3232,7 +3233,7 @@ button.ledger-due-badge-card { width: 100%; font: inherit; text-align: start; }
   gap: 8px;
   font-family: inherit;
   font-weight: 600;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-btn);
   border: 1px solid transparent;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
@@ -3289,41 +3290,41 @@ button.ledger-due-badge-card { width: 100%; font: inherit; text-align: start; }
 /* Button Sizes */
 .ui-btn-sm {
   height: 32px;
-  padding: 0 10px;
+  padding: 0 14px;
   font-size: var(--font-xs);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-btn);
 }
 .ui-btn-md {
   height: 40px;
-  padding: 0 14px;
+  padding: 0 16px;
   font-size: var(--font-md);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-btn);
 }
 .ui-btn-lg {
   height: 48px;
-  padding: 0 18px;
+  padding: 0 20px;
   font-size: var(--font-lg);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-btn);
 }
 
-/* Icon-only button sizes (square) */
+/* Icon-only button sizes (circle) */
 .ui-btn-icon-sm {
   width: 32px;
   height: 32px;
   padding: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-btn);
 }
 .ui-btn-icon-md {
   width: 40px;
   height: 40px;
   padding: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-btn);
 }
 .ui-btn-icon-lg {
   width: 48px;
   height: 48px;
   padding: 0;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-btn);
 }
 
 /* Card */
