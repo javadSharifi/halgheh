@@ -39,7 +39,7 @@ export function openFollowUps(interactions: Interaction[], today: string) {
 }
 
 /** Open todos this person asked for ("کارهایی که گفته"), earliest due first; a dateless one goes last. */
-export function openTodos(tasks: { id: string; title: string; on?: string; fromPersonId?: string }[], doneIds: Set<string>, personId: string) {
+export function openTodos<T extends { id: string; title: string; on?: string; fromPersonId?: string }>(tasks: T[], doneIds: Set<string>, personId: string) {
   const rows = tasks.filter((t) => t.fromPersonId === personId && !doneIds.has(t.id));
   if (rows.length === 0) return undefined;
   return rows.sort((a, b) => (a.on ?? '9999-99-99').localeCompare(b.on ?? '9999-99-99') || a.title.localeCompare(b.title, locale()));

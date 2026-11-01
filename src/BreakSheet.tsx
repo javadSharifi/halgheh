@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Person, type Rule, type RuleBreak, db } from './db';
 import { fa, label, today } from './cal';
 import { Icon } from './Icon';
-import { Button, InputField } from './ui';
+import { Button, FormPage, FormSection, InputField } from './ui';
 import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { ask } from './confirm';
@@ -60,14 +60,16 @@ export function BreakSheet({ rule, seedPersonId, onClose, onSaved }: {
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet break-sheet" role="dialog" aria-modal="true" aria-labelledby="break-title">
-        <div className="bf-head">
-          <span id="break-title">{tx(STR.breaks.sheetTitleFor(rule.title))}</span>
-          <Button variant="ghost" size="sm" onClick={onClose}>{tx(STR.feature.close)}</Button>
-        </div>
-
-        <div className="pe-scroll">
+      <FormPage
+        title={tx(STR.breaks.sheetTitleFor(rule.title))}
+        icon="plus"
+        onClose={onClose}
+        onSave={() => void save(false)}
+        saveLabel={tx(STR.breaks.save)}
+        busy={busy}
+        error={err}
+      >
+        <FormSection>
           <InputField
             multiline
             rows={3}
@@ -119,17 +121,13 @@ export function BreakSheet({ rule, seedPersonId, onClose, onSaved }: {
             </span>
           </div>
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </div>
+        </FormSection>
 
-        <Button variant="primary" block disabled={busy} onClick={() => void save(false)} icon="check">
-          {busy ? tx('در حال ذخیره…') : tx(STR.breaks.save)}
-        </Button>
         <Button variant="secondary" block disabled={busy} onClick={() => void save(true)} icon="clock">
           {tx(STR.breaks.later)}
         </Button>
         <p className="hint break-hint">{tx(STR.breaks.savedEmpty)}</p>
-      </section>
+      </FormPage>
       {picking && <DatePicker value={v.brokenOn} onPick={(d) => { set({ brokenOn: d }); setPicking(false); }} onClose={() => setPicking(false)} />}
     </>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ask } from './confirm';
 import { type Person, db, del, put } from './db';
@@ -6,10 +6,9 @@ import { fa } from './cal';
 import { Icon } from './Icon';
 import { locale, tx } from './i18n';
 import { personLabel } from './format';
+import { CIRCLES, type Circle } from './circles';
+import { Button, PageHead } from './ui';
 
-type Sort = 'name' | 'recent';
-const SORT_KEY = 'halgheh:people-sort';
-const initialSort = (): Sort => (localStorage.getItem(SORT_KEY) === 'recent' ? 'recent' : 'name');
 const paletteOf = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
 export function PeoplePage({
@@ -18,26 +17,32 @@ export function PeoplePage({
   openPerson,
   openSearch,
   openWhoCan,
+  openGraph,
+  openTouch,
 }: {
   openAddPerson?: () => void;
   openQuickAdd?: () => void;
   openPerson: (id: string) => void;
   openSearch: () => void;
   openWhoCan: () => void;
+  openGraph: () => void;
+  openTouch: () => void;
 }) {
   const onAdd = openAddPerson ?? openQuickAdd ?? (() => {});
-  const [sort, setSort] = useState<Sort>(initialSort);
   const [menu, setMenu] = useState<Person | null>(null);
+  const [circle, setCircle] = useState<Circle | 'none' | ''>('');
   const people = useLiveQuery(() => db.people.toArray(), []) ?? [];
-  const rows = people
-    .filter((p) => !p.isSelf && !p.archivedAt)
-    .sort(sort === 'name' ? (a, b) => a.displayName.localeCompare(b.displayName, locale()) : (a, b) => b.createdAt - a.createdAt);
-  const archivedCount = people.filter((p) => !p.isSelf && p.archivedAt).length;
+  // sorting with localeCompare is the slow part of this screen, so it runs only when the list changes
+  const rows = useMemo(
+    () =>
+      people
+        .filter((p) => !p.isSelf && !p.archivedAt)
+        .filter((p) => !circle || (circle === 'none' ? !p.circle : p.circle === circle))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName, locale())),
+    [people, circle],
+  );
+  const archivedCount = useMemo(() => people.filter((p) => !p.isSelf && p.archivedAt).length, [people]);
 
-  const pickSort = (s: Sort) => {
-    setSort(s);
-    localStorage.setItem(SORT_KEY, s);
-  };
   const archive = async (p: Person) => {
     setMenu(null);
     const now = Date.now();
@@ -56,16 +61,28 @@ export function PeoplePage({
 
   return (
     <>
-      <div className="page-head">
-        <h1>{tx('افراد')}</h1>
-        <div className="head-tools">
-          <button className="icon-btn" aria-label={tx('جستجو در افراد')} onClick={openSearch}><Icon name="search" size={19} stroke={1.9} /></button>
-          <button className="icon-btn" aria-label={tx('چه کسی می‌تواند')} onClick={openWhoCan}><Icon name="toolbox" size={19} stroke={1.9} /></button>
-          <button className="pill-btn" onClick={onAdd}><Icon name="plus" size={16} stroke={2.4} />{tx('افزودن فرد')}</button>
-        </div>
+      <PageHead
+        title={tx('افراد')}
+        tools={[
+          { icon: 'search', label: tx('جستجو در افراد'), onClick: openSearch },
+          { icon: 'toolbox', label: tx('چه کسی می‌تواند'), onClick: openWhoCan },
+          { icon: 'plus', label: tx('افزودن فرد'), onClick: onAdd, primary: true },
+        ]}
+      />
+
+      <div className="inline-actions">
+        <Button size="sm" icon="repeat" onClick={openTouch}>{tx('حفظ ارتباط')}</Button>
+        <Button size="sm" icon="users" onClick={openGraph}>{tx('گراف رابطه‌ها')}</Button>
+      </div>
+      <div className="tabs people-circles" role="tablist" aria-label={tx('دسته‌بندی صمیمیت')}>
+        {([['', tx('همه')], ...CIRCLES.map((c): [string, string] => [c.key, tx(c.name)]), ['none', tx('دسته‌بندی نشده')]] as [Circle | 'none' | '', string][]).map(([k, name]) => (
+          <button key={k} role="tab" aria-selected={circle === k} className={circle === k ? 'on' : ''} onClick={() => setCircle(k)}>{name}</button>
+        ))}
       </div>
 
-      {rows.length === 0 ? (
+      {rows.length === 0 && circle ? (
+        <p className="hint empty">{tx('کسی در این دسته نیست.')}</p>
+      ) : rows.length === 0 ? (
         <section className="glass empty-state">
           <span className="tile blue" aria-hidden="true"><Icon name="users" size={24} stroke={1.7} /></span>
           <b>{archivedCount > 0 ? tx('کسی در فهرست نیست') : tx('هنوز کسی اضافه نشده')}</b>
@@ -79,10 +96,6 @@ export function PeoplePage({
         </section>
       ) : (
         <>
-          <div className="tabs people-sort" aria-label={tx('ترتیب افراد')}>
-            <button aria-pressed={sort === 'name'} className={sort === 'name' ? 'on' : ''} onClick={() => pickSort('name')}>{tx('نام')}</button>
-            <button aria-pressed={sort === 'recent'} className={sort === 'recent' ? 'on' : ''} onClick={() => pickSort('recent')}>{tx('تازه‌ترین')}</button>
-          </div>
           <div className="glass set-list people-list">
             {rows.map((p) => (
               <div className="person-row" key={p.id}>

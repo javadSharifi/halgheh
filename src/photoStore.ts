@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
-import { JPEG_QUALITY, MAX_LONG_SIDE, fileNameFor, targetSize } from './photos';
+import { JPEG_QUALITY, MAX_LONG_SIDE, THUMB_LONG_SIDE, THUMB_QUALITY, fileNameFor, targetSize, thumbPathFor } from './photos';
 import { isNative } from './native';
 
 /**
@@ -31,19 +31,28 @@ async function loadImage(webPath: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Downscales to `MAX_LONG_SIDE` on the long side and re-encodes as JPEG. Returns base64 (without the data: prefix) so it
- * can go straight to the Filesystem plugin, whose Base64 write needs no extra conversion.
+ * Downscales to `MAX_LONG_SIDE` on the long side and re-encodes as JPEG, plus the `THUMB_LONG_SIDE` grid thumbnail from the
+ * same decode: decoding the picked image twice would double peak memory, which is exactly what a phone cannot spare.
+ * Returns base64 (without the data: prefix) so it can go straight to the Filesystem plugin, whose Base64 write needs no
+ * extra conversion.
  */
-export async function compress(webPath: string): Promise<{ data: string; width: number; height: number }> {
+export async function compress(webPath: string): Promise<{ data: string; width: number; height: number; thumb: string }> {
   const img = await loadImage(webPath);
-  const { width, height } = targetSize(img.naturalWidth, img.naturalHeight, MAX_LONG_SIDE);
+  const full = draw(img, MAX_LONG_SIDE, JPEG_QUALITY);
+  const thumb = draw(img, THUMB_LONG_SIDE, THUMB_QUALITY);
+  return { ...full, thumb: thumb.data };
+}
+
+/** Scales the loaded image into a fresh canvas and returns the JPEG bytes as base64. */
+function draw(img: HTMLImageElement, max: number, quality: number) {
+  const { width, height } = targetSize(img.naturalWidth, img.naturalHeight, max);
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('no 2d context');
   ctx.drawImage(img, 0, 0, width, height);
-  const url = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+  const url = canvas.toDataURL('image/jpeg', quality);
   const comma = url.indexOf(',');
   return { data: url.slice(comma + 1), width, height };
 }
@@ -53,6 +62,13 @@ export async function saveFile(photoId: string, base64: string) {
   const path = fileNameFor(photoId);
   await Filesystem.writeFile({ path, data: base64, directory: Directory.Data, recursive: true });
   return path;
+}
+
+/** Writes the grid thumbnail next to the stored photo. */
+export async function saveThumb(path: string, base64: string) {
+  const thumbPath = thumbPathFor(path);
+  await Filesystem.writeFile({ path: thumbPath, data: base64, directory: Directory.Data, recursive: true });
+  return thumbPath;
 }
 
 /** A source that works in an <img src>: the stored file, converted to a URL the web view can render. */

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PersonNote } from './db';
 import { Icon } from './Icon';
-import { Button, Card } from './ui';
+import { Button, Card, InputField } from './ui';
 import { tx } from './i18n';
 
 /**
@@ -36,16 +36,16 @@ export function NoteBox({ note, onSave }: { note: PersonNote | undefined; onSave
 
   return (
     <Card className="note-box">
-      <label className="note-label">
-        <span className="field-label">{tx('یادداشت خصوصی')}</span>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={commit}
-          placeholder={tx('هر چیزی که باید یادت بماند…')}
-          maxLength={4000}
-        />
-      </label>
+      <InputField
+        multiline
+        rows={4}
+        label={tx('یادداشت خصوصی')}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        placeholder={tx('هر چیزی که باید یادت بماند…')}
+        maxLength={4000}
+      />
       <div className="note-foot">
         {saved === 'saving' ? (
           <span className="hint"><Icon name="refresh" size={13} stroke={2} />{tx('در حال ذخیره…')}</span>

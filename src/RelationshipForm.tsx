@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { type Person, type Relationship, del, put } from './db';
 import { ask } from './confirm';
 import { Icon } from './Icon';
-import { Button, InputField } from './ui';
+import { FormPage, FormSection, InputField, Select } from './ui';
 import { CONFIDENCE_LABEL, REL_LABEL, REL_TYPES, findLink, isSymmetric, linkId, linkIds } from './relationships';
 import type { RelType } from './db';
 import { locale, tx } from './i18n';
@@ -90,14 +90,19 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet rel-sheet" role="dialog" aria-modal="true" aria-labelledby="rel-title">
-        <div className="bf-head">
-          <span id="rel-title">{editing ? tx('ویرایش رابطه') : tx('رابطهٔ تازه')}</span>
-          <Button variant="ghost" size="sm" onClick={onClose}>{tx('بستن')}</Button>
-        </div>
-
-        <div className="pe-scroll">
+      <FormPage
+        title={editing ? tx('ویرایش رابطه') : tx('رابطهٔ تازه')}
+        icon={editing ? 'edit' : 'plus'}
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={editing ? tx('ذخیره') : tx('ثبت')}
+        saveDisabled={!valid}
+        busy={busy}
+        error={err}
+        onDelete={editing ? () => void remove() : undefined}
+        deleteLabel={tx('حذف این رابطه')}
+      >
+        <FormSection>
           {!editing && (
             <>
               <InputField label={tx('طرف دیگر')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('جستجوی نام…')} />
@@ -125,26 +130,27 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
           </p>
           {duplicate && <p className="form-error" role="alert">{tx('این رابطه از قبل ثبت شده است.')}</p>}
 
-          <div className="pe-grid">
-            <label className="bf-tile"><span>{tx('نزدیکی (۱–۵)')}</span><input inputMode="numeric" value={closeness} onChange={(e) => setCloseness(e.target.value)} /></label>
-            <div className="bf-tile">
-              <span>{tx('اطمینان')}</span>
-              <button type="button" className="as-value" onClick={() => setConfidence(confidence === 'sure' ? 'maybe' : 'sure')}>
-                {tx(CONFIDENCE_LABEL[confidence])}
-              </button>
-            </div>
-          </div>
-          {!closenessOk && <p className="form-error">{tx('نزدیکی باید عددی بین ۱ و ۵ باشد.')}</p>}
+          <InputField
+            label={tx('نزدیکی (۱–۵)')}
+            inputMode="numeric"
+            value={closeness}
+            onChange={(e) => setCloseness(e.target.value)}
+            error={!closenessOk ? tx('نزدیکی باید عددی بین ۱ و ۵ باشد.') : undefined}
+          />
+          <Select
+            label={tx('اطمینان')}
+            value={confidence}
+            onChange={(e) => setConfidence(e.target.value as 'sure' | 'maybe')}
+            options={(['sure', 'maybe'] as const).map((k) => ({ value: k, label: tx(CONFIDENCE_LABEL[k]) }))}
+          />
 
           <InputField label={tx('از کجا می‌شناسیشان (اختیاری)')} value={howMet} maxLength={200} onChange={(e) => setHowMet(e.target.value)} />
-          <div className="rf-row">
-            <span className="tile green" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
-            <span className="rf-name">{tx('معرف')}</span>
-            <select className="as-value" aria-label={tx('معرف')} value={introducedBy} onChange={(e) => setIntroducedBy(e.target.value)}>
-              <option value="">{tx('مشخص نیست')}</option>
-              {others.map((p) => <option key={p.id} value={p.id}>{personLabel(p)}</option>)}
-            </select>
-          </div>
+          <Select
+            label={tx('معرف')}
+            value={introducedBy}
+            onChange={(e) => setIntroducedBy(e.target.value)}
+            options={[{ value: '', label: tx('مشخص نیست') }, ...others.map((p) => ({ value: p.id, label: personLabel(p) }))]}
+          />
           <InputField
             multiline
             rows={3}
@@ -154,18 +160,8 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
             maxLength={400}
           />
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </div>
-
-        <Button variant="primary" block disabled={!valid || busy} onClick={() => void save()} icon="check">
-          {busy ? tx('در حال ذخیره…') : editing ? tx('ذخیره') : tx('افزودن رابطه')}
-        </Button>
-        {editing && (
-          <Button variant="danger" block onClick={() => void remove()} icon="trash">
-            {tx('حذف این رابطه')}
-          </Button>
-        )}
-      </section>
+        </FormSection>
+      </FormPage>
     </>
   );
 }

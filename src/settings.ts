@@ -8,6 +8,7 @@ export type Settings = {
   weekStart: WeekStart;
   theme: Theme;
   remind: boolean; // daily reminders (Android)
+  hideNames: boolean; // notifications show a generic line instead of names (lock screen privacy)
   lang: Lang;
 };
 
@@ -17,6 +18,7 @@ export const DEFAULTS: Settings = {
   weekStart: 6,
   theme: 'auto',
   remind: false,
+  hideNames: false,
   lang: 'fa',
 };
 
@@ -27,6 +29,7 @@ export function normalize(x: unknown): Settings {
     weekStart: r.weekStart === 0 || r.weekStart === 1 || r.weekStart === 6 ? r.weekStart : DEFAULTS.weekStart,
     theme: r.theme === 'light' || r.theme === 'dark' || r.theme === 'auto' ? r.theme : DEFAULTS.theme,
     remind: r.remind === true,
+    hideNames: r.hideNames === true,
     lang: r.lang === 'en' ? 'en' : 'fa',
   };
 }

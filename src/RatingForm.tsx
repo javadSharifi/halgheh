@@ -3,7 +3,7 @@ import { type Rating, del, put, uid } from './db';
 import { fa, today } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
-import { Button, InputField } from './ui';
+import { Button, FormPage, FormSection, InputField } from './ui';
 import { DatePicker } from './DatePicker';
 import { CRITERION_HINT, CRITERION_LABEL, SCORES, currentOf, historyOf, newRating, scoreText } from './ratings';
 import type { RatingCriterion } from './db';
@@ -48,14 +48,17 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet rating-sheet" role="dialog" aria-modal="true" aria-labelledby="rating-title">
-        <div className="bf-head">
-          <span id="rating-title">{tx(CRITERION_LABEL[criterion])}</span>
-          <Button variant="ghost" size="sm" onClick={onClose}>{tx('بستن')}</Button>
-        </div>
-
-        <div className="pe-scroll">
+      <FormPage
+        title={tx(CRITERION_LABEL[criterion])}
+        icon="plus"
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={current ? tx('ثبت امتیاز تازه') : tx('ثبت')}
+        saveDisabled={score < 1}
+        busy={busy}
+        error={err}
+      >
+        <FormSection>
           <p className="hint pe-hint">{tx(CRITERION_HINT[criterion])}</p>
 
           <div className="score-row" role="radiogroup" aria-label={tx('امتیاز {a1}', { a1: tx(CRITERION_LABEL[criterion]) })}>
@@ -113,13 +116,8 @@ export function RatingForm({ personId, criterion, ratings, onClose }: {
             </>
           )}
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </div>
-
-        <Button variant="primary" block disabled={score < 1 || busy} onClick={() => void save()} icon="check">
-          {busy ? tx('در حال ذخیره…') : current ? tx('ثبت امتیاز تازه') : tx('ثبت امتیاز')}
-        </Button>
-      </section>
+        </FormSection>
+      </FormPage>
       {picking && <DatePicker value={ratedAt} onPick={(d) => { setRatedAt(d); setPicking(false); }} onClose={() => setPicking(false)} />}
     </>
   );

@@ -4,7 +4,7 @@ import { type Person, type Rule, type RuleCheck, type RuleCheckItem, type RuleCa
 import { fa, label } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
-import { Button, Card, InputField } from './ui';
+import { Button, Card, FormPage, FormSection, InputField } from './ui';
 import { Toggle } from './Toggle';
 import { STR, CHECK_ITEM_LABEL } from './strings/rulebook';
 import { normalize } from './search';
@@ -284,13 +284,8 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
 function NoteSheet({ ruleTitle, note, onSave, onClose }: { ruleTitle: string; note: string; onSave: (text: string) => void; onClose: () => void }) {
   const [text, setText] = useState(note);
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="check-note-title">
-        <div className="bf-head">
-          <span id="check-note-title">{tx(STR.personCheck.note)} · {ruleTitle}</span>
-          <Button variant="ghost" size="sm" onClick={onClose}>{tx(STR.feature.close)}</Button>
-        </div>
+    <FormPage title={`${tx(STR.personCheck.note)} · ${ruleTitle}`} icon="note" onClose={onClose} onSave={() => onSave(text)} saveLabel={tx(STR.feature.save)}>
+      <FormSection>
         <InputField
           multiline
           autoFocus
@@ -300,11 +295,8 @@ function NoteSheet({ ruleTitle, note, onSave, onClose }: { ruleTitle: string; no
           maxLength={1000}
           onChange={(e) => setText(e.target.value)}
         />
-        <Button variant="primary" block onClick={() => onSave(text)} icon="check">
-          {tx(STR.feature.save)}
-        </Button>
-      </section>
-    </>
+      </FormSection>
+    </FormPage>
   );
 }
 
@@ -397,23 +389,20 @@ export function NewCheckSheet({ personId, onClose, onCreated }: { personId: stri
   };
 
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="new-check-title">
-        <div className="bf-head">
-          <span id="new-check-title">{tx(STR.personCheck.newTitle)}</span>
-          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
-        </div>
+    <FormPage title={tx(STR.personCheck.newTitle)} icon="plus" onClose={onClose} onSave={() => void create()} saveLabel={tx(STR.personCheck.start)} busy={busy}>
+      <FormSection>
         <p className="hint">{tx(STR.personCheck.createAskBody)}</p>
-        <label className="bf-name">
-          <span>{tx(STR.personCheck.titleLabel)}</span>
-          <input autoFocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder={tx(STR.personCheck.titlePlaceholder)} enterKeyHint="done" />
-        </label>
-        <button className="primary" disabled={busy} onClick={() => void create()}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? tx('در حال ذخیره…') : tx(STR.personCheck.start)}
-        </button>
-      </section>
-    </>
+        <InputField
+          autoFocus
+          label={tx(STR.personCheck.titleLabel)}
+          value={title}
+          maxLength={120}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={tx(STR.personCheck.titlePlaceholder)}
+          enterKeyHint="done"
+        />
+      </FormSection>
+    </FormPage>
   );
 }
 

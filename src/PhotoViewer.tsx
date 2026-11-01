@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import type { Photo } from './db';
 import { fa, label } from './cal';
 import { Icon } from './Icon';
-import { Button } from './ui';
 import { tx } from './i18n';
 
 /**
@@ -59,9 +58,9 @@ export function PhotoViewer({ photoId, photos, urls, title, onClose, onEdit, onR
   return (
     <div className="viewer" role="dialog" aria-modal="true" aria-label={photo.title}>
       <div className="viewer-bar">
-        <Button variant="ghost" size="icon-md" aria-label={tx('بستن')} onClick={onClose} icon="close" />
+        <button type="button" className="viewer-act round" aria-label={tx('بستن')} onClick={onClose}><Icon name="close" size={20} stroke={2.2} /></button>
         <span className="viewer-title">{photo.title}</span>
-        <Button variant="ghost" size="icon-md" aria-label={tx('ویرایش')} onClick={() => onEdit(photo)} icon="settings" />
+        <span className="viewer-count">{tx('{a1} از {a2}', { a1: fa(index + 1), a2: fa(photos.length) })}</span>
       </div>
 
       <div
@@ -94,16 +93,19 @@ export function PhotoViewer({ photoId, photos, urls, title, onClose, onEdit, onR
 
       {photos.length > 1 && (
         <>
-          <button className="viewer-nav prev" aria-label={tx('عکس بعدی')} onClick={() => step(1)} disabled={index >= photos.length - 1}><Icon name="chevronRight" size={22} stroke={2.2} /></button>
-          <button className="viewer-nav next" aria-label={tx('عکس قبلی')} onClick={() => step(-1)} disabled={index <= 0}><Icon name="chevronLeft" size={22} stroke={2.2} /></button>
+          <button className="viewer-nav prev" aria-label={tx('عکس قبلی')} onClick={() => step(-1)} disabled={index <= 0}><Icon name="chevronRight" size={22} stroke={2.2} /></button>
+          <button className="viewer-nav next" aria-label={tx('عکس بعدی')} onClick={() => step(1)} disabled={index >= photos.length - 1}><Icon name="chevronLeft" size={22} stroke={2.2} /></button>
         </>
       )}
 
       <div className="viewer-foot">
         <span>{label(photo.takenAt, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         {photo.note && <span className="viewer-note">{photo.note}</span>}
-        <span className="viewer-count">{tx('{a1} از {a2}', { a1: fa(index + 1), a2: fa(photos.length) })}</span>
-        <Button variant="ghost" size="sm" onClick={() => onRemove(photo)}>{tx('حذف')}</Button>
+      </div>
+
+      <div className="viewer-actions">
+        <button type="button" className="viewer-act" onClick={() => onEdit(photo)}><Icon name="edit" size={18} stroke={2} />{tx('ویرایش')}</button>
+        <button type="button" className="viewer-act danger" onClick={() => onRemove(photo)}><Icon name="trash" size={18} stroke={2} />{tx('حذف')}</button>
       </div>
     </div>
   );

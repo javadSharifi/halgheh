@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Birthday, type Occasion, db, del, put, uid } from './db';
 import { CALS, CAL_NAMES, MONTHS, type Cal, fa, label, monthName, parts, today } from './cal';
@@ -9,7 +9,7 @@ import { Choice } from './Choice';
 import { Icon } from './Icon';
 import { WishSheet } from './WishSheet';
 import { tn, tx } from './i18n';
-import { Card, Button, InputField } from './ui';
+import { Card, Button, PageHead, FormPage, FormSection, InputField, Select } from './ui';
 
 // avatar colour (p0..p2 in the stylesheet), picked by name so a person keeps the same colour
 const paletteOf = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
@@ -19,7 +19,7 @@ type ODraft = { title: string; cal: Cal; month: number; day: string; remindLead:
 const emptyOccasion = (cal: Cal): ODraft => ({ title: '', cal, month: parts(today(), cal, 0).m, day: '', remindLead: '0', tagId: '' });
 const occasionDraft = (o: Occasion): ODraft => ({ title: o.title, cal: o.cal, month: o.month, day: fa(o.day), remindLead: String(o.remindLead ?? 0), tagId: o.tagId ?? '' });
 
-export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: string | null; onFocused?: () => void; openSearch: () => void }) {
+export function BirthdaysPage({ focusId, onFocused, openSearch, startAdd, onStarted }: { focusId?: string | null; onFocused?: () => void; openSearch: () => void; startAdd?: boolean; onStarted?: () => void }) {
   const mainCal: Cal = 'persian';
   const off = 0;
   const t = today();
@@ -27,12 +27,17 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
   const [f, setF] = useState(() => emptyDraft(mainCal, parts(t, mainCal, off).m));
   const [editing, setEditing] = useState<Birthday | null>(null);
   const [wish, setWish] = useState<Birthday | null>(null);
-  const formRef = useRef<HTMLElement>(null);
+  /** Which add/edit page is open; each is its own full-screen page, never an inline card. */
+  const [form, setForm] = useState<'bday' | 'occ' | null>(null);
   const occs = useLiveQuery(() => db.occasions.toArray(), []) ?? [];
   const tags = useLiveQuery(() => db.tags.toArray(), []) ?? [];
   const [of, setOF] = useState<ODraft>(() => emptyOccasion(mainCal));
+  useEffect(() => {
+    if (!startAdd) return;
+    setForm('bday');
+    onStarted?.();
+  }, [startAdd, onStarted]);
   const [editingOcc, setEditingOcc] = useState<Occasion | null>(null);
-  const occFormRef = useRef<HTMLElement>(null);
   const occDated = useMemo(
     () => occs.map((o) => ({ o, next: nextOccurrence(o, t, off) })).sort((x, y) => (x.next?.inDays ?? 1e6) - (y.next?.inDays ?? 1e6)),
     [occs, t, off],
@@ -41,6 +46,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
   const occDay = Number(toLatinDigits(of.day));
   const occValid = of.title.trim() !== '' && Number.isInteger(occDay) && occDay >= 1 && occDay <= maxDay(of.cal, of.month);
   const resetOcc = () => {
+    setForm(null);
     setEditingOcc(null);
     setOF(emptyOccasion(mainCal));
   };
@@ -62,7 +68,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
   const editOcc = (o: Occasion) => {
     setEditingOcc(o);
     setOF(occasionDraft(o));
-    occFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setForm('occ');
   };
   const removeOcc = async () => {
     if (editingOcc && (await ask({ title: tx('حذف مناسبت {a1}؟', { a1: editingOcc.title }), message: tx('این کار قابل بازگشت نیست.'), confirm: tx('حذف') }))) {
@@ -97,6 +103,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
   const { valid } = readDraft(f);
 
   const reset = () => {
+    setForm(null);
     setEditing(null);
     setF(emptyDraft(mainCal, parts(t, mainCal, off).m));
   };
@@ -108,7 +115,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
   const edit = (b: Birthday) => {
     setEditing(b);
     setF(draftOf(b));
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setForm('bday');
   };
   // arriving from a search result: open that person for editing once
   useEffect(() => {
@@ -152,16 +159,13 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
 
   return (
     <>
-      <div className="page-head">
-        <h1>{tx('تولدها')}</h1>
-        <Button
-          size="icon-md"
-          variant="ghost"
-          aria-label={tx('جستجو در تولدها')}
-          onClick={openSearch}
-          icon="search"
-        />
-      </div>
+      <PageHead
+        title={tx('تولدها')}
+        tools={[
+          { icon: 'search', label: tx('جستجو در تولدها'), onClick: openSearch },
+          { icon: 'plus', label: tx('افزودن تولد'), onClick: () => setForm('bday'), primary: true },
+        ]}
+      />
 
       {todays.map(({ b }) => (
         <section key={b.id} className="bday-today" aria-label={tx('تولد امروز')}>
@@ -193,7 +197,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
                 <button className="bday-row" onClick={() => edit(b)} aria-label={tx('ویرایش {a1}', { a1: b.name })}>
                   <span className={`avatar p${paletteOf(b.name)}`} aria-hidden="true">{b.name.slice(0, 1)}</span>
                   <div>
-                    <b><bdi>b.name</bdi></b>
+                    <b><bdi>{b.name}</bdi></b>
                     <span>{next ? when(b, next.date) : tx(CAL_NAMES[b.cal])}</span>
                     {next && b.year && <span>{born(b, next.date)}</span>}
                   </div>
@@ -207,7 +211,8 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
       ))}
 
       <section>
-        <h2 className="sec-title">{tx('مناسبت‌ها')}<small>{tn('{n} مورد', occDated.length)}</small></h2>
+        <h2 className="sec-title">{tx('مناسبت‌ها')}<small>{tn('{n} مورد', occDated.length)}</small>
+          <button type="button" className="text-btn" onClick={() => setForm('occ')}>{tx('افزودن مناسبت')}</button></h2>
         <Card variant="glass" className="bday-list">
           {occDated.length === 0 && <p className="hint empty">{tx('هنوز مناسبتی ثبت نشده است.')}</p>}
           {occDated.map(({ o, next }) => (
@@ -226,60 +231,71 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
         </Card>
       </section>
 
-      <section ref={occFormRef} className="glass bday-form" aria-label={editingOcc ? tx('ویرایش مناسبت') : tx('افزودن مناسبت')}>
-        <div className="bf-head">
-          <span>{editingOcc ? tx('ویرایش مناسبت') : tx('افزودن مناسبت')}</span>
-          <span className="inline-actions">
-            {editingOcc && <Button variant="ghost" size="sm" onClick={resetOcc}>{tx('انصراف')}</Button>}
-            <Button variant="primary" size="sm" disabled={!occValid} onClick={saveOcc}>{tx('ذخیره')}</Button>
-          </span>
-        </div>
-        <div className="birthday-fields-group">
-          <InputField
-            label={tx('نام مناسبت')}
-            value={of.title}
-            onChange={(e) => setOF({ ...of, title: e.target.value })}
-          />
-          <div className="radios bf-cal-radios" role="radiogroup" aria-label={tx('نوع تقویم')}>
-            {CALS.map((c) => (
-              <button key={c} role="radio" aria-checked={of.cal === c} className={of.cal === c ? 'on' : ''} onClick={() => setOF({ ...of, cal: c })}>{tx(CAL_NAMES[c])}</button>
-            ))}
-          </div>
-          <div className="bf-grid">
-            <label className={`bf-tile${of.day && !(occDay >= 1 && occDay <= maxDay(of.cal, of.month)) ? ' bad' : ''}`}>
-              <span>{tx('روز')}</span>
-              <input inputMode="numeric" value={of.day} onChange={(e) => setOF({ ...of, day: e.target.value })} />
-            </label>
-            <div className="bf-tile">
-              <span>{tx('ماه')}</span>
-              <Choice className="pick-text" label={tx('ماه')} value={of.month} options={MONTHS[of.cal].map((_, i): [number, string] => [i + 1, monthName(of.cal, i + 1)])} onChange={(m) => setOF({ ...of, month: m })} />
+      {form === 'occ' && (
+        <FormPage
+          title={editingOcc ? tx('ویرایش مناسبت') : tx('افزودن مناسبت')}
+          icon={editingOcc ? 'edit' : 'plus'}
+          onClose={resetOcc}
+          onSave={saveOcc}
+          saveDisabled={!occValid}
+          onDelete={editingOcc ? removeOcc : undefined}
+          deleteLabel={tx('حذف این مناسبت')}
+        >
+          <FormSection>
+            <InputField
+              label={tx('نام مناسبت')}
+              value={of.title}
+              onChange={(e) => setOF({ ...of, title: e.target.value })}
+            />
+            <div className="radios bf-cal-radios" role="radiogroup" aria-label={tx('نوع تقویم')}>
+              {CALS.map((c) => (
+                <button key={c} role="radio" aria-checked={of.cal === c} className={of.cal === c ? 'on' : ''} onClick={() => setOF({ ...of, cal: c })}>{tx(CAL_NAMES[c])}</button>
+              ))}
             </div>
-          </div>
-          <div className="bf-grid">
-            <div className="bf-tile">
-              <span>{tx('یادآوری')}</span>
-              <Choice className="pick-text" label={tx('یادآوری')} value={Number(of.remindLead)} options={LEADS} onChange={(v) => setOF({ ...of, remindLead: String(v) })} />
-            </div>
-            <div className="bf-tile">
-              <span>{tx('برچسب')}</span>
-              <Choice className="pick-text" label={tx('برچسب')} value={of.tagId} options={[['', tx('همه')], ...tags.map((tg): [string, string] => [tg.id, tg.name])]} onChange={(v) => setOF({ ...of, tagId: v })} />
-            </div>
-          </div>
-        </div>
-        {editingOcc && <Button variant="danger" block onClick={removeOcc} icon="trash">{tx('حذف این مناسبت')}</Button>}
-      </section>
+            <InputField
+              label={tx('روز')}
+              inputMode="numeric"
+              value={of.day}
+              onChange={(e) => setOF({ ...of, day: e.target.value })}
+              error={of.day && !(occDay >= 1 && occDay <= maxDay(of.cal, of.month)) ? tx('روز این ماه باید بین ۱ و {a1} باشد.', { a1: fa(maxDay(of.cal, of.month)) }) : undefined}
+            />
+            <Select
+              label={tx('ماه')}
+              value={of.month}
+              onChange={(e) => setOF({ ...of, month: Number(e.target.value) })}
+              options={MONTHS[of.cal].map((_, i) => ({ value: i + 1, label: monthName(of.cal, i + 1) }))}
+            />
+            <Select
+              label={tx('یادآوری')}
+              value={of.remindLead}
+              onChange={(e) => setOF({ ...of, remindLead: e.target.value })}
+              options={LEADS.map(([value, name]) => ({ value, label: name }))}
+            />
+            <Select
+              label={tx('برچسب')}
+              value={of.tagId}
+              onChange={(e) => setOF({ ...of, tagId: e.target.value })}
+              options={[{ value: '', label: tx('همه') }, ...tags.map((tg) => ({ value: tg.id, label: tg.name }))]}
+            />
+          </FormSection>
+        </FormPage>
+      )}
 
-      <section ref={formRef} className="glass bday-form" aria-label={editing ? tx('ویرایش تولد') : tx('افزودن تولد')}>
-        <div className="bf-head">
-          <span>{editing ? tx('ویرایش تولد') : tx('افزودن تولد')}</span>
-          <span className="inline-actions">
-            {editing && <Button variant="ghost" size="sm" onClick={reset}>{tx('انصراف')}</Button>}
-            <Button variant="primary" size="sm" disabled={!valid} onClick={save}>{tx('ذخیره')}</Button>
-          </span>
-        </div>
-        <BirthdayFields d={f} set={(patch) => setF((x) => ({ ...x, ...patch }))} />
-        {editing && <Button variant="danger" block onClick={remove} icon="trash">{tx('حذف این تولد')}</Button>}
-      </section>
+      {form === 'bday' && (
+        <FormPage
+          title={editing ? tx('ویرایش تولد') : tx('افزودن تولد')}
+          icon={editing ? 'edit' : 'plus'}
+          onClose={reset}
+          onSave={save}
+          saveDisabled={!valid}
+          onDelete={editing ? remove : undefined}
+          deleteLabel={tx('حذف این تولد')}
+        >
+          <FormSection>
+            <BirthdayFields d={f} set={(patch) => setF((x) => ({ ...x, ...patch }))} />
+          </FormSection>
+        </FormPage>
+      )}
 
       {wish && <WishSheet name={wish.name} phone={wish.phone} personId={wish.personId} onClose={() => setWish(null)} />}
     </>

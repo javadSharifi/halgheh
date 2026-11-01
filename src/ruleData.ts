@@ -380,3 +380,16 @@ export async function deletePersonCheck(check: RuleCheck) {
   for (const i of await db.ruleCheckItems.where('checkId').equals(check.id).toArray()) await del('ruleCheckItems', i.id);
   await del('ruleChecks', check.id);
 }
+
+/** The one rule category shopping tasks compare against. Created on first use, and switched to comparison mode if it was not. */
+export const SHOPPING_CATEGORY = 'خرید';
+export async function ensureShoppingCategory(): Promise<RuleCategory> {
+  const cats = await db.ruleCategories.toArray();
+  const found = cats.find((c) => c.name === SHOPPING_CATEGORY);
+  if (!found) {
+    const made = await addCategory(cats, SHOPPING_CATEGORY);
+    return setCompareEnabled(made, true).then(() => ({ ...made, compareEnabled: true }));
+  }
+  if (!found.compareEnabled) await setCompareEnabled(found, true);
+  return { ...found, compareEnabled: true };
+}

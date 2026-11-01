@@ -73,4 +73,5 @@ export function applyLang(l: Lang) {
 }
 
 /** Joins the non-empty parts with a translated middle dot: join([a, cond && b]) -> 'a · b'. */
-export const join = (parts: (string | false | undefined)[]) => parts.filter(Boolean).join(` ${tx('·')} `);
+export const join = (...parts: (string | false | undefined | (string | false | undefined)[])[]) =>
+  parts.flat().filter(Boolean).join(` ${tx('·')} `);

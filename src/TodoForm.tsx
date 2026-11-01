@@ -1,11 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { type Person, type Task, db, put, uid } from './db';
-import { fa, label, parts, today } from './cal';
-import { LEADS, faDigits, isTime, leadLabel, personLabel } from './format';
+import { fa, label, parts, today, wdInitial } from './cal';
+import { LEADS, MASK_ALL, MASK_SAT_TO_WED, MASK_WEEKEND, SAT_FIRST, daysText, faDigits, isTime, leadLabel, personLabel } from './format';
 import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { Icon } from './Icon';
-import { InputField } from './ui';
+import { FormField, FormPage, FormSection, InputField, Select } from './ui';
+import { ShoppingSection } from './ShoppingSection';
+import { TASK_KINDS, type TaskKind } from './taskKinds';
 import { askNotifications, isNative } from './native';
 import { getSettings, updateSettings } from './settings';
 import { removeTask } from './Todos';
@@ -20,12 +22,15 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
   const [v, setV] = useState(() => ({
     title: initial?.title ?? '',
     note: initial?.description ?? '',
-    dated: !!initial?.on || !initial, // a new todo starts with today's date; user can toggle off
+    // a new todo starts with today's date; the user can switch to repeating or to no date
+    when: (initial ? (initial.on ? 'date' : initial.mask > 0 ? 'repeat' : 'none') : 'date') as 'none' | 'date' | 'repeat',
+    mask: initial?.mask || MASK_ALL,
     date: initial?.on ?? today(),
     time: isTime(initial?.time) ? initial.time : '',
     lead: initial ? (initial.remindLead ?? -1) : 10,
     before: initial?.before ?? ([] as number[]),
     fromPersonId: initial?.fromPersonId ?? seedPersonId ?? '',
+    kind: initial?.kind ?? ('' as TaskKind | ''),
   }));
 
   const [picking, setPicking] = useState(false);
@@ -33,7 +38,9 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
   const [err, setErr] = useState('');
   const set = (patch: Partial<typeof v>) => setV((x) => ({ ...x, ...patch }));
 
-  const valid = v.title.trim() !== '';
+  const valid = v.title.trim() !== '' && (v.when !== 'repeat' || v.mask > 0);
+  const once = v.when === 'date';
+  const repeat = v.when === 'repeat';
 
   const save = async () => {
     if (!valid || busy) return;
@@ -41,24 +48,29 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
     setErr('');
     try {
       const now = Date.now();
+      // the shopping section may have linked a comparison since this form opened, so build on the stored row, not the opened one
+      const stored = initial ? await db.tasks.get(initial.id) : undefined;
       const row: Task = {
-        ...initial,
+        ...(stored ?? initial),
         id: initial?.id ?? uid(),
         title: v.title.replace(/\s+/g, ' ').trim(),
         description: v.note.trim() || undefined,
-        mask: 0,
-        on: v.dated ? v.date : undefined,
-        start: v.dated ? v.date : today(),
-        before: v.dated && v.before.length ? [...v.before].sort((a, b) => a - b) : undefined,
-        time: v.dated && v.time ? v.time : undefined,
-        remindLead: v.dated && v.time && v.lead >= 0 ? v.lead : undefined,
+        mask: repeat ? v.mask : 0,
+        on: once ? v.date : undefined,
+        start: once ? v.date : repeat ? (stored?.start ?? today()) : today(),
+        before: once && v.before.length ? [...v.before].sort((a, b) => a - b) : undefined,
+        time: v.when !== 'none' && v.time ? v.time : undefined,
+        remindLead: v.when !== 'none' && v.time && v.lead >= 0 ? v.lead : undefined,
         fromPersonId: v.fromPersonId || undefined,
+        kind: v.kind || undefined,
         active: initial?.active !== false,
         updatedAt: now,
       };
 
-      if (!row.on) {
-        delete row.before;
+      if (!row.kind) delete row.kind;
+      if (!once) delete row.before;
+      if (!repeat) delete row.end;
+      if (v.when === 'none') {
         delete row.time;
         delete row.remindLead;
       }
@@ -76,42 +88,20 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="task-sheet-modal" role="dialog" aria-modal="true" aria-labelledby="todo-sheet-title">
-        {/* Top Handle Puller & Header */}
-        <div className="task-sheet-header">
-          <div aria-hidden="true" className="sheet-pull-handle" />
-          <div className="sheet-header-row">
-            <div className="sheet-title-group">
-              <div className="sheet-icon-box">
-                <Icon name={initial ? 'edit' : 'plus'} size={20} stroke={2.4} />
-              </div>
-              <div className="sheet-titles-text">
-                <h2 id="todo-sheet-title">{initial ? tx('ویرایش کار') : tx('کار تازه')}</h2>
-                <span>{initial ? tx('ویرایش جزئیات و زمان‌بندی کار') : tx('افزودن فعالیت و وظیفه به روز جاری')}</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="sheet-close-btn"
-              onClick={onClose}
-              aria-label={tx('بستن فرم')}
-            >
-              <span>{tx('بستن')}</span>
-              <Icon name="close" size={13} stroke={2.5} />
-            </button>
-          </div>
-        </div>
-
+      <FormPage
+        title={initial ? tx('ویرایش کار') : tx('کار تازه')}
+        icon={initial ? 'edit' : 'plus'}
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={initial ? tx('ذخیره') : tx('ثبت')}
+        saveDisabled={!valid}
+        busy={busy}
+        error={err && valid ? err : undefined}
+        onDelete={initial ? async () => { if (await removeTask(initial.id)) onClose(); } : undefined}
+        deleteLabel={tx('حذف این کار')}
+      >
+        <FormSection>
         {/* Scrollable Form Body */}
-        <form
-          className="task-sheet-body"
-          onSubmit={(e: FormEvent) => {
-            e.preventDefault();
-            void save();
-          }}
-        >
           {/* Input: Task Title with unified InputField */}
           <InputField
             label={tx('عنوان کار')}
@@ -126,18 +116,22 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
             error={err && !valid ? tx('عنوان کار نمی‌تواند خالی باشد') : undefined}
           />
 
+          <Select
+            label={tx('نوع کار')}
+            value={v.kind}
+            onChange={(e) => set({ kind: e.target.value as TaskKind | '' })}
+            options={[{ value: '', label: tx('کار معمولی') }, ...TASK_KINDS.map((k) => ({ value: k.key, label: tx(k.name) }))]}
+          />
+
           {/* Segmented Control: Deadline Toggle */}
-          <div className="input-field-group">
-            <div className="input-label-row">
-              <span className="input-label-text">{tx('موعد انجام')}</span>
-            </div>
+          <FormField label={tx('موعد انجام')}>
             <div className="modal-segmented" role="radiogroup" aria-label={tx('موعد انجام')}>
               <button
                 type="button"
                 role="radio"
-                aria-checked={!v.dated}
-                className={`modal-seg-btn${!v.dated ? ' on' : ''}`}
-                onClick={() => set({ dated: false })}
+                aria-checked={v.when === 'none'}
+                className={`modal-seg-btn${v.when === 'none' ? ' on' : ''}`}
+                onClick={() => set({ when: 'none' })}
               >
                 <Icon name="close" size={15} stroke={2.2} />
                 <span>{tx('بدون موعد')}</span>
@@ -145,21 +139,53 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
               <button
                 type="button"
                 role="radio"
-                aria-checked={v.dated}
-                className={`modal-seg-btn${v.dated ? ' on' : ''}`}
-                onClick={() => set({ dated: true })}
+                aria-checked={once}
+                className={`modal-seg-btn${once ? ' on' : ''}`}
+                onClick={() => set({ when: 'date' })}
               >
                 <Icon name="calendar" size={15} stroke={2.2} />
                 <span>{tx('با موعد زمانی')}</span>
               </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={repeat}
+                className={`modal-seg-btn${repeat ? ' on' : ''}`}
+                onClick={() => set({ when: 'repeat' })}
+              >
+                <Icon name="repeat" size={15} stroke={2.2} />
+                <span>{tx('تکرارشونده')}</span>
+              </button>
             </div>
-          </div>
+          </FormField>
 
           {/* When Dated: Date Picker, Time & Reminder Rows */}
-          {v.dated && (
+          {v.when !== 'none' && (
             <div className="task-deadline-details">
+              {repeat && (
+                <div className="repeat-box">
+                  <div className="wd-row" role="group" aria-label={tx('روزهای تکرار')}>
+                    {SAT_FIRST.map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        aria-pressed={((v.mask >> d) & 1) === 1}
+                        className={((v.mask >> d) & 1) === 1 ? 'on' : ''}
+                        onClick={() => set({ mask: v.mask ^ (1 << d) })}
+                      >{wdInitial(d)}</button>
+                    ))}
+                  </div>
+                  <div className="wd-presets">
+                    {([[tx('هر روز'), MASK_ALL], [tx('شنبه تا چهارشنبه'), MASK_SAT_TO_WED], [tx('آخر هفته'), MASK_WEEKEND]] as [string, number][]).map(([name, m]) => (
+                      <button key={m} type="button" className={`mini-btn${v.mask === m ? ' on' : ''}`} onClick={() => set({ mask: m })}>{name}</button>
+                    ))}
+                  </div>
+                  <p className="hint">{v.mask > 0 ? tx('تکرار: {a1}', { a1: daysText(v.mask) }) : tx('دست‌کم یک روز را انتخاب کن.')}</p>
+                </div>
+              )}
+
               {/* Date Button */}
-              <button
+              {once && <button
                 type="button"
                 className="deadline-row-btn"
                 onClick={() => setPicking(true)}
@@ -175,7 +201,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
                   </span>
                 </div>
                 <Icon name="chevronLeft" size={16} stroke={2} />
-              </button>
+              </button>}
 
               {/* Time Row */}
               <div className="deadline-row-btn" style={{ cursor: 'default' }}>
@@ -234,12 +260,9 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
           )}
 
           {/* Assignee / Responsible Person Selector Card */}
-          <div className="input-field-group">
-            <div className="input-label-row">
-              <span className="input-label-text">{tx('ارجاع دهنده / مسئول')}</span>
-            </div>
+          <FormField label={tx('ارجاع دهنده / مسئول')}>
             <WhoAskedCard value={v.fromPersonId} onChange={(id) => set({ fromPersonId: id })} />
-          </div>
+          </FormField>
 
           {/* Input: Note (Textarea) with unified InputField */}
           <InputField
@@ -253,42 +276,19 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
             onChange={(e) => set({ note: e.target.value })}
           />
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </form>
+        </FormSection>
 
-        {/* Fixed Bottom Action Bar */}
-        <div className="task-sheet-footer">
-          <button
-            type="button"
-            className="sheet-big-submit-btn"
-            disabled={!valid || busy}
-            onClick={() => void save()}
-          >
-            <Icon name="check" size={19} stroke={2.5} />
-            <span>{busy ? tx('در حال ذخیره…') : initial ? tx('ذخیره تغییرات') : tx('ثبت کار')}</span>
-          </button>
-
-          {initial && (
-            <button
-              type="button"
-              className="sheet-delete-action-btn"
-              onClick={async () => {
-                if (await removeTask(initial.id)) onClose();
-              }}
-            >
-              <Icon name="trash" size={15} stroke={2} />
-              <span>{tx('حذف این کار')}</span>
-            </button>
-          )}
-        </div>
-      </section>
+        {v.kind === 'shopping' && (initial
+          ? <ShoppingSection task={initial} />
+          : <p className="hint">{tx('بعد از ثبت کار، قوانین خرید و مقایسهٔ محصولات همین‌جا باز می‌شود.')}</p>)}
+      </FormPage>
 
       {/* Date Picker Modal */}
       {picking && (
         <DatePicker
           value={v.date}
           onPick={(d) => {
-            set({ date: d, dated: true });
+            set({ date: d, when: 'date' });
             setPicking(false);
           }}
           onClose={() => setPicking(false)}

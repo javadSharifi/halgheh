@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Rule, db } from './db';
 import { fa } from './cal';
@@ -7,6 +7,7 @@ import { STR } from './strings/rulebook';
 import { setCheck } from './ruleData';
 import type { CheckState } from './domain/rules/constants';
 import { tx } from './i18n';
+import { FormPage, InputField } from './ui';
 
 /**
  * Phase 5, step 3: the quick check, one hand, in the shop. Every non-archived rule of the category is a card for one item
@@ -53,43 +54,37 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
     }
   };
 
-  const head = (
-    <header className="dd-head">
-      <button className="icon-btn check-back" aria-label={tx(STR.compare.backToSession)} onClick={onClose}><Icon name="chevronRight" /></button>
-      <span>{tx(STR.compare.checkModeTitle)}</span>
-      <span className="head-spacer" />
-    </header>
+  const shell = (body: ReactNode) => (
+    <FormPage title={item ? tx(STR.compare.checkFor(item.name)) : tx(STR.compare.checkModeTitle)} icon="listChecks" onClose={onClose}>
+      {body}
+    </FormPage>
   );
 
   if (item === undefined || index === null) {
-    return (
+    return shell(
       <>
-        {head}
         <p className="hint">…</p>
-      </>
+      </>,
     );
   }
   if (!item) {
-    return (
+    return shell(
       <>
-        {head}
         <p className="hint">{tx(STR.compare.noItems)}</p>
-      </>
+      </>,
     );
   }
   if (rules.length === 0) {
-    return (
+    return shell(
       <>
-        {head}
         <p className="hint">{tx(STR.compare.noRules)}</p>
-      </>
+      </>,
     );
   }
 
   if (!current) {
-    return (
+    return shell(
       <>
-        {head}
         <section className="glass empty-state">
           <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.7} /></span>
           <b>{tx(STR.compare.checkDone)}</b>
@@ -98,20 +93,17 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
         <div className="rf-foot">
           <button className="primary big-btn" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />{tx(STR.feature.close)}</button>
         </div>
-      </>
+      </>,
     );
   }
 
-  return (
+  return shell(
     <>
-      {head}
 
       <div className="review-progress">
         <span role="status">{tx(STR.compare.checkProgress(answeredCount, rules.length))}</span>
         <div className="review-bar" aria-hidden="true"><i style={{ width: `${(index / rules.length) * 100}%` }} /></div>
       </div>
-
-      <p className="check-for">{tx(STR.compare.checkFor(item.name))}</p>
 
       <section className="glass review-card check-card" aria-live="polite">
         {current.strict && <span className="rule-chip strict">{tx(STR.feature.strict)}</span>}
@@ -120,10 +112,7 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
       </section>
 
       {noteOpen ? (
-        <label className="bf-name bf-name-top review-note">
-          <span>{tx(STR.review.optionalNote)}</span>
-          <textarea className="rf-text" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
-        </label>
+        <InputField multiline rows={3} label={tx(STR.review.optionalNote)} value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
       ) : (
         <button className="text-btn review-note-btn" onClick={() => setNoteOpen(true)}>
           <Icon name="plus" size={13} stroke={2.4} />{tx(STR.review.optionalNote)}
@@ -148,6 +137,6 @@ export function CompareCheckMode({ itemId, rules, onClose }: { itemId: string; r
       </div>
 
       <p className="hint check-hint">{tx(STR.compare.unknownNotZero)}</p>
-    </>
+    </>,
   );
 }

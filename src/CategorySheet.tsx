@@ -8,7 +8,7 @@ import { Choice } from './Choice';
 import { STR } from './strings/rulebook';
 import { addCategory, deleteCategory, deleteCategory as removeCategory, moveCategory, renameCategory, setCompareEnabled } from './ruleData';
 import { tn, tx } from './i18n';
-import { Button } from './ui';
+import { Button, FormPage, FormSection, InputField } from './ui';
 
 /**
  * Phase 2: category management. Add, rename, reorder, delete and the per-category purchase-comparison switch. Deleting a
@@ -67,23 +67,27 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet cat-sheet" role="dialog" aria-modal="true" aria-labelledby="cat-sheet-title">
-        <div className="bf-head">
-          <span id="cat-sheet-title">{pending ? tx(STR.categories.deleteTitle(tx(pending.name))) : tx(STR.categories.manageTitle)}</span>
-          <Button variant="ghost" size="sm" onClick={() => (pending ? setPending(null) : onClose())}>
-            {pending ? tx(STR.feature.cancel) : tx(STR.feature.close)}
-          </Button>
-        </div>
-
+      <FormPage
+        title={pending ? tx(STR.categories.deleteTitle(tx(pending.name))) : tx(STR.categories.manageTitle)}
+        icon={pending ? 'trash' : 'tag'}
+        onClose={() => (pending ? setPending(null) : onClose())}
+        error={err}
+      >
         {!pending && (
           <>
-            <div className="cat-add">
-              <input value={adding} maxLength={60} onChange={(e) => setAdding(e.target.value)} placeholder={tx(STR.categories.namePlaceholder)} aria-label={tx(STR.categories.add)} enterKeyHint="done" />
-              <Button variant="primary" size="sm" icon="plus" disabled={!adding.trim()} onClick={() => void add()}>
+            <FormSection>
+              <InputField
+                label={tx(STR.categories.add)}
+                value={adding}
+                maxLength={60}
+                onChange={(e) => setAdding(e.target.value)}
+                placeholder={tx(STR.categories.namePlaceholder)}
+                enterKeyHint="done"
+              />
+              <Button variant="primary" block icon="plus" disabled={!adding.trim()} onClick={() => void add()}>
                 {tx(STR.categories.add)}
               </Button>
-            </div>
+            </FormSection>
 
             <div className="cat-list">
               {categories.map((cat, i) => (
@@ -137,7 +141,6 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
             </div>
 
             <p className="hint cat-hint">{tx(STR.categories.compareHint)}</p>
-            {err && <p className="form-error" role="alert">{err}</p>}
           </>
         )}
 
@@ -178,7 +181,7 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
             </Button>
           </>
         )}
-      </section>
+      </FormPage>
     </>
   );
 }

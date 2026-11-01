@@ -6,5 +6,7 @@
     <string name="custom_url_scheme">com.javadsharifi.halgheh</string>
     <string name="widget_name">کارهای امروز</string>
     <string name="widget_description">نمایش ساعت، تقویم و کارهای امروز همراه با ثبت سریع</string>
+    <string name="widget_upcoming_name">پیش‌رو</string>
+    <string name="widget_upcoming_description">تولدها و مناسبت‌های نزدیک</string>
     <string name="widget_quick_add">+ کار تازه</string>
 </resources>

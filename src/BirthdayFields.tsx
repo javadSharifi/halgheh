@@ -1,8 +1,7 @@
 import { CALS, CAL_NAMES, MONTHS, type Cal, fa, monthName, parts, today } from './cal';
 import type { Birthday } from './db';
 import { YEAR_RANGE, maxDay, toLatinDigits } from './format';
-import { Choice } from './Choice';
-import { InputField } from './ui';
+import { InputField, Select } from './ui';
 import { tx } from './i18n';
 
 /** The birthday form's fields as typed. Day and year stay strings while the user edits them. */
@@ -75,20 +74,26 @@ export function BirthdayFields({
           <button key={c} role="radio" aria-checked={d.cal === c} className={d.cal === c ? 'on' : ''} onClick={() => set({ cal: c })}>{tx(CAL_NAMES[c])}</button>
         ))}
       </div>
-      <div className="bf-grid">
-        <label className={`bf-tile${d.day && !r.dayOk ? ' bad' : ''}`}>
-          <span>{tx('روز')}</span>
-          <input inputMode="numeric" value={d.day} aria-invalid={d.day !== '' && !r.dayOk} onChange={(e) => set({ day: e.target.value })} />
-        </label>
-        <div className="bf-tile">
-          <span>{tx('ماه')}</span>
-          <Choice className="pick-text" label={tx('ماه')} value={d.month} options={MONTHS[d.cal].map((_, i): [number, string] => [i + 1, monthName(d.cal, i + 1)])} onChange={(m) => set({ month: m })} />
-        </div>
-        <label className={`bf-tile${!r.yearOk ? ' bad' : ''}`}>
-          <span>{tx('سال (اختیاری)')}</span>
-          <input inputMode="numeric" value={d.year} aria-invalid={!r.yearOk} onChange={(e) => set({ year: e.target.value })} />
-        </label>
-      </div>
+      <InputField
+        label={tx('روز')}
+        inputMode="numeric"
+        value={d.day}
+        onChange={(e) => set({ day: e.target.value })}
+        error={d.day && !r.dayOk ? tx('روز این ماه باید بین ۱ و {a1} باشد.', { a1: fa(maxDay(d.cal, d.month)) }) : undefined}
+      />
+      <Select
+        label={tx('ماه')}
+        value={d.month}
+        onChange={(e) => set({ month: Number(e.target.value) })}
+        options={MONTHS[d.cal].map((_, i) => ({ value: i + 1, label: monthName(d.cal, i + 1) }))}
+      />
+      <InputField
+        label={tx('سال (اختیاری)')}
+        inputMode="numeric"
+        value={d.year}
+        onChange={(e) => set({ year: e.target.value })}
+        error={!r.yearOk ? tx('سال باید بین {a1} و {a2} باشد.', { a1: fa(YEAR_RANGE[d.cal][0]), a2: fa(YEAR_RANGE[d.cal][1]) }) : undefined}
+      />
       {!hidePhone && (
         <InputField
           label={tx('شماره تلفن (اختیاری)')}
@@ -101,8 +106,6 @@ export function BirthdayFields({
           onChange={(e) => set({ phone: e.target.value })}
         />
       )}
-      {!r.dayOk && d.day !== '' && <p className="form-error">{tx('روز این ماه باید بین ۱ و {a1} باشد.', { a1: fa(maxDay(d.cal, d.month)) })}</p>}
-      {!r.yearOk && <p className="form-error">{tx('سال باید بین {a1} و {a2} باشد.', { a1: fa(YEAR_RANGE[d.cal][0]), a2: fa(YEAR_RANGE[d.cal][1]) })}</p>}
     </div>
   );
 }

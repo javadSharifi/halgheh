@@ -108,6 +108,9 @@ public class TodayPlugin extends Plugin {
         editor.remove("task_1");
         editor.remove("task_2");
         editor.remove("task_3");
+        editor.remove("upcoming_1");
+        editor.remove("upcoming_2");
+        editor.remove("upcoming_3");
 
         if (tasks != null) {
             try {
@@ -118,9 +121,20 @@ public class TodayPlugin extends Plugin {
                 // ignore
             }
         }
+        com.getcapacitor.JSArray upcoming = call.getArray("upcoming");
+        if (upcoming != null) {
+            try {
+                for (int i = 0; i < upcoming.length() && i < 3; i++) {
+                    editor.putString("upcoming_" + (i + 1), upcoming.getString(i));
+                }
+            } catch (org.json.JSONException e) {
+                // ignore
+            }
+        }
         editor.apply();
 
         TodayWidgetProvider.updateAllWidgets(getContext());
+        UpcomingWidgetProvider.updateAllWidgets(getContext());
         call.resolve();
     }
 

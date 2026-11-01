@@ -1,4 +1,4 @@
-import type { ContactPayload } from '@capacitor-community/contacts';
+import { Contacts, type ContactPayload } from '@capacitor-community/contacts';
 import { type Person, put } from './db';
 import { normPhone } from './phone';
 import { locale, tx } from './i18n';
@@ -116,6 +116,16 @@ export async function importPicks(picks: Pick[], people: Person[]) {
     added++;
   }
   return { added, merged, skipped };
+}
+
+/**
+ * Opens the phone's own contact picker and returns the single contact the user tapped. No permission dialog: the picker
+ * is an Android system screen that hands back only that one contact. null when the user backs out.
+ */
+export async function pickOne(): Promise<Pick | null> {
+  const { contact } = await Contacts.pickContact({ projection: { name: true, phones: true, emails: true } });
+  if (!contact?.contactId) return null;
+  return toPicks([contact])[0] ?? null;
 }
 
 /** Why importing from contacts is unavailable, in one sentence, or null when it is fine. */

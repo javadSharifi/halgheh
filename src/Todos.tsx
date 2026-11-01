@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Task, db, del, put } from './db';
 import { fa, label, today } from './cal';
-import { faDigits, isTime, personLabel } from './format';
+import { daysText, faDigits, isTime, personLabel } from './format';
 import { ask } from './confirm';
 import { Icon } from './Icon';
-import { Button } from './ui';
-import { counts, doneDateFor, doneKey, FILTERS, isOverdue, listTodos, overdue, type TodoFilter } from './todoFilters';
+import { Button, PageHead } from './ui';
+import { counts, doneDateFor, doneKey, FILTERS, isOverdue, isRecurring, listTodos, overdue, type TodoFilter } from './todoFilters';
 import { tn, tx } from './i18n';
+import { TASK_KINDS } from './taskKinds';
 
 /** Asks first; true when the task and its done-history are gone. */
 export async function removeTask(id: string) {
@@ -21,8 +22,8 @@ export async function removeTask(id: string) {
  * Ticking writes a `done` row under the todo's own day; a dateless todo uses the SOMEDAY sentinel, so it can be ticked
  * and un-ticked on any day. `done` is the current state: true removes the row.
  */
-export async function toggleTodo(task: Task, done: boolean) {
-  const date = doneDateFor(task);
+export async function toggleTodo(task: Task, done: boolean, day?: string) {
+  const date = doneDateFor(task, day);
   if (done) return del('done', doneKey(task.id, date));
   await put('done', { id: doneKey(task.id, date), taskId: task.id, date, updatedAt: Date.now(), doneAt: Date.now() });
 }
@@ -42,7 +43,7 @@ export async function clearSnooze(task: Task) {
 
 const snoozedNow = (t: Task) => !!t.snoozeUntil && t.snoozeUntil > Date.now();
 
-export function Todos({ openForm, openPerson }: { openForm: (id: string | null) => void; openPerson: (id: string) => void }) {
+export function Todos({ openForm, openPerson, openSearch }: { openForm: (id: string | null) => void; openPerson: (id: string) => void; openSearch: () => void }) {
   const [filter, setFilter] = useState<TodoFilter>('today');
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
   const dones = useLiveQuery(() => db.done.toArray(), []) ?? [];
@@ -58,8 +59,11 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
     const bits: string[] = [];
     if (task.on && task.on !== t) bits.push(label(task.on, 'persian', 0, { day: 'numeric', month: 'long' }));
     if (isTime(task.time)) bits.push(faDigits(task.time));
+    const kind = TASK_KINDS.find((k) => k.key === task.kind);
+    if (kind) bits.push(tx(kind.name));
     if (task.fromPersonId) bits.push(tx('از طرف {a1}', { a1: nameOf.get(task.fromPersonId) ?? tx('کسی') }));
-    if (!task.on) bits.push(tx('بدون موعد'));
+    if (isRecurring(task)) bits.unshift(daysText(task.mask));
+    else if (!task.on) bits.push(tx('بدون موعد'));
     if (done) bits.push(tx('انجام شد'));
     if (snoozedNow(task)) bits.push(tx('یادآوری به تعویق افتاده'));
     return bits.join(' · ');
@@ -71,11 +75,12 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
       : filter === 'upcoming' ? tx('کار آینده‌ای نیست.')
         : filter === 'nodate' ? tx('کار بی‌موعدی نداری.')
           : filter === 'done' ? tx('هنوز کاری انجام نشده.')
+            : filter === 'personal' ? tx('کار شخصی نداری؛ هنگام ساختن کار، «نوع کار» را انتخاب کن.')
             : tx('هنوز کاری نساخته‌ای.');
 
-  const Row = ({ task, done }: { task: Task; done: boolean }) => (
+  const Row = ({ task, done, due }: { task: Task; done: boolean; due?: string }) => (
     <div className={`task-row${done ? ' done' : ''}`}>
-      <button className="tick" aria-pressed={done} aria-label={done ? tx('{a1}، انجام شد', { a1: task.title }) : tx('{a1}، انجام نشده', { a1: task.title })} onClick={() => void toggleTodo(task, done)}>
+      <button className="tick" aria-pressed={done} disabled={isRecurring(task) && due !== t} aria-label={done ? tx('{a1}، انجام شد', { a1: task.title }) : tx('{a1}، انجام نشده', { a1: task.title })} onClick={() => void toggleTodo(task, done, due)}>
         <span className="circle">{done && <Icon name="check" size={13} stroke={3} />}</span>
       </button>
       <button className="t-body" onClick={() => openForm(task.id)} aria-label={tx('ویرایش {a1}', { a1: task.title })}>
@@ -116,12 +121,13 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
 
   return (
     <>
-      <div className="page-head">
-        <h1>{tx('کارها')}</h1>
-        <Button variant="primary" size="sm" icon="plus" onClick={() => openForm(null)}>
-          {tx('افزودن')}
-        </Button>
-      </div>
+      <PageHead
+        title={tx('کارها')}
+        tools={[
+          { icon: 'search', label: tx('جستجو در کارها'), onClick: openSearch },
+          { icon: 'plus', label: tx('افزودن'), onClick: () => openForm(null), primary: true },
+        ]}
+      />
 
       <div className="tabs" role="tablist" aria-label={tx('فیلتر کارها')}>
         {FILTERS.map(([k, labelText]) => (
@@ -161,11 +167,14 @@ export function Todos({ openForm, openPerson }: { openForm: (id: string | null) 
       <section>
         <div className="glass task-list">
           {list.length === 0 && (
-            <p className="hint empty">
-              {noDate ? tx('{a1} کارِ بی‌موعد را از «افزودن» و با انتخاب «بدون موعد» بساز.', { a1: emptyText }) : emptyText}
-            </p>
+            <div className="empty-state">
+              <p className="hint empty">
+                {noDate ? tx('{a1} کارِ بی‌موعد را از «افزودن» و با انتخاب «بدون موعد» بساز.', { a1: emptyText }) : emptyText}
+              </p>
+              <Button variant="primary" icon="plus" onClick={() => openForm(null)}>{tx('کار تازه')}</Button>
+            </div>
           )}
-          {list.map(({ task, done }) => <Row key={task.id} task={task} done={done} />)}
+          {list.map(({ task, done, due }) => <Row key={task.id} task={task} done={done} due={due} />)}
         </div>
       </section>
 

@@ -12,7 +12,7 @@ test('garbage becomes defaults', () => {
 });
 
 test('valid values are kept', () => {
-  expect(normalize({ weekStart: 1, theme: 'dark', remind: true })).toEqual({ weekStart: 1, theme: 'dark', remind: true, lang: 'fa' });
+  expect(normalize({ weekStart: 1, theme: 'dark', remind: true })).toEqual({ weekStart: 1, theme: 'dark', remind: true, hideNames: false, lang: 'fa' });
 });
 
 test('a corrupt saved object falls back instead of throwing', () => {

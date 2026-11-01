@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { PageHead } from './ui';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Exchange, db } from './db';
 import { fa, today } from './cal';
@@ -15,13 +16,11 @@ import {
 import { PALETTE, money } from './ledger/shared';
 import { LedgerHero } from './ledger/LedgerHero';
 import { BalanceChips, ExchangeItem } from './ledger/ExchangeItem';
-import { ExchangeSheet } from './ledger/ExchangeSheet';
 import { SettleSheet } from './ledger/SettleSheet';
 import { locale, tn, tx } from './i18n';
 import { personLabel } from './format';
 
 export { money, BalanceChips };
-export { ExchangeSheet };
 
 type ExtendedFilter = 'all' | 'earn' | 'owe' | 'nonmoney' | 'overdue' | 'settled';
 
@@ -34,16 +33,23 @@ type ExtendedFilter = 'all' | 'earn' | 'owe' | 'nonmoney' | 'overdue' | 'settled
  * - Rich transaction rows with progress bars for partial payments and overdue chips
  * - Direct tap to edit, settle, or delete
  */
-export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string) => void; openCheck: (id: string) => void }) {
+export function LedgerPage({
+  openPerson,
+  openCheck,
+  openExchange,
+  openSearch,
+}: {
+  openSearch: () => void;
+  openPerson: (id: string) => void;
+  openCheck: (id: string) => void;
+  openExchange: (seedPersonId?: string, exchangeId?: string | null) => void;
+}) {
   const exchanges = useLiveQuery(() => db.exchanges.toArray(), []) ?? [];
   const settlements = useLiveQuery(() => db.exchangeSettlements.toArray(), []) ?? [];
   const people = useLiveQuery(() => db.people.toArray(), []) ?? [];
-  const checks = useLiveQuery(() => db.ruleChecks.toArray(), []) ?? [];
 
   const [filter, setFilter] = useState<ExtendedFilter>('all');
   const [search, setSearch] = useState('');
-  const [adding, setAdding] = useState<string | null | 'new'>(null);
-  const [editing, setEditing] = useState<Exchange | null>(null);
   const [settling, setSettling] = useState<Exchange | null>(null);
   const t = today();
 
@@ -134,17 +140,14 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
   return (
     <div className="ledger-container">
       {/* Page Header */}
-      <div className="page-head">
-        <div className="ledger-title-wrap">
-          <h1>{tx(STR.ledger.title)}</h1>
-          <span className="ledger-title-count">
-            {tx('{a1} باز', { a1: fa(openEarnCount + openOweCount + nonMoneyCount) })}</span>
-        </div>
-        <button className="primary ledger-quick-add-btn" onClick={() => setAdding('new')}>
-          <Icon name="plus" size={17} stroke={2.4} />
-          <span>{tx(STR.ledger.quickAdd)}</span>
-        </button>
-      </div>
+      <PageHead
+        title={tx(STR.ledger.title)}
+        badge={tx('{a1} باز', { a1: fa(openEarnCount + openOweCount + nonMoneyCount) })}
+        tools={[
+          { icon: 'search', label: tx('جستجو در دادوستدها'), onClick: openSearch },
+          { icon: 'plus', label: tx(STR.ledger.quickAdd), onClick: () => openExchange(), primary: true },
+        ]}
+      />
 
       {/* Hero Financial Summary Card */}
       {exchanges.length > 0 && (
@@ -238,7 +241,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
           </span>
           <b>{tx('هنوز هیچ دادوستدی ثبت نکرده‌اید')}</b>
           <p className="hint">{tx('قرض‌هایی که دادید، بدهی‌ها، کالاهایی که امانت دادید یا گرفتید، و لطف‌هایی که برای هم انجام دادید را اینجا منظم نگه دارید.')}</p>
-          <button className="primary" onClick={() => setAdding('new')}>
+          <button className="primary" onClick={() => openExchange()}>
             <Icon name="plus" size={17} stroke={2.4} />{tx('ثبت اولین دادوستد')}</button>
         </section>
       ) : groups.length === 0 ? (
@@ -282,7 +285,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
                     {personBalance && <BalanceChips earn={personBalance.earn} owe={personBalance.owe} />}
                     <button
                       className="icon-btn small ledger-add-to-person-btn"
-                      onClick={() => setAdding(g.personId)}
+                      onClick={() => openExchange(g.personId)}
                       title={tx('ثبت دادوستد با {a1}', { a1: pName })}
                       aria-label={tx('ثبت دادوستد با {a1}', { a1: pName })}
                     >
@@ -300,7 +303,7 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
                       settlements={settlements}
                       today={t}
                       onSettle={() => setSettling(e)}
-                      onEdit={() => setEditing(e)}
+                      onEdit={() => openExchange(e.personId, e.id)}
                     />
                   ))}
                 </div>
@@ -308,21 +311,6 @@ export function LedgerPage({ openPerson, openCheck }: { openPerson: (id: string)
             );
           })}
         </div>
-      )}
-
-      {/* Add / Edit Sheet Modal */}
-      {(adding || editing) && (
-        <ExchangeSheet
-          people={people.filter((p) => !p.archivedAt && !p.isSelf)}
-          seedPersonId={adding && adding !== 'new' ? adding : editing ? editing.personId : undefined}
-          exchange={editing}
-          onClose={() => {
-            setAdding(null);
-            setEditing(null);
-          }}
-          onStartCheck={openCheck}
-          checks={checks}
-        />
       )}
 
       {/* Settle Modal */}

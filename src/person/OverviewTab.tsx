@@ -1,16 +1,19 @@
-import { CAL_NAMES, fa, monthName } from '../cal';
-import type { Birthday, Person, PersonNote, PersonTag, Tag } from '../db';
+import { CAL_NAMES, fa, monthName, today } from '../cal';
+import { type Birthday, type Interaction, type Person, type PersonNote, type PersonTag, type Tag, put } from '../db';
+import { CIRCLES } from '../circles';
 import { Icon } from '../Icon';
 import { normPhone } from '../phone';
 import { NoteBox } from '../NoteBox';
 import { TagEditor } from '../TagEditor';
+import { daysSinceContact, lastSeen, withSnooze } from '../domain/keepinTouch';
 import { ageOf, smsHref } from './shared';
 import { join, tx } from '../i18n';
 
-/** Tab 1: phones, emails, birthday, tags, the note, archive/delete. */
-export function OverviewTab({ person: p, birthday: bd, note, tags, tagLinks, onEdit, onSaveNote, onArchive, onRemove }: {
+/** Tab 1: phones, emails, birthday, the keep-in-touch ring, tags, the note, archive/delete. */
+export function OverviewTab({ person: p, birthday: bd, interactions, note, tags, tagLinks, onEdit, onSaveNote, onArchive, onRemove }: {
   person: Person;
   birthday: Birthday | undefined;
+  interactions: Interaction[];
   note: PersonNote | undefined;
   tags: Tag[];
   tagLinks: PersonTag[];
@@ -21,6 +24,9 @@ export function OverviewTab({ person: p, birthday: bd, note, tags, tagLinks, onE
 }) {
   const phones = p.phones.filter(Boolean);
   const age = bd ? ageOf(bd.year, bd.cal, bd.month, bd.day) : null;
+  const seen = lastSeen(p.id, interactions);
+  const snoozed = (p.dueSnoozeUntil ?? 0) > Date.now();
+  const snooze = () => put('people', withSnooze(p, Date.now()));
 
   return (
     <div className="tab-pane">
@@ -79,6 +85,24 @@ export function OverviewTab({ person: p, birthday: bd, note, tags, tagLinks, onE
               <Icon name="chevronLeft" size={16} stroke={2} />
             </button>
           )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="sec-title">{tx('حفظ ارتباط')}</h2>
+        <div className="glass set-list">
+          <div className="set-row">
+            <span className="tile purple" aria-hidden="true"><Icon name="repeat" size={17} stroke={1.9} /></span>
+            <span className="set-name">
+              {seen ? tx('آخرین تماس: {a1} روز پیش', { a1: fa(daysSinceContact(p, interactions, today(), Date.now())) }) : tx('هنوز تماسی ثبت نشده')}
+              <small className="set-sub">{[p.circle && tx(CIRCLES.find((c) => c.key === p.circle)?.name ?? ''), p.cadenceDays ? (p.cadenceDays === 365 ? tx('سالی یک بار') : tx('هر {a1} روز', { a1: fa(p.cadenceDays) })) : tx('بدون ریتم یادآوری')].filter(Boolean).join(' · ')}</small>
+            </span>
+            {p.cadenceDays ? (
+              <button className="mini-btn" onClick={snooze}>{snoozed ? tx('یادآوری یک هفته بعد') : tx('یک هفته بعد یادم بینداز')}</button>
+            ) : (
+              <button className="mini-btn" onClick={onEdit}>{tx('تنظیم ریتم')}</button>
+            )}
+          </div>
         </div>
       </section>
 

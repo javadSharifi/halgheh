@@ -10,7 +10,11 @@ React 19 + Capacitor + Dexie. All data lives on the device; cloud sync (Cloudfla
 - `src/cal.ts` — three calendars (Jalali/Gregorian/Hijri). `src/format.ts` — display helpers. `src/skills.ts`, `src/search.ts`, `src/relationships.ts` — per-feature logic.
 - `src/native.ts`, `src/photoStore.ts`, `src/contacts.ts`, `src/reminders.ts` — Capacitor bridges, each guarded so the web build still runs.
 - `src/sync.ts`, `src/online.ts`, `src/photoSync.ts` — sync client. `worker/index.ts` — sync backend (D1), `migrations/` — SQL.
-- `src/ui/` — design system base components (`Button`, `InputField`, `Select`, `Card`, `Sheet`, `Chip`).
+- `src/taskKinds.ts` personal-task modes (`Task.kind`); `src/ShoppingSection.tsx` = shopping task rules + product comparison, built on the rulebook compare feature (shared «خرید» category).
+- `src/GraphPage.tsx` relationship graph (layout in `domain/graph`); `src/TouchPage.tsx` keep-in-touch overview; `src/circles.ts` closeness groups (`Person.circle`) and their suggested rhythm (`cadenceDays`).
+- `src/WeeklyPage.tsx` weekly review (numbers in `domain/weekly`); recurring tasks = `Task.mask` weekday bits with no `on`, resolved by `dueOf`/`isRecurring` in `src/todoFilters.ts`, ticked per occurrence day.
+- `src/AddMenu.tsx` global "+" (add task/person/exchange/birthday/rule); `src/TodayTabs.tsx` امروز|کارها|تولدها switch shown by App on those three pages.
+- `src/ui/` — design system base components (`Button`, `InputField`, `Select`, `Card`, `Sheet`, `Chip`, `FormPage`, `PageHead`). Every add/edit screen is a `FormPage` (+ `FormSection`/`FormField`) built from `InputField`/`Select`; `Sheet` is only for pickers and menus.
 - `src/i18n/` — `tx('متن فارسی')` everywhere in the UI; Persian text is the key, `en.ts` holds the English copy. `src/settings.ts` `lang` picks it and remounts the app.
 
 ## Landmarks
@@ -20,6 +24,7 @@ Add a line here only after a search actually cost time. Directory or file, never
 - `src/strings/rulebook.ts` — `STR` plus label maps (`EXCHANGE_KIND_LABEL`, `CHECK_ITEM_LABEL`, ...) for rulebook, brief, ledger and checks; imported by ~10 screens. Every other screen keeps Persian inline.
 - `src/ledger/shared.ts` — `money()` and `PALETTE()`; the balance/total math itself is in `src/domain/ledger/index.ts`.
 - `src/App.tsx` — one `page` state machine, ~25 pages. Full-screen pages (sync, search, person, whocan, exchange, brief) hide the bottom tab bar via the `full` flag.
+- `src/photoAdd.tsx` (`usePhotoAdd`: pick → full photo form → `storePhoto.ts`) is the only way a photo is added; gallery and person profile both use it.
 - `src/photoStore.ts` + `photoFiles` table — device-local, never synced; `usePhotoUrls` turns stored paths into blob URLs.
 
 ## Conventions

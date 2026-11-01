@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, type FormEvent, useRef } from 'react';
+import { useState, useMemo, type FormEvent, useRef } from 'react';
 import { type Task, put, uid } from './db';
 import { addDays, bdayOn, fa, label, parts, taskOn, today, wd, wdInitial } from './cal';
-import { faDigits, greeting, isTime } from './format';
+import { faDigits, isTime } from './format';
 import { Icon } from './Icon';
 import { isOverdue } from './todoFilters';
 import { toggleTodo } from './Todos';
@@ -9,7 +9,6 @@ import { tn, tx } from './i18n';
 
 export type TodayWidgetProps = {
   tasks: Task[];
-  dones: { taskId: string; date: string }[];
   todays: { task: Task; done: boolean }[];
   openTask: (id: string | null) => void;
   openSearch?: () => void;
@@ -86,7 +85,7 @@ function WidgetTaskItem({
 /**
  * TodayWidget:
  * A rich all-in-one widget featuring:
- * 1. Live Digital Clock with seconds & time-of-day greeting
+ * 1. Persian Solar Calendar with weekday & interactive week ribbon
  * 2. Persian Solar Calendar with weekday & interactive week ribbon
  * 3. Quick-Add section to immediately add a task for today
  * 4. Today's Tasks checklist with one-tap toggle and progress bar
@@ -101,19 +100,6 @@ export function TodayWidget({
   statusChip,
 }: TodayWidgetProps) {
   const t = today();
-
-  // 1. Live Clock State
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const hoursStr = String(now.getHours()).padStart(2, '0');
-  const minutesStr = String(now.getMinutes()).padStart(2, '0');
-  const secondsStr = String(now.getSeconds()).padStart(2, '0');
-  const clockText = `${hoursStr}:${minutesStr}`;
-  const greet = greeting(now.getHours());
 
   // 2. Persian Calendar Date
   const weekdayName = label(t, 'persian', 0, { weekday: 'long' });
@@ -167,17 +153,11 @@ export function TodayWidget({
   };
 
   return (
-    <section className="glass today-widget" aria-label={tx('ویجت کارهای امروز')}>
-      {/* Top Header: Clock, Greeting & Status */}
+    <div className="today-widget">
+      {/* Hero card: date, week ribbon and search */}
+      <section className="glass tw-hero" aria-label={tx('امروز')}>
+      {/* Top Header: date & status */}
       <div className="tw-header">
-        <div className="tw-clock-block">
-          <div className="tw-clock-display" aria-label={tx('ساعت فعلی: {a1}', { a1: faDigits(clockText) })}>
-            <span className="tw-clock-time">{faDigits(clockText)}</span>
-            <span className="tw-clock-seconds">:{faDigits(secondsStr)}</span>
-          </div>
-          <span className="tw-greeting-badge">{greet}</span>
-        </div>
-
         <div className="tw-cal-block">
           <div className="tw-cal-date">
             <span className="tw-cal-weekday">{weekdayName}</span>
@@ -218,7 +198,10 @@ export function TodayWidget({
           <span>{tx('جستجو در آدم‌ها، کارها، یادداشت‌ها...')}</span>
         </button>
       )}
+      </section>
 
+      {/* Tasks card: quick add + today's checklist */}
+      <section className="glass tw-tasks-card" aria-label={tx('کارهای امروز')}>
       {/* Quick Add Section: Type and press Enter to immediately add to today */}
       <div className="tw-quick-section">
         <form className="tw-quick-form" onSubmit={handleQuickAdd}>
@@ -332,7 +315,7 @@ export function TodayWidget({
                   aria-expanded={showDone}
                 >
                   <span>{tn('{n} کار انجام‌شده', doneCount)}</span>
-                  <Icon name={showDone ? 'chevronDown' : 'chevronLeft'} size={15} stroke={2} />
+                  <Icon name="chevronDown" size={15} stroke={2} className={showDone ? 'rot' : undefined} />
                 </button>
 
                 {showDone && (
@@ -355,6 +338,7 @@ export function TodayWidget({
           </div>
         )}
       </div>
-    </section>
+      </section>
+    </div>
   );
 }

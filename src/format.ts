@@ -1,7 +1,7 @@
 import { type Cal, addDays, bdayOn, fa, wd, wdName } from './cal';
 import { lang, tx } from './i18n';
 
-const SAT_FIRST = [6, 0, 1, 2, 3, 4, 5]; // JS weekdays in the order Iranians read the week
+export const SAT_FIRST = [6, 0, 1, 2, 3, 4, 5]; // JS weekdays in the order Iranians read the week
 
 /** Weekday mask -> "هر روز", "شنبه تا چهارشنبه" (3+ days in a row) or "شنبه، دوشنبه". */
 export function daysText(mask: number) {
@@ -27,7 +27,7 @@ export const kindText = (t: { mask: number; on?: string }) => (t.on ? tx('یک�
 export const greeting = (hour: number) =>
   tx(hour < 5 ? 'شب بخیر' : hour < 12 ? 'صبح بخیر' : hour < 17 ? 'ظهر بخیر' : hour < 20 ? 'عصر بخیر' : 'شب بخیر');
 
-type B = { id: string; name: string; cal: Cal; month: number; day: number; year?: number };
+type B = { cal: Cal; month: number; day: number };
 
 /** The first birthday strictly after `from` within a year and a bit, or null. */
 export function nextBirthday<T extends B>(bdays: T[], from: string, off: number) {

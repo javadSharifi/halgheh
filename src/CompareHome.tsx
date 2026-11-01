@@ -5,7 +5,7 @@ import { db } from './db';
 import { fa, label } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
-import { Button } from './ui';
+import { Button, FormPage, FormSection, InputField } from './ui';
 import { Toggle } from './Toggle';
 import { STR } from './strings/rulebook';
 import { addSession, itemsOf, orderSessions, setCompareEnabled, deleteSession } from './ruleData';
@@ -46,14 +46,7 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
   };
 
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet compare-home" role="dialog" aria-modal="true" aria-labelledby="compare-home-title">
-        <div className="bf-head">
-          <span id="compare-home-title">{tx(STR.compare.title)} · {tx(category.name)}</span>
-          <Button variant="ghost" size="sm" onClick={onClose}>{tx(STR.feature.close)}</Button>
-        </div>
-
+    <FormPage title={`${tx(STR.compare.title)} · ${tx(category.name)}`} icon="contrast" onClose={onClose}>
         <div className="rf-row">
           <span className="tile purple" aria-hidden="true"><Icon name="contrast" size={17} stroke={1.9} /></span>
           <span className="rf-name">{tx(STR.categories.compareToggle)}</span>
@@ -65,12 +58,12 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
         {category.compareEnabled && (
           <>
             {rulesHere.length === 0 && <p className="hint">{tx(STR.compare.noRules)}</p>}
-            <div className="cat-add">
-              <input value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder={tx(STR.compare.sessionTitlePlaceholder)} aria-label={tx(STR.compare.newSession)} enterKeyHint="done" />
-              <Button variant="primary" size="sm" disabled={busy || rulesHere.length === 0} onClick={() => void create()} icon="plus">
+            <FormSection>
+              <InputField label={tx(STR.compare.newSession)} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder={tx(STR.compare.sessionTitlePlaceholder)} enterKeyHint="done" />
+              <Button variant="primary" block disabled={busy || rulesHere.length === 0} onClick={() => void create()} icon="plus">
                 {tx(STR.compare.newSession)}
               </Button>
-            </div>
+            </FormSection>
 
             <p className="field-label">{tx(STR.compare.sessions)}</p>
             <div className="session-list">
@@ -98,7 +91,6 @@ export function CompareHome({ category, rules, onOpen, onClose }: {
             </div>
           </>
         )}
-      </section>
-    </>
+    </FormPage>
   );
 }

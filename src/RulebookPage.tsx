@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Rule, db } from './db';
 import { fa, today } from './cal';
 import { Icon } from './Icon';
-import { Button, Card } from './ui';
+import { Button, Card, PageHead } from './ui';
 import { STR } from './strings/rulebook';
 import { addRule, dueLabel, orderCategories, orderRules } from './ruleData';
 import { orderByBreaks } from './domain/rules/breaks';
@@ -25,7 +25,13 @@ export function RulebookPage({
   onFocused,
   openReview,
   openReadThrough,
+  startAdd,
+  onStarted,
+  openSearch,
 }: {
+  startAdd?: boolean;
+  onStarted?: () => void;
+  openSearch?: () => void;
   focusId?: string | null;
   onFocused?: () => void;
   openReview?: () => void;
@@ -63,6 +69,13 @@ export function RulebookPage({
   }, [inScope, mostBroken, onlyBroken, breaks]);
   const archived = useMemo(() => inScope.filter((r) => r.archivedAt).sort((a, b) => (b.archivedAt ?? 0) - (a.archivedAt ?? 0)), [inScope]);
   const catName = (id: string) => tx(categories.find((c) => c.id === id)?.name ?? '—');
+
+  // the global + asks for a new rule
+  useEffect(() => {
+    if (!startAdd) return;
+    setEditing('new');
+    onStarted?.();
+  }, [startAdd, onStarted]);
 
   // a rule opened from search arrives as an id; open its sheet once, then clear the request so back does not reopen it
   useEffect(() => {
@@ -136,15 +149,14 @@ export function RulebookPage({
   return (
     <>
       <div className={overlay ? 'rulebook-under' : undefined} aria-hidden={overlay || undefined}>
-      <div className="page-head">
-        <h1>{tx(STR.feature.title)}</h1>
-        <div className="head-tools">
-          <Button variant="ghost" size="icon-md" aria-label={tx(STR.categories.manageTitle)} onClick={() => setManaging(true)} icon="alignLeft" />
-          <Button variant="primary" size="sm" onClick={() => setEditing('new')} icon="plus">
-            {tx(STR.feature.addRule)}
-          </Button>
-        </div>
-      </div>
+      <PageHead
+        title={tx(STR.feature.title)}
+        tools={[
+          ...(openSearch ? [{ icon: 'search' as const, label: tx('جستجو در قوانین'), onClick: openSearch }] : []),
+          { icon: 'alignLeft', label: tx(STR.categories.manageTitle), onClick: () => setManaging(true) },
+          { icon: 'plus', label: tx(STR.feature.addRule), onClick: () => setEditing('new'), primary: true },
+        ]}
+      />
 
       <div className="read-invite">
         <button className="text-btn" onClick={() => openReadThrough?.(active === 'all' ? undefined : active, active === 'all' ? undefined : catName(active))}>
@@ -190,6 +202,7 @@ export function RulebookPage({
           <span className="tile purple" aria-hidden="true"><Icon name="listChecks" size={24} stroke={1.7} /></span>
           <b>{tx(STR.feature.emptyTitle)}</b>
           <p className="hint">{tx(STR.feature.emptyBody)}</p>
+          <Button variant="primary" icon="plus" onClick={() => setEditing('new')}>{tx(STR.feature.addRule)}</Button>
         </Card>
       ) : null}
 

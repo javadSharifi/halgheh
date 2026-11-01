@@ -7,7 +7,7 @@ import { DatePicker } from './DatePicker';
 import { Choice } from './Choice';
 import { EVIDENCE_STATUS, findSkill, readSkillNumbers, STATUS_LABEL } from './skills';
 import { tx } from './i18n';
-import { InputField, Button } from './ui';
+import { FormPage, FormSection, InputField } from './ui';
 
 /** The status picker's labels, ordered strongest first. */
 const STATUS: [PersonSkill['evidenceStatus'], string][] = [...EVIDENCE_STATUS].map(([k, v]) => [k, v] as const);
@@ -105,14 +105,19 @@ export function SkillForm({ personId, skills, existing, initial, onClose }: {
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet skill-sheet" role="dialog" aria-modal="true" aria-labelledby="skill-title">
-        <div className="bf-head">
-          <span id="skill-title">{initial ? tx('ویرایش مهارت') : tx('مهارت تازه')}</span>
-          <button className="text-btn" onClick={onClose}>{tx('بستن')}</button>
-        </div>
-
-        <div className="pe-scroll">
+      <FormPage
+        title={initial ? tx('ویرایش مهارت') : tx('مهارت تازه')}
+        icon={initial ? 'edit' : 'plus'}
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={initial ? tx('ذخیره') : tx('ثبت')}
+        saveDisabled={!valid || clash}
+        busy={busy}
+        error={err}
+        onDelete={initial ? () => void remove() : undefined}
+        deleteLabel={tx('حذف این مهارت')}
+      >
+        <FormSection>
           <InputField
             label={tx('مهارت')}
             autoFocus
@@ -144,12 +149,20 @@ export function SkillForm({ personId, skills, existing, initial, onClose }: {
             />
           )}
 
-          <div className="pe-grid">
-            <label className="bf-tile"><span>{tx('سطح (۱–۵)')}</span><input inputMode="numeric" value={v.level} onChange={(e) => set({ level: e.target.value })} /></label>
-            <label className="bf-tile"><span>{tx('سال تجربه')}</span><input inputMode="numeric" value={v.years} onChange={(e) => set({ years: e.target.value })} /></label>
-          </div>
-          {!nums.levelOk && <p className="form-error">{tx('سطح باید عددی بین ۱ و ۵ باشد.')}</p>}
-          {!nums.yearsOk && <p className="form-error">{tx('سال تجربه باید عددی بین ۰ و ۷۰ باشد.')}</p>}
+          <InputField
+            label={tx('سطح (۱–۵)')}
+            inputMode="numeric"
+            value={v.level}
+            onChange={(e) => set({ level: e.target.value })}
+            error={!nums.levelOk ? tx('سطح باید عددی بین ۱ و ۵ باشد.') : undefined}
+          />
+          <InputField
+            label={tx('سال تجربه')}
+            inputMode="numeric"
+            value={v.years}
+            onChange={(e) => set({ years: e.target.value })}
+            error={!nums.yearsOk ? tx('سال تجربه باید عددی بین ۰ و ۷۰ باشد.') : undefined}
+          />
 
           <div className="rf-row">
             <span className="tile purple" aria-hidden="true"><Icon name="target" size={17} stroke={1.9} /></span>
@@ -186,14 +199,8 @@ export function SkillForm({ personId, skills, existing, initial, onClose }: {
           </div>
           <p className="hint pe-hint">{tx('اگر بیش از ۱۲ ماه تأیید نشود، کهنه علامت می‌خورد.')}</p>
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </div>
-
-        <Button variant="primary" block disabled={!valid || busy || clash} onClick={() => void save()} icon="check">
-          {busy ? tx('در حال ذخیره…') : initial ? tx('ذخیره') : tx('افزودن مهارت')}
-        </Button>
-        {initial && <Button variant="danger" block onClick={() => void remove()} icon="trash">{tx('حذف این مهارت')}</Button>}
-      </section>
+        </FormSection>
+      </FormPage>
       {picking === 'verified' && (
         <DatePicker value={v.verified} onPick={(d) => { set({ verified: d, hasVerified: true }); setPicking(null); }} onClose={() => setPicking(null)} />
       )}

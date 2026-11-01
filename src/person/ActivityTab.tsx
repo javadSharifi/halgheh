@@ -1,6 +1,6 @@
 import { fa, label } from '../cal';
 import type { Interaction, Task } from '../db';
-import { faDigits, isTime } from '../format';
+import { daysText, faDigits, isTime } from '../format';
 import { Icon } from '../Icon';
 import { Button } from '../ui';
 import { TYPE_NAME } from '../InteractionForm';
@@ -48,7 +48,7 @@ export function ActivityTab({ askedTasks, askedDone, interactions, onTodo, onInt
                       <span className="t-sub">
                         {isOverdue(task, done) && <em className="late-chip">{tx('عقب‌افتاده')}</em>}
                         {join([
-                          task.on ? label(task.on, 'persian', 0, { day: 'numeric', month: 'long' }) : tx('بدون موعد'),
+                          task.on ? label(task.on, 'persian', 0, { day: 'numeric', month: 'long' }) : task.mask ? daysText(task.mask) : tx('بدون موعد'),
                           isTime(task.time) && faDigits(task.time),
                           done && tx('انجام شد'),
                         ])}

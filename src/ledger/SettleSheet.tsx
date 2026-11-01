@@ -4,7 +4,7 @@ import { label } from '../cal';
 import { formatToman, formatNumberFa, tomanWords, toLatinDigits } from '../format';
 import { ask } from '../confirm';
 import { Icon } from '../Icon';
-import { Button, Card } from '../ui';
+import { Button, Card, FormPage, FormSection, InputField } from '../ui';
 import { STR } from '../strings/rulebook';
 import { addSettlement, deleteSettlement, settleExchange } from '../ledgerData';
 import { isMoney, remainingOf } from '../domain/ledger';
@@ -67,21 +67,16 @@ export function SettleSheet({
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet ledger-modern-sheet" role="dialog" aria-modal="true">
-        <div className="bf-head">
-          <div>
-            <span className="sheet-main-title">{tx('تسویه و پرداخت')}</span>
-            <small className="sheet-sub-title">
-              <bdi>{exchange.title}</bdi> ({personName})
-            </small>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            {tx(STR.feature.close)}
-          </Button>
-        </div>
-
-        <div className="pe-scroll ledger-sheet-content">
+      <FormPage
+        title={`${tx('تسویه و پرداخت')} · ${exchange.title} (${personName})`}
+        icon="check"
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={mode === 'partial' ? tx('ثبت پرداخت') : tx('تسویه')}
+        saveDisabled={mode === 'partial' && !parsedPartial}
+        busy={busy}
+      >
+        <FormSection>
           {/* Summary Card */}
           {isMoney(exchange) && exchange.amount !== undefined && (
             <Card className="ledger-settle-summary">
@@ -121,21 +116,17 @@ export function SettleSheet({
           )}
 
           {mode === 'partial' && canPartial && (
-            <div className="ledger-form-section ledger-amount-section">
-              <span className="ledger-form-label">{tx('مبلغ پرداختی این نوبت (تومان)')}</span>
-              <div className="ledger-amount-input-box">
-                <input
-                  type="text"
-                  dir="ltr"
-                  inputMode="numeric"
-                  className="ledger-amount-input"
-                  value={parsedPartial !== undefined ? formatNumberFa(parsedPartial) : ''}
-                  onChange={(e) => setPartialAmount(e.target.value)}
-                  placeholder={tx('۰')}
-                  autoFocus
-                />
-                <span className="ledger-amount-currency">{tx('تومان')}</span>
-              </div>
+            <>
+              <InputField
+                label={tx('مبلغ پرداختی این نوبت (تومان)')}
+                hint={tx('تومان')}
+                dir="ltr"
+                inputMode="numeric"
+                value={parsedPartial !== undefined ? formatNumberFa(parsedPartial) : ''}
+                onChange={(e) => setPartialAmount(e.target.value)}
+                placeholder={tx('۰')}
+                autoFocus
+              />
 
               {parsedPartial !== undefined && parsedPartial > 0 && (
                 <div className="ledger-amount-words">
@@ -151,15 +142,13 @@ export function SettleSheet({
                 <button type="button" onClick={() => setPartialAmount(String(left))}>{tx('کل باقیمانده')}</button>
               </div>
 
-              <input
-                type="text"
-                className="ledger-text-input"
-                style={{ marginTop: '10px' }}
+              <InputField
+                aria-label={tx('توضیح این پرداخت (اختیاری، مثلاً قسط اول)')}
                 value={partialNote}
                 onChange={(e) => setPartialNote(e.target.value)}
                 placeholder={tx('توضیح این پرداخت (اختیاری، مثلاً قسط اول)')}
               />
-            </div>
+            </>
           )}
 
           {/* Past settlements history */}
@@ -187,26 +176,8 @@ export function SettleSheet({
               </div>
             </div>
           )}
-        </div>
-
-        <div className="ledger-sheet-footer">
-          <Button
-            variant="primary"
-            block
-            size="lg"
-            className="ledger-submit-btn"
-            disabled={busy || (mode === 'partial' && !parsedPartial)}
-            onClick={() => void save()}
-            icon="check"
-          >
-            {busy
-              ? tx('در حال ثبت…')
-              : mode === 'partial'
-              ? tx('ثبت پرداخت {a1}', { a1: parsedPartial ? `(${formatToman(parsedPartial)})` : '' })
-              : tx('تسویه کامل ({a1})', { a1: formatToman(left) })}
-          </Button>
-        </div>
-      </section>
+        </FormSection>
+      </FormPage>
     </>
   );
 }

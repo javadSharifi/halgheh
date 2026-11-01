@@ -9,7 +9,10 @@ import { STR } from '../strings/rulebook';
 import { tx } from '../i18n';
 
 /** Tab 4: open exchanges with this person, the brief entry, and their photos. */
-export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls, openLedger, openBrief, onExchange }: {
+export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls, openLedger, openBrief, onExchange, onAddPhoto, onOpenPhoto }: {
+  onOpenPhoto: (id: string) => void;
+  /** Set on the phone only: opens the photo form with this person already chosen. */
+  onAddPhoto?: () => void;
   personId: string;
   exchanges: Exchange[];
   settlements: ExchangeSettlement[];
@@ -72,23 +75,27 @@ export function LedgerTab({ personId, exchanges, settlements, photos, photoUrls,
       <section>
         <div className="section-head">
           <h2>{tx('عکس‌ها')}</h2>
-          <span className="hint">{photos.length ? tx('{a1} عکس', { a1: fa(photos.length) }) : ''}</span>
+          {onAddPhoto ? (
+            <Button variant="secondary" size="sm" icon="plus" onClick={onAddPhoto}>{tx('افزودن عکس')}</Button>
+          ) : (
+            <span className="hint">{photos.length ? tx('{a1} عکس', { a1: fa(photos.length) }) : ''}</span>
+          )}
         </div>
         {photos.length === 0 ? (
           <div className="glass empty-state small">
             <b>{tx('عکسی به او وصل نیست')}</b>
-            <p className="hint">{tx('در گالری، هنگام ویرایش عکس، این فرد را انتخاب کن.')}</p>
+            <p className="hint">{tx(onAddPhoto ? 'با «افزودن عکس» اولین عکس او را بگذار.' : 'در گالری، هنگام ویرایش عکس، این فرد را انتخاب کن.')}</p>
           </div>
         ) : (
           <div className="photo-grid person-photos">
             {photos.map((ph) => (
-              <div key={ph.id} className="photo-cell" aria-label={ph.title} title={ph.title}>
+              <button key={ph.id} type="button" className="photo-cell" aria-label={ph.title} title={ph.title} onClick={() => onOpenPhoto(ph.id)}>
                 {photoUrls[ph.id] ? (
                   <img src={photoUrls[ph.id]} alt="" loading="lazy" />
                 ) : (
                   <span className="photo-missing" aria-hidden="true"><Icon name="image" size={18} stroke={1.8} /></span>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         )}

@@ -5,10 +5,10 @@ import { fa, label, monthName, parts, today } from './cal';
 import { Icon } from './Icon';
 import { STR, EXCHANGE_DIRECTION_LABEL } from './strings/rulebook';
 import { normPhone } from './phone';
-import { nextOccurrence, personLabel } from './format';
+import { daysText, nextOccurrence, personLabel } from './format';
 import { CRITERION_LABEL, RATING_CRITERIA, SCORES, isScore } from './ratings';
 import { TYPE_NAME } from './InteractionForm';
-import { doneKey, doneDateFor } from './todoFilters';
+import { doneKey, doneDateFor, doneDatesFor } from './todoFilters';
 import { dueText } from './domain/ledger';
 import {
   briefBalance,
@@ -23,7 +23,7 @@ import {
   openTodos,
   upcomingBirthday,
 } from './domain/brief';
-import { money, BalanceChips, ExchangeSheet } from './LedgerPage';
+import { money, BalanceChips } from './LedgerPage';
 import { NewCheckSheet } from './PersonCheck';
 import { InteractionForm } from './InteractionForm';
 import { latestPlan } from './domain/rules/breaks';
@@ -36,25 +36,45 @@ const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0)
  * person with a single interaction gets one section, not eight empty ones. Nothing on this page writes except the buttons at
  * the bottom, which open the existing sheets.
  */
-export function BriefPage({ personId, onBack, openCheck }: { personId: string; onBack: () => void; openCheck: (id: string) => void }) {
+export function BriefPage({
+  personId,
+  onBack,
+  openCheck,
+  openExchange,
+}: {
+  personId: string;
+  onBack: () => void;
+  openCheck: (id: string) => void;
+  openExchange: (seedPersonId?: string, exchangeId?: string | null) => void;
+}) {
   const t = today();
   const person = useLiveQuery(() => db.people.get(personId), [personId]);
   const birthday = useLiveQuery(() => db.birthdays.where('personId').equals(personId).first(), [personId]);
   const interactions = useLiveQuery(() => db.interactions.where('personId').equals(personId).toArray(), [personId]) ?? [];
   const tasks = useLiveQuery(() => db.tasks.filter((x) => x.fromPersonId === personId).toArray(), [personId]) ?? [];
-  const dones = useLiveQuery(() => db.done.toArray(), []) ?? [];
+  // the done rows belong to this person's tasks only, so the history cannot arrive here at all
+  const dones = useLiveQuery(
+    () => (tasks.length ? db.done.where('date').anyOf(doneDatesFor(tasks)).toArray() : []),
+    [tasks],
+  ) ?? [];
   const notes = useLiveQuery(() => db.personNotes.where('personId').equals(personId).toArray(), [personId]) ?? [];
   const ratings = useLiveQuery(() => db.ratings.where('personId').equals(personId).toArray(), [personId]) ?? [];
   const exchanges = useLiveQuery(() => db.exchanges.where('personId').equals(personId).toArray(), [personId]) ?? [];
-  const settlements = useLiveQuery(() => db.exchangeSettlements.toArray(), []) ?? [];
+  const settlements = useLiveQuery(async () => {
+    const ids = exchanges.map((e) => e.id);
+    return ids.length ? db.exchangeSettlements.where('exchangeId').anyOf(ids).toArray() : [];
+  }, [exchanges]) ?? [];
   const checks = useLiveQuery(() => db.ruleChecks.where('personId').equals(personId).toArray(), [personId]) ?? [];
-  const checkItems = useLiveQuery(() => db.ruleCheckItems.toArray(), []) ?? [];
+  const newestCheck = useMemo(() => [...checks].sort((a, b) => b.updatedAt - a.updatedAt)[0], [checks]);
+  const checkItems = useLiveQuery(
+    () => (newestCheck ? db.ruleCheckItems.where('checkId').equals(newestCheck.id).toArray() : []),
+    [newestCheck],
+  ) ?? [];
   const rules = useLiveQuery(() => db.rules.toArray(), []) ?? [];
-  const breaks = useLiveQuery(() => db.ruleBreaks.toArray(), []) ?? [];
+  const breaks = useLiveQuery(() => db.ruleBreaks.where('personId').equals(personId).toArray(), [personId]) ?? [];
   const [notesOpen, setNotesOpen] = useState(false);
   /** The brief's own actions reuse the existing sheets, so it never leaves the page mid-brief. */
   const [addingInteraction, setAddingInteraction] = useState(false);
-  const [addingExchange, setAddingExchange] = useState(false);
   const [newCheck, setNewCheck] = useState(false);
 
   const latest = useMemo(() => latestInteractions(interactions, t), [interactions, t]);
@@ -70,7 +90,6 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
   }, [birthday, t]);
   const myNotes = useMemo(() => briefNotes(notes), [notes]);
   const myRatings = useMemo(() => briefRatings(ratings, RATING_CRITERIA), [ratings]);
-  const newestCheck = useMemo(() => [...checks].sort((a, b) => b.updatedAt - a.updatedAt)[0], [checks]);
   const check = useMemo(() => (newestCheck ? lastCheck(newestCheck, checkItems, rules) : undefined), [newestCheck, checkItems, rules]);
   const myBreaks = useMemo(() => myBreaksWithPerson(breaks, rules, personId, t), [breaks, rules, personId, t]);
 
@@ -158,7 +177,7 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
                 <span className="tile blue" aria-hidden="true"><Icon name="listChecks" size={16} stroke={1.9} /></span>
                 <span className="set-name">
                   <bdi>{task.title}</bdi>
-                  <small className="set-sub">{task.on ? label(task.on, 'persian', 0, { day: 'numeric', month: 'long' }) : tx('بدون موعد')}</small>
+                  <small className="set-sub">{task.on ? label(task.on, 'persian', 0, { day: 'numeric', month: 'long' }) : task.mask ? daysText(task.mask) : tx('بدون موعد')}</small>
                 </span>
                 <em className="chip-ok">{tx(STR.brief.todoOpen)}</em>
               </div>
@@ -302,7 +321,9 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
           if (open) openCheck(open.id);
           else setNewCheck(true);
         }}><Icon name="listChecks" size={17} stroke={1.9} />{tx(STR.brief.startCheck)}</button>
-        <button className="big-btn" onClick={() => setAddingExchange(true)}><Icon name="repeat" size={17} stroke={1.9} />{tx(STR.brief.addExchange)}</button>
+        <button className="big-btn" onClick={() => openExchange(p.id, null)}>
+          <Icon name="repeat" size={17} stroke={1.9} />{tx(STR.brief.addExchange)}
+        </button>
         {phone ? (
           <a className="big-btn" href={`tel:${normPhone(phone)}`}><Icon name="phone" size={17} stroke={1.9} />{tx(STR.brief.call)}</a>
         ) : (
@@ -311,7 +332,6 @@ export function BriefPage({ personId, onBack, openCheck }: { personId: string; o
       </div>
 
       {addingInteraction && <InteractionForm personId={p.id} onClose={() => setAddingInteraction(false)} />}
-      {addingExchange && <ExchangeSheet people={[p]} seedPersonId={p.id} exchange={null} onClose={() => setAddingExchange(false)} />}
       {newCheck && (
         <NewCheckSheet personId={p.id} onClose={() => setNewCheck(false)} onCreated={(id) => { setNewCheck(false); openCheck(id); }} />
       )}

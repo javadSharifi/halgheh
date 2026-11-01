@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, put, uid } from './db';
-import { today, fa } from './cal';
+import { today } from './cal';
 import { Icon } from './Icon';
 import { normPhone } from './phone';
 import { waNumber, wishTexts } from './wishes';
+import { Share } from '@capacitor/share';
 import { tx } from './i18n';
-import { Sheet, InputField, Button } from './ui';
+import { Button, FormPage, FormSection, InputField } from './ui';
 
 /**
  * The birthday wish: a ready text (by the person's gender), editable, sent through a messaging app, and optionally written
@@ -17,8 +18,23 @@ export function WishSheet({ name, phone, personId, onClose }: { name: string; ph
   const texts = wishTexts(person?.gender, name);
   const [text, setText] = useState(texts[0]);
   const [recorded, setRecorded] = useState(false);
-  const tel = phone ? normPhone(phone) : '';
+  // the birthday row may have no number while the person's profile does
+  const number = phone || person?.phones[0];
+  const tel = number ? normPhone(number) : '';
   const enc = encodeURIComponent(text);
+
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // clipboard blocked: the text is still in the box above to copy by hand
+    }
+  };
+  // the system share sheet lists every installed messenger (Bale, Eitaa, Instagram, ...), so none needs its own button
+  const share = () => void Share.share({ text, dialogTitle: tx('ارسال تبریک') }).catch(() => {});
 
   const record = async () => {
     if (!personId) return;
@@ -34,43 +50,48 @@ export function WishSheet({ name, phone, personId, onClose }: { name: string; ph
   };
 
   return (
-    <Sheet open onClose={onClose} title={tx('تبریک به {a1}', { a1: name })}>
-      <div className="pe-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div className="radios" role="radiogroup" aria-label={tx('متن تبریک')} style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
-          {texts.map((t, i) => (
-            <button key={t} role="radio" aria-checked={text === t} className={text === t ? 'on' : ''} onClick={() => setText(t)}>
-              {tx('متن {a1}', { a1: fa(i + 1) })}
+    <FormPage title={tx('تبریک به {a1}', { a1: name })} icon="cake" onClose={onClose}>
+      <section className="wish-hero">
+        <span className="wish-cake" aria-hidden="true"><Icon name="cake" size={30} stroke={1.8} /></span>
+        <b><bdi>{name}</bdi></b>
+        <span>{tx('یک متن آماده انتخاب کن، اگر خواستی ویرایشش کن، بعد بفرست.')}</span>
+      </section>
+
+      <FormSection title={tx('متن تبریک')} icon="note">
+        <div className="wish-options" role="radiogroup" aria-label={tx('متن تبریک')}>
+          {texts.map((t) => (
+            <button key={t} type="button" role="radio" aria-checked={text === t} className={`wish-option${text === t ? ' on' : ''}`} onClick={() => setText(t)}>
+              <span className="wish-radio" aria-hidden="true">{text === t && <Icon name="check" size={13} stroke={3} />}</span>
+              <span>{t}</span>
             </button>
           ))}
         </div>
-
         <InputField
-          label={tx('متن تبریک')}
+          label={tx('ویرایش متن')}
           multiline
           rows={4}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
+      </FormSection>
 
-        <div className="inline-actions">
-          {tel && <a className="mini-btn" href={`sms:${tel}?body=${enc}`}><Icon name="note" size={15} stroke={2} />{tx('پیامک')}</a>}
-          {tel && <a className="mini-btn" href={`https://wa.me/${waNumber(tel)}?text=${enc}`} target="_blank" rel="noopener"><Icon name="note" size={15} stroke={2} />{tx('واتساپ')}</a>}
-          <a className="mini-btn" href={`tg://msg?text=${enc}`}><Icon name="note" size={15} stroke={2} />{tx('تلگرام')}</a>
-          <a className="mini-btn" href={`mailto:?body=${enc}`}><Icon name="file" size={15} stroke={2} />{tx('ایمیل')}</a>
+      <FormSection title={tx('ارسال با')} icon="upload">
+        <div className="wish-send">
+          {tel && <a className="wish-send-btn" href={`sms:${tel}?body=${enc}`}><Icon name="note" size={22} stroke={1.9} /><span>{tx('پیامک')}</span></a>}
+          {tel && <a className="wish-send-btn" href={`https://wa.me/${waNumber(tel)}?text=${enc}`} target="_blank" rel="noopener"><Icon name="phone" size={22} stroke={1.9} /><span>{tx('واتساپ')}</span></a>}
+          <a className="wish-send-btn" href={`https://t.me/share/url?url=%20&text=${enc}`} target="_blank" rel="noopener"><Icon name="upload" size={22} stroke={1.9} /><span>{tx('تلگرام')}</span></a>
+          <a className="wish-send-btn" href={`mailto:?body=${enc}`}><Icon name="file" size={22} stroke={1.9} /><span>{tx('ایمیل')}</span></a>
+          <button type="button" className="wish-send-btn" onClick={share}><Icon name="repeat" size={22} stroke={1.9} /><span>{tx('سایر برنامه‌ها')}</span></button>
+          <button type="button" className="wish-send-btn" onClick={() => void copy()}><Icon name={copied ? 'check' : 'note'} size={22} stroke={1.9} /><span>{copied ? tx('کپی شد') : tx('کپی متن')}</span></button>
         </div>
+        {!tel && <p className="hint">{tx('برای پیامک و واتساپ، شماره‌ای برای این فرد ثبت کن.')}</p>}
+      </FormSection>
 
-        {personId && (
-          <Button
-            variant="primary"
-            block
-            disabled={recorded}
-            onClick={() => void record()}
-            icon={recorded ? 'check' : 'history'}
-          >
-            {recorded ? tx('ثبت شد') : tx('ثبت به‌عنوان تعامل')}
-          </Button>
-        )}
-      </div>
-    </Sheet>
+      {personId && (
+        <Button variant="secondary" block disabled={recorded} onClick={() => void record()} icon={recorded ? 'check' : 'history'}>
+          {recorded ? tx('در تاریخچه ثبت شد') : tx('بعد از فرستادن، در تاریخچه ثبت کن')}
+        </Button>
+      )}
+    </FormPage>
   );
 }

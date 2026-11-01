@@ -12,7 +12,7 @@ import { replaySchedule } from './domain/rules/schedule';
 import { BreakSheet, BreakTimeline } from './BreakSheet';
 import { breaksOf } from './domain/rules/breaks';
 import { tx } from './i18n';
-import { InputField, Button } from './ui';
+import { Button, FormPage, FormSection, InputField } from './ui';
 
 /**
  * Phase 2: the rule editor. One sheet for every editable field — title, why, category, pin, strict — plus the rule's own
@@ -90,14 +90,19 @@ export function RuleSheet({ rule, categories, seedCategoryId, onClose }: { rule:
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet rule-sheet" role="dialog" aria-modal="true" aria-labelledby="rule-sheet-title">
-        <div className="bf-head">
-          <span id="rule-sheet-title">{rule ? tx(STR.feature.edit) : tx(STR.feature.addRule)}</span>
-          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
-        </div>
-
-        <div className="pe-scroll">
+      <FormPage
+        title={rule ? tx(STR.feature.edit) : tx(STR.feature.addRule)}
+        icon={rule ? 'edit' : 'plus'}
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={rule ? tx(STR.feature.save) : tx('ثبت')}
+        saveDisabled={!valid}
+        busy={busy}
+        error={err}
+        onDelete={rule ? () => void remove() : undefined}
+        deleteLabel={tx(STR.feature.delete)}
+      >
+        <FormSection>
           <InputField
             label={tx(STR.feature.ruleTitle)}
             autoFocus
@@ -184,30 +189,20 @@ export function RuleSheet({ rule, categories, seedCategoryId, onClose }: { rule:
             </div>
           )}
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </div>
-
-        <Button variant="primary" block disabled={!valid || busy} onClick={() => void save()} icon="check">
-          {busy ? tx('در حال ذخیره…') : rule ? tx(STR.feature.save) : tx(STR.feature.addRule)}
-        </Button>
+        </FormSection>
 
         {rule && (
-          <button className="big-btn break-cta" onClick={() => setBreaking('new')}>
-            <Icon name="close" size={17} stroke={2.2} />{tx(STR.breaks.record)}
-          </button>
+          <Button variant="secondary" block icon="close" onClick={() => setBreaking('new')}>{tx(STR.breaks.record)}</Button>
         )}
 
         {rule && (
-          <div className="set-actions rule-sheet-actions">
-            {rule.archivedAt ? (
-              <button onClick={() => void restore()}><Icon name="undo" size={17} stroke={1.9} />{tx(STR.feature.restore)}</button>
-            ) : (
-              <button onClick={() => void archive()}><Icon name="archive" size={17} stroke={1.9} />{tx(STR.feature.archive)}</button>
-            )}
-            <button className="danger-btn" onClick={() => void remove()}><Icon name="trash" size={16} stroke={2} />{tx(STR.feature.delete)}</button>
-          </div>
+          rule.archivedAt ? (
+            <Button block icon="undo" onClick={() => void restore()}>{tx(STR.feature.restore)}</Button>
+          ) : (
+            <Button block icon="archive" onClick={() => void archive()}>{tx(STR.feature.archive)}</Button>
+          )
         )}
-      </section>
+      </FormPage>
 
       {rule && breaking === 'new' && <BreakSheet rule={rule} onClose={() => setBreaking(null)} />}
       {rule && breaking && breaking !== 'new' && (
@@ -241,13 +236,15 @@ function EditBreakSheet({ rule, row, onClose }: { rule: Rule; row: RuleBreak; on
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet break-sheet" role="dialog" aria-modal="true" aria-labelledby="edit-break-title">
-        <div className="bf-head">
-          <span id="edit-break-title">{tx(STR.breaks.editTitle)} · <bdi>{rule.title}</bdi></span>
-          <button className="text-btn" onClick={onClose}>{tx(STR.feature.close)}</button>
-        </div>
-        <div className="pe-scroll">
+      <FormPage
+        title={`${tx(STR.breaks.editTitle)} · ${rule.title}`}
+        icon="edit"
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={tx(STR.feature.save)}
+        busy={busy}
+      >
+        <FormSection>
           <InputField
             label={tx(STR.breaks.whatHappened)}
             multiline
@@ -272,11 +269,8 @@ function EditBreakSheet({ rule, row, onClose }: { rule: Rule; row: RuleBreak; on
             maxLength={2000}
             onChange={(e) => set({ nextTimePlan: e.target.value })}
           />
-        </div>
-        <Button variant="primary" block disabled={busy} onClick={() => void save()} icon="check">
-          {busy ? tx('در حال ذخیره…') : tx(STR.feature.save)}
-        </Button>
-      </section>
+        </FormSection>
+      </FormPage>
     </>
   );
 }

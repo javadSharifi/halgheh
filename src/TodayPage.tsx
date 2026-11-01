@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from './db';
-import { fa, parts, today } from './cal';
+import { db, put } from './db';
+import { fa, parts, today, wd } from './cal';
 import { Icon } from './Icon';
 import { useOnline } from './online';
 import { getCfg } from './sync';
 import { birthdaysWithin, followUpsDue, followUpLabel, recentPeople } from './todayFeed';
-import { listTodos, overdue } from './todoFilters';
+import { listTodos, overdue, doneDatesFor } from './todoFilters';
 import { dueCount, dueRules } from './domain/rules/schedule';
 import { STR } from './strings/rulebook';
 import { dueExchanges } from './domain/ledger';
+import { overdueContacts, withSnooze } from './domain/keepinTouch';
 import { TodayWidget } from './TodayWidget';
 import { tn, tx } from './i18n';
 import { personLabel } from './format';
@@ -30,6 +31,8 @@ type Props = {
   openPerson: (id: string) => void;
   openTask: (id: string | null) => void;
   openTodos: () => void;
+  openTouch: () => void;
+  openWeekly: () => void;
   openRulebook: () => void;
   openReview: () => void;
   openLedger: () => void;
@@ -40,10 +43,14 @@ type Props = {
  * Answers "what needs me today" with clear visual hierarchy, distinct card personalities,
  * streamlined layout, and zero clutter.
  */
-export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRulebook, openReview, openLedger }: Props) {
+export function TodayPage({ openSearch, openPerson, openTask, openTodos, openTouch, openWeekly, openRulebook, openReview, openLedger }: Props) {
   const t = today();
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
-  const dones = useLiveQuery(() => db.done.toArray(), []) ?? [];
+  // only the done rows a task can own; the full history would load every tick ever recorded
+  const dones = useLiveQuery(
+    () => (tasks.length ? db.done.where('date').anyOf(doneDatesFor(tasks)).toArray() : []),
+    [tasks],
+  ) ?? [];
   const bdays = useLiveQuery(() => db.birthdays.toArray(), []) ?? [];
   const people = useLiveQuery(() => db.people.toArray(), []) ?? [];
   const interactions = useLiveQuery(() => db.interactions.toArray(), []) ?? [];
@@ -58,6 +65,7 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
   const bdaysLater = useMemo(() => soon.filter((x) => x.inDays > 0), [soon]);
 
   const due = useMemo(() => followUpsDue(interactions, t), [interactions, t]);
+  const ring = useMemo(() => overdueContacts(people, interactions, t, Date.now()), [people, interactions, t]);
   const fresh = useMemo(() => recentPeople(people), [people]);
   const nameOf = useMemo(() => new Map(people.map((p) => [p.id, personLabel(p)])), [people]);
 
@@ -72,7 +80,6 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
       {/* 1. All-in-one Today Widget: Clock, Calendar, Today's Tasks & Quick Add */}
       <TodayWidget
         tasks={tasks}
-        dones={dones}
         todays={todays}
         openTask={openTask}
         openSearch={openSearch}
@@ -285,6 +292,40 @@ export function TodayPage({ openSearch, openPerson, openTask, openTodos, openRul
               style={{ padding: '6px 0' }}
             >{tn('و {n} پیگیری دیگر', due.length - 3)}</button>
           )}
+        </section>
+      )}
+
+      {/* Weekly review: pushed to the front on Friday and Saturday, one tap away from More the rest of the week */}
+      {(wd(t) === 5 || wd(t) === 6) && (
+        <button type="button" className="glass followups-card wk-banner" onClick={openWeekly}>
+          <span className="tile green" aria-hidden="true"><Icon name="history" size={20} stroke={1.9} /></span>
+          <span className="wk-banner-text">
+            <b>{tx('هفته تمام شد؟')}</b>
+            <small>{tx('مرور هفتگی: با چه کسانی حرف زدی، چه چیزی عقب ماند، هفتهٔ بعد چه خبر است.')}</small>
+          </span>
+          <Icon name="chevronLeft" size={16} stroke={2} />
+        </button>
+      )}
+
+      {/* 6b. Keep in touch: people whose ring is overdue */}
+      {ring.length > 0 && (
+        <section className="glass followups-card" aria-label={tx('چه کسی را صدا بزنم')}>
+          <div className="fc-head">
+            <h2>{tx('چه کسی را صدا بزنم')}</h2>
+            <button type="button" className="progress-pill as-btn" onClick={openTouch}>{tn('{n} نفر', ring.length)} ‹</button>
+          </div>
+          {ring.slice(0, 3).map(({ person, days }) => (
+            <div key={person.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className="fc-row" style={{ flex: 1 }} onClick={() => openPerson(person.id)} aria-label={tx('پروفایل {a1}', { a1: person.displayName })}>
+                <span className={`avatar p${PALETTE(person.displayName)}`} aria-hidden="true">{person.displayName.slice(0, 1)}</span>
+                <div className="fc-details">
+                  <span className="fc-name">{personLabel(person)}</span>
+                  <span className="fc-sub">{tx('{a1} روز از آخرین تماس', { a1: fa(days) })}</span>
+                </div>
+              </button>
+              <button className="mini-btn" onClick={() => put('people', withSnooze(person, Date.now()))}>{tx('یک هفته بعد')}</button>
+            </div>
+          ))}
         </section>
       )}
 

@@ -7,7 +7,7 @@ import { tx } from '../i18n';
 import { personLabel } from '../format';
 
 /** The avatar card plus the call/sms/email/brief row, both derived from the person alone. */
-export function PersonHero({ person: p, onEdit, openBrief }: { person: Person; onEdit: () => void; openBrief: () => void }) {
+export function PersonHero({ person: p, onEdit, openBrief, onInteraction, onExchange }: { person: Person; onEdit: () => void; openBrief: () => void; onInteraction: () => void; onExchange: () => void }) {
   const phones = p.phones.filter(Boolean);
   const meta = [p.occupation, p.workplace, p.city].filter(Boolean) as string[];
 
@@ -32,8 +32,7 @@ export function PersonHero({ person: p, onEdit, openBrief }: { person: Person; o
         </button>
       </section>
 
-      {(phones.length > 0 || p.emails.length > 0) && (
-        <div className="quick-actions-bar">
+      <div className="quick-actions-bar">
           {phones[0] && (
             <a className="qa-btn" href={`tel:${normPhone(phones[0])}`} aria-label={tx('تماس با {a1}', { a1: p.displayName })}>
               <span className="qa-icon call"><Icon name="phone" size={17} stroke={2} /></span>
@@ -56,8 +55,15 @@ export function PersonHero({ person: p, onEdit, openBrief }: { person: Person; o
             <span className="qa-icon brief"><Icon name="listChecks" size={17} stroke={2} /></span>
             <span>{tx('خلاصه قرار')}</span>
           </button>
+          <button className="qa-btn" onClick={onInteraction}>
+            <span className="qa-icon sms"><Icon name="plus" size={17} stroke={2} /></span>
+            <span>{tx('ثبت تعامل')}</span>
+          </button>
+          <button className="qa-btn" onClick={onExchange}>
+            <span className="qa-icon mail"><Icon name="repeat" size={17} stroke={2} /></span>
+            <span>{tx('دادوستد')}</span>
+          </button>
         </div>
-      )}
     </>
   );
 }

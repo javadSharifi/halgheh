@@ -1,90 +1,58 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { type Photo, db, del, put, uid } from './db';
+import { type Photo, db } from './db';
 import { fa } from './cal';
-import { ask } from './confirm';
 import { Icon } from './Icon';
 import { isNative } from './native';
-import { capacity, defaultTakenAt, orderPhotos, thumbPathFor, titleFromName } from './photos';
-import { base64Bytes, compress, pickImages, removeFile, saveFile, saveThumb } from './photoStore';
-import { queueForUpload } from './photoSync';
+import { orderPhotos } from './photos';
+import { removePhoto } from './storePhoto';
+import { usePhotoAdd } from './photoAdd';
 import { PhotoViewer } from './PhotoViewer';
 import { usePhotoUrls } from './usePhotoUrls';
 import { PhotoEdit } from './PhotoEdit';
-import { tn, tx } from './i18n';
-import { Card, Button } from './ui';
+import { locale, tn, tx } from './i18n';
+import { personLabel } from './format';
+import { Card, Button, InputField } from './ui';
 
 /** The gallery tab (G1): grid of stored photos, add from the system picker, full-screen viewer, cap at 300. */
 export function Gallery({ onBack }: { onBack?: () => void } = {}) {
   const photos = useLiveQuery(() => db.photos.toArray(), []) ?? [];
   const files = useLiveQuery(() => db.photoFiles.toArray(), []) ?? [];
-  const [busy, setBusy] = useState<{ done: number; total: number } | null>(null);
-  const [err, setErr] = useState('');
+  const adder = usePhotoAdd();
+  const { cap, err } = adder;
+  const busy = adder.adding;
   const [viewing, setViewing] = useState<string | null>(null);
   const [editing, setEditing] = useState<Photo | 'new' | null>(null);
-  const mounted = useRef(true);
 
-  const order = useMemo(() => orderPhotos(photos), [photos]);
-  const fileOf = useMemo(() => new Map(files.map((f) => [f.photoId, f])), [files]);
+  const people = useLiveQuery(() => db.people.toArray(), []) ?? [];
+  const tags = useLiveQuery(() => db.tags.toArray(), []) ?? [];
+  const [q, setQ] = useState('');
+  const [byPerson, setByPerson] = useState(false);
+
+  const all = useMemo(() => orderPhotos(photos), [photos]);
+  const nameOf = useMemo(() => new Map(people.map((p) => [p.id, personLabel(p)])), [people]);
+  const tagName = useMemo(() => new Map(tags.map((t) => [t.id, t.name])), [tags]);
+  // search covers what the user typed about the photo plus the person's name and the tag names
+  const shown = useMemo(() => {
+    const needle = q.trim().toLocaleLowerCase('fa');
+    if (!needle) return all;
+    return all.filter((p) =>
+      [p.title, p.note, p.personId && nameOf.get(p.personId), ...p.tagIds.map((t) => tagName.get(t))]
+        .some((f) => f?.toLocaleLowerCase('fa').includes(needle)),
+    );
+  }, [all, q, nameOf, tagName]);
+  const groups = useMemo(() => {
+    if (!byPerson) return [{ key: 'all', title: '', items: shown }];
+    const m = new Map<string, Photo[]>();
+    for (const p of shown) m.set(p.personId ?? '', [...(m.get(p.personId ?? '') ?? []), p]);
+    return [...m.entries()]
+      .map(([key, items]) => ({ key, title: key ? (nameOf.get(key) ?? '…') : tx('بدون شخص'), items }))
+      .sort((a, b) => (a.key === '' ? 1 : b.key === '' ? -1 : a.title.localeCompare(b.title, locale())));
+  }, [shown, byPerson, nameOf]);
+  // the viewer pages through photos in the order they are on screen
+  const order = useMemo(() => groups.flatMap((x) => x.items), [groups]);
   const paths = useMemo(() => new Map(files.map((f) => [f.photoId, f.path])), [files]);
-  const { full: urls, thumb } = usePhotoUrls(order, paths);
-  const cap = capacity(photos.length);
-
-  useEffect(() => () => { mounted.current = false; }, []);
-
-  const add = async () => {
-    setErr('');
-    if (cap.full) {
-      setErr(tx('سقف {a1} عکس پر شده است. برای افزودن عکس تازه، یکی را حذف کن.', { a1: fa(cap.max) }));
-      return;
-    }
-    try {
-      const picked = await pickImages(0);
-      if (!picked.length) return;
-      // never write more rows than the cap allows, whatever the picker returned
-      const room = Math.max(0, cap.remaining);
-      const list = picked.slice(0, room);
-      if (picked.length > room) setErr(tx('فقط {a1} عکس جا داشت؛ بقیه اضافه نشد.', { a1: fa(room) }));
-      setBusy({ done: 0, total: list.length });
-      const takenAt = defaultTakenAt();
-      for (const [i, file] of list.entries()) {
-        const id = uid();
-        const { data, width, height, thumb: thumbData } = await compress(file.webPath);
-        const path = await saveFile(id, data);
-        // a phone out of space still keeps the photo; the grid then falls back to the full file
-        await saveThumb(path, thumbData).catch(() => {});
-        const row: Photo = {
-          id,
-          title: titleFromName(file.name) || tx('عکس'),
-          takenAt,
-          tagIds: [],
-          width,
-          height,
-          bytes: base64Bytes(data),
-          updatedAt: Date.now(),
-        };
-        await put('photos', row);
-        await db.photoFiles.put(queueForUpload(id, path));
-        if (mounted.current) setBusy({ done: i + 1, total: list.length });
-      }
-      setBusy(null);
-    } catch {
-      setBusy(null);
-      setErr(tx('افزودن عکس ممکن نشد. اگر پنجرهٔ انتخاب عکس را بستی، دوباره تلاش کن.'));
-    }
-  };
-
-  const remove = async (p: Photo) => {
-    if (!(await ask({ title: tx('«{a1}» حذف شود؟', { a1: p.title }), message: tx('فایل عکس از این گوشی پاک می‌شود. این کار قابل بازگشت نیست.'), confirm: tx('حذف') }))) return;
-    await del('photos', p.id);
-    const f = fileOf.get(p.id);
-    if (f) {
-      await removeFile(f.path);
-      await removeFile(thumbPathFor(f.path));
-      await db.photoFiles.delete(p.id);
-    }
-    setViewing(null);
-  };
+  const { full: urls, thumb } = usePhotoUrls(all, paths);
 
   const absent = photos.length - files.length;
 
@@ -108,10 +76,10 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
             variant="primary"
             size="sm"
             disabled={!!busy || cap.full}
-            onClick={() => void add()}
+            onClick={() => void adder.start()}
             icon="plus"
           >
-            {busy ? `${fa(busy.done)}/${fa(busy.total)}` : tx('افزودن عکس')}
+            {tx('افزودن عکس')}
           </Button>
         )}
       </div>
@@ -133,26 +101,48 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
           <span className="tile purple" aria-hidden="true"><Icon name="image" size={24} stroke={1.7} /></span>
           <b>{tx('عکسی نیست')}</b>
           <p className="hint">{tx('کارت ویزیت، مدارک و عکس‌هایی که به آدم‌ها مربوط‌اند اینجا نگه داشته می‌شوند.')}</p>
-          <Button variant="primary" size="sm" onClick={() => void add()} icon="plus">
+          <Button variant="primary" size="sm" onClick={() => void adder.start()} icon="plus">
             {tx('افزودن از گالری')}
           </Button>
         </Card>
       )}
 
-      {order.length > 0 && (
-        <div className="photo-grid">
-          {order.map((p) => (
-            <button key={p.id} className="photo-cell" onClick={() => setViewing(p.id)} aria-label={p.title}>
-              {thumb[p.id] ? (
-                <img src={thumb[p.id]} alt="" loading="lazy" width={p.width} height={p.height} />
-              ) : (
-                <span className="photo-missing" aria-hidden="true"><Icon name="image" size={18} stroke={1.8} /></span>
-              )}
-              {p.personId && <span className="photo-tag" aria-hidden="true"><Icon name="users" size={11} stroke={2} /></span>}
-            </button>
-          ))}
+      {photos.length > 0 && (
+        <div className="gallery-tools">
+          <InputField
+            type="search"
+            icon="search"
+            aria-label={tx('جستجو در عکس‌ها')}
+            placeholder={tx('جستجو در عنوان، یادداشت، شخص و برچسب')}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <div className="tabs today-tabs" role="tablist" aria-label={tx('نمایش عکس‌ها')}>
+            <button role="tab" aria-selected={!byPerson} className={!byPerson ? 'on' : ''} onClick={() => setByPerson(false)}>{tx('همه')}</button>
+            <button role="tab" aria-selected={byPerson} className={byPerson ? 'on' : ''} onClick={() => setByPerson(true)}>{tx('بر اساس شخص')}</button>
+          </div>
         </div>
       )}
+
+      {photos.length > 0 && shown.length === 0 && <p className="hint empty">{tx('عکسی با این مشخصات پیدا نشد.')}</p>}
+
+      {groups.map((grp) => (
+        <section key={grp.key}>
+          {grp.title && <h2 className="sec-title">{grp.title}<small>{tn('{n} عکس', grp.items.length)}</small></h2>}
+          <div className="photo-grid">
+            {grp.items.map((p) => (
+              <button key={p.id} className="photo-cell" onClick={() => setViewing(p.id)} aria-label={p.title}>
+                {thumb[p.id] ? (
+                  <img src={thumb[p.id]} alt="" loading="lazy" width={p.width} height={p.height} />
+                ) : (
+                  <span className="photo-missing" aria-hidden="true"><Icon name="image" size={18} stroke={1.8} /></span>
+                )}
+                {p.personId && <span className="photo-tag" aria-hidden="true"><Icon name="users" size={11} stroke={2} /></span>}
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
 
       {viewing && (
         <PhotoViewer
@@ -162,10 +152,12 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
           title={(id) => order.find((p) => p.id === id)?.title ?? ''}
           onClose={() => setViewing(null)}
           onEdit={(p) => { setViewing(null); setEditing(p); }}
-          onRemove={(p) => void remove(p)}
+          onRemove={(p) => void removePhoto(p).then((gone) => gone && setViewing(null))}
           onNavigate={setViewing}
         />
       )}
+
+      {adder.form}
 
       {editing && (
         <PhotoEdit
