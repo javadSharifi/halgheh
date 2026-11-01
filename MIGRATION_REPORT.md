@@ -7,7 +7,7 @@
 ## ۱. خلاصه‌ی کار و آمار
 
 - **توکن‌های طراحی استخراج و استانداردسازی‌شده:**
-  - سیستم مقیاس شعاعی (Radius): `--radius-dot` (2px), `--radius-bar-sm` (3px), `--radius-bar` (4px), `--radius-sm` (8px), `--radius-md` (12px), `--radius-lg` (16px), `--radius-xl` (20px), `--radius-2xl` (24px), `--radius-sheet` (28px), `--radius-full` (9999px).
+  - سیستم مقیاس شعاعی (Radius): `--radius-dot` (2px), `--radius-bar-sm` (3px), `--radius-bar` (4px), `--radius-sm` (8px), `--radius-md` (12px), `--radius-lg` (16px), `--radius-xl` (20px), `--radius-2xl` (24px), `--radius-sheet` (28px), `--radius-full` (9999px), `--radius-btn` (کنترل سراسری انحنای دکمه‌ها، پیش‌فرض `var(--radius-full)`).
   - مقیاس تایپوگرافی (Font Size): ۱۱px تا ۲۴px بر پایه استانداردهای متنی خوانا.
   - سیستم سایه (Shadows): `--shadow-xs`, `--shadow-sm`, `--shadow-md`, `--shadow-lg`, `--shadow-primary`.
   - سیستم فوکوس دسترس‌پذیری: `--focus-ring` (تنها اعمال‌شده روی کامپوننت‌های مدرن `src/ui/`).
@@ -86,6 +86,7 @@
 | `4e16020` | `feat(ui): migrate BirthdayFields and occasion form to ui InputField` | مهاجرت ورودی‌های نام، تلفن و عنوان مناسبت به InputField با اعتبارسنجی |
 | `314acd0` | `feat(ui): migrate cadence and comparison pickers to ui Select` | مهاجرت انتخاب‌گرهای ریتم تماس و ستون‌های مقایسه دو کالا به Select |
 | `ab3787c` | `feat(ui): migrate CategorySheet action buttons to ui Button` | مهاجرت دکمه‌های بستن، جابه‌جایی و حذف دسته‌بندی‌ها به Button |
+| `167a723` | `feat(ui): unify all buttons to pill shape via --radius-btn token` | یکدست‌سازی تمام دکمه‌ها به کپسولی/دایره‌ای از طریق توکن سراسری `--radius-btn` |
 
 *نکته: تمامی کامیت‌ها پس از اجرای موفقیت‌آمیز `pnpm verify` (بررسی تایپ‌اسکریپت و پاس شدن ۴۷ تست vitest) و `pnpm build` (بررسی بدون خطای i18n و خروجی باندل Vite/PWA) ثبت شده‌اند.*
 
