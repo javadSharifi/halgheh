@@ -1,4 +1,5 @@
 import type { Rule, RuleCheckItem, RuleCategory } from '../../db';
+import { locale, tx } from '../../i18n';
 
 /**
  * Part 2 pure logic: the per-person rule check. No UI, no Dexie import.
@@ -63,10 +64,10 @@ export function groupByCategory(rules: Rule[], categories: RuleCategory[]): Grou
   return [...groups.entries()]
     .map(([categoryId, list]) => ({
       category: byId.get(categoryId),
-      rules: [...list].sort((a, b) => a.title.localeCompare(b.title, 'fa')),
+      rules: [...list].sort((a, b) => a.title.localeCompare(b.title, locale())),
       order: byId.get(categoryId)?.sortOrder ?? Number.MAX_SAFE_INTEGER,
     }))
-    .sort((a, b) => a.order - b.order || (a.category?.name ?? '').localeCompare(b.category?.name ?? '', 'fa'))
+    .sort((a, b) => a.order - b.order || (a.category?.name ?? '').localeCompare(b.category?.name ?? '', locale()))
     .map(({ category, rules: list }) => ({ category, rules: list }));
 }
 
@@ -91,4 +92,4 @@ export const chosenRules = (rules: Rule[], items: RuleCheckItem[]) => {
 
 /** A plain one-line summary of a closed check, e.g. "۳ رعایت · ۱ می‌شکنم · ۲ بررسی‌نشده". */
 export const summaryLine = (counts: ReturnType<typeof checkCounts>, fa: (n: number) => string) =>
-  `${fa(counts.keeping)} رعایت · ${fa(counts.breaking)} می‌شکنم · ${fa(counts.unknown)} بررسی‌نشده`;
+  tx('{a1} رعایت · {a2} می‌شکنم · {a3} بررسی‌نشده', { a1: fa(counts.keeping), a2: fa(counts.breaking), a3: fa(counts.unknown) });

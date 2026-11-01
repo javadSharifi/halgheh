@@ -1,6 +1,7 @@
-import type { ContactPayload } from '@capacitor-community/contacts';
+import { Contacts, type ContactPayload } from '@capacitor-community/contacts';
 import { type Person, put } from './db';
 import { normPhone } from './phone';
+import { locale, tx } from './i18n';
 
 /** One contact as the import screen shows it, already flattened out of the plugin's nested payload. */
 export type Pick = {
@@ -50,7 +51,7 @@ export function toPicks(contacts: ContactPayload[]): Pick[] {
     });
   }
   // a stable, human order: Persian collation, then the number so two same-named contacts stay apart
-  return out.sort((a, b) => a.displayName.localeCompare(b.displayName, 'fa') || (a.phones[0] ?? '').localeCompare(b.phones[0] ?? ''));
+  return out.sort((a, b) => a.displayName.localeCompare(b.displayName, locale()) || (a.phones[0] ?? '').localeCompare(b.phones[0] ?? ''));
 }
 
 /** Which picks already exist in the notebook, matched by any shared normalized phone number. */
@@ -117,10 +118,20 @@ export async function importPicks(picks: Pick[], people: Person[]) {
   return { added, merged, skipped };
 }
 
+/**
+ * Opens the phone's own contact picker and returns the single contact the user tapped. No permission dialog: the picker
+ * is an Android system screen that hands back only that one contact. null when the user backs out.
+ */
+export async function pickOne(): Promise<Pick | null> {
+  const { contact } = await Contacts.pickContact({ projection: { name: true, phones: true, emails: true } });
+  if (!contact?.contactId) return null;
+  return toPicks([contact])[0] ?? null;
+}
+
 /** Why importing from contacts is unavailable, in one sentence, or null when it is fine. */
 export const permissionText = (state: string) =>
   state === 'denied'
-    ? 'دسترسی به مخاطبین رد شد. با اجازه دادن از تنظیمات اندروید می‌توانی مخاطبین را بیاوری؛ افزودن دستی همچنان کار می‌کند.'
+    ? tx('دسترسی به مخاطبین رد شد. با اجازه دادن از تنظیمات اندروید می‌توانی مخاطبین را بیاوری؛ افزودن دستی همچنان کار می‌کند.')
     : state === 'limited'
-      ? 'فقط بخشی از مخاطبین در دسترس است. می‌توانی از همین‌ها انتخاب کنی یا دستی اضافه کنی.'
+      ? tx('فقط بخشی از مخاطبین در دسترس است. می‌توانی از همین‌ها انتخاب کنی یا دستی اضافه کنی.')
       : '';

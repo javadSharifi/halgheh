@@ -1,7 +1,8 @@
-import { CALS, CAL_NAMES, MONTHS, type Cal, fa, parts, today } from './cal';
+import { CALS, CAL_NAMES, MONTHS, type Cal, fa, monthName, parts, today } from './cal';
 import type { Birthday } from './db';
 import { YEAR_RANGE, maxDay, toLatinDigits } from './format';
-import { Choice } from './Choice';
+import { InputField, Select } from './ui';
+import { tx } from './i18n';
 
 /** The birthday form's fields as typed. Day and year stay strings while the user edits them. */
 export type BirthdayDraft = { name: string; cal: Cal; month: number; day: string; year: string; phone: string };
@@ -62,39 +63,49 @@ export function BirthdayFields({
   return (
     <div className="birthday-fields-group">
       {!lockName && (
-        <label className="bf-name">
-          <span>نام</span>
-          <input value={d.name} onChange={(e) => set({ name: e.target.value })} />
-        </label>
+        <InputField
+          label={tx('نام')}
+          value={d.name}
+          onChange={(e) => set({ name: e.target.value })}
+        />
       )}
-      <div className="radios bf-cal-radios" role="radiogroup" aria-label="نوع تقویم">
+      <div className="radios bf-cal-radios" role="radiogroup" aria-label={tx('نوع تقویم')}>
         {CALS.map((c) => (
-          <button key={c} role="radio" aria-checked={d.cal === c} className={d.cal === c ? 'on' : ''} onClick={() => set({ cal: c })}>{CAL_NAMES[c]}</button>
+          <button key={c} role="radio" aria-checked={d.cal === c} className={d.cal === c ? 'on' : ''} onClick={() => set({ cal: c })}>{tx(CAL_NAMES[c])}</button>
         ))}
       </div>
-      <div className="bf-grid">
-        <label className={`bf-tile${d.day && !r.dayOk ? ' bad' : ''}`}>
-          <span>روز</span>
-          <input inputMode="numeric" value={d.day} aria-invalid={d.day !== '' && !r.dayOk} onChange={(e) => set({ day: e.target.value })} />
-        </label>
-        <div className="bf-tile">
-          <span>ماه</span>
-          <Choice className="pick-text" label="ماه" value={d.month} options={MONTHS[d.cal].map((m, i): [number, string] => [i + 1, m])} onChange={(m) => set({ month: m })} />
-        </div>
-        <label className={`bf-tile${!r.yearOk ? ' bad' : ''}`}>
-          <span>سال (اختیاری)</span>
-          <input inputMode="numeric" value={d.year} aria-invalid={!r.yearOk} onChange={(e) => set({ year: e.target.value })} />
-        </label>
-      </div>
+      <InputField
+        label={tx('روز')}
+        inputMode="numeric"
+        value={d.day}
+        onChange={(e) => set({ day: e.target.value })}
+        error={d.day && !r.dayOk ? tx('روز این ماه باید بین ۱ و {a1} باشد.', { a1: fa(maxDay(d.cal, d.month)) }) : undefined}
+      />
+      <Select
+        label={tx('ماه')}
+        value={d.month}
+        onChange={(e) => set({ month: Number(e.target.value) })}
+        options={MONTHS[d.cal].map((_, i) => ({ value: i + 1, label: monthName(d.cal, i + 1) }))}
+      />
+      <InputField
+        label={tx('سال (اختیاری)')}
+        inputMode="numeric"
+        value={d.year}
+        onChange={(e) => set({ year: e.target.value })}
+        error={!r.yearOk ? tx('سال باید بین {a1} و {a2} باشد.', { a1: fa(YEAR_RANGE[d.cal][0]), a2: fa(YEAR_RANGE[d.cal][1]) }) : undefined}
+      />
       {!hidePhone && (
-        <label className={`bf-name${!r.phoneOk ? ' bad' : ''}`}>
-          <span>شماره تلفن (اختیاری)</span>
-          <input type="tel" inputMode="tel" dir="ltr" value={d.phone} aria-invalid={!r.phoneOk} placeholder="0912…" onChange={(e) => set({ phone: e.target.value })} />
-        </label>
+        <InputField
+          label={tx('شماره تلفن (اختیاری)')}
+          type="tel"
+          inputMode="tel"
+          dir="ltr"
+          value={d.phone}
+          error={!r.phoneOk ? tx('شماره باید فقط رقم باشد (۵ تا ۱۵ رقم، می‌تواند با + شروع شود).') : undefined}
+          placeholder="0912…"
+          onChange={(e) => set({ phone: e.target.value })}
+        />
       )}
-      {!r.phoneOk && !hidePhone && <p className="form-error">شماره باید فقط رقم باشد (۵ تا ۱۵ رقم، می‌تواند با + شروع شود).</p>}
-      {!r.dayOk && d.day !== '' && <p className="form-error">روز این ماه باید بین ۱ و {fa(maxDay(d.cal, d.month))} باشد.</p>}
-      {!r.yearOk && <p className="form-error">سال باید بین {fa(YEAR_RANGE[d.cal][0])} و {fa(YEAR_RANGE[d.cal][1])} باشد.</p>}
     </div>
   );
 }

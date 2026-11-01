@@ -16,10 +16,21 @@ export type Task = {
   on?: string; // one-off task: the only date it runs on (mask is 0)
   before?: number[]; // one-off task: also remind this many days ahead (at `time`, or 09:00)
   fromPersonId?: string; // T1: the person who asked for this todo ("چه کسی خواسته")
+  kind?: 'personal' | 'shopping' | 'errand' | 'health'; // personal-task mode; missing = an ordinary task
+  compareSessionId?: string; // shopping tasks: the product comparison that belongs to this task
   snoozeUntil?: number; // T1: epoch ms; while in the future this replaces the normal reminder time (survives re-planning)
 };
 export type Done = { id: string; taskId: string; date: string; updatedAt: number; doneAt?: number }; // id = `${taskId}|${date}`; doneAt = when it was ticked (ms), missing on old rows
 export type Birthday = { id: string; name: string; cal: Cal; month: number; day: number; year?: number; phone?: string; personId?: string; updatedAt: number };
+
+/**
+ * A yearly date that is not a birthday — Nowruz, Mother's Day, an anniversary. Same three-calendar date as a birthday,
+ * `tagId` says which group it belongs to (empty = everyone), `remindLead` adds an earlier line in the daily digest.
+ */
+export type Occasion = { id: string; title: string; cal: Cal; month: number; day: number; remindLead?: number; tagId?: string; updatedAt: number };
+
+/** Woman, man, other. Missing means the user did not say. Only the wish texts use it. */
+export type Gender = 'm' | 'f' | 'o';
 
 /** A person in the notebook. `isSelf: 1` marks the single "me" row; other rows leave it out. */
 export type Person = {
@@ -29,11 +40,18 @@ export type Person = {
   firstName?: string;
   lastName?: string;
   nickname?: string;
+  gender?: Gender;
   phones: string[];
   emails: string[];
   city?: string;
   occupation?: string;
   workplace?: string;
+  /** 'Keep in touch' ring: remind me when this many days passed since the last interaction. Missing = no ring. */
+  cadenceDays?: number;
+  /** Closeness group; it only suggests a `cadenceDays` and groups the people list. Missing = not sorted yet. */
+  circle?: 'close' | 'friend' | 'acquaintance' | 'distant';
+  /** Epoch ms; while in the future this person is hidden from the due list. */
+  dueSnoozeUntil?: number;
   createdAt: number;
   updatedAt: number;
   archivedAt?: number;
@@ -322,7 +340,8 @@ export type TableName =
   | 'ruleChecks'
   | 'ruleCheckItems'
   | 'exchanges'
-  | 'exchangeSettlements';
+  | 'exchangeSettlements'
+  | 'occasions';
 
 /** A local change not yet sent to the server (only used when sync is on). Latest change per row wins. */
 export type Outbox = { key: string; t: TableName; id: string; deleted: 0 | 1; updatedAt: number; op?: 'create' | 'edit' | 'delete' }; // op is for the sync screen only; missing on old entries

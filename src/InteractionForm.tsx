@@ -3,14 +3,16 @@ import { type Interaction, del, put, uid } from './db';
 import { ask } from './confirm';
 import { fullDate, label, today } from './cal';
 import { Icon } from './Icon';
+import { Button, FormField, FormPage, FormSection, InputField } from './ui';
 import { DatePicker } from './DatePicker';
 import { Choice } from './Choice';
+import { tx, tk } from './i18n';
 
 const TYPES: [Interaction['type'], string][] = [
-  ['meeting', 'دیدار'],
-  ['call', 'تماس'],
-  ['message', 'پیام'],
-  ['other', 'دیگر'],
+  ['meeting', tk('دیدار')],
+  ['call', tk('تماس')],
+  ['message', tk('پیام')],
+  ['other', tk('دیگر')],
 ];
 export const TYPE_NAME = Object.fromEntries(TYPES) as Record<Interaction['type'], string>;
 
@@ -33,7 +35,7 @@ export function InteractionForm({ personId, initial, onClose }: { personId: stri
 
   const remove = async () => {
     if (!initial || busy) return;
-    if (!(await ask({ title: 'این تعامل حذف شود؟', message: 'فقط همین یک ردیف از سابقه پاک می‌شود.', confirm: 'حذف' }))) return;
+    if (!(await ask({ title: tx('این تعامل حذف شود؟'), message: tx('فقط همین یک ردیف از سابقه پاک می‌شود.'), confirm: tx('حذف') }))) return;
     setBusy(true);
     try {
       await del('interactions', initial.id);
@@ -68,60 +70,63 @@ export function InteractionForm({ personId, initial, onClose }: { personId: stri
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="interaction-title">
-        <div className="bf-head">
-          <span id="interaction-title">{initial ? 'ویرایش تعامل' : 'تعامل تازه'}</span>
-          <button className="text-btn" onClick={onClose}>بستن</button>
-        </div>
-
-        <div className="pe-scroll">
-          <div className="radios" role="radiogroup" aria-label="نوع تعامل">
-            {TYPES.map(([k, n]) => (
-              <button key={k} role="radio" aria-checked={v.type === k} className={v.type === k ? 'on' : ''} aria-pressed={v.type === k} onClick={() => set({ type: k })}>{n}</button>
-            ))}
-          </div>
+      <FormPage
+        title={initial ? tx('ویرایش تعامل') : tx('تعامل تازه')}
+        icon={initial ? 'edit' : 'plus'}
+        onClose={onClose}
+        onSave={save}
+        saveLabel={initial ? tx('ذخیره') : tx('ثبت')}
+        saveDisabled={!valid}
+        busy={busy}
+        onDelete={initial ? remove : undefined}
+        deleteLabel={tx('حذف این تعامل')}
+      >
+        <FormSection>
+          <FormField label={tx('نوع تعامل')}>
+            <div className="radios" role="radiogroup" aria-label={tx('نوع تعامل')}>
+              {TYPES.map(([k, n]) => (
+                <button key={k} role="radio" aria-checked={v.type === k} className={v.type === k ? 'on' : ''} aria-pressed={v.type === k} onClick={() => set({ type: k })}>{tx(n)}</button>
+              ))}
+            </div>
+          </FormField>
 
           <button className="rf-date" onClick={() => setPicking('when')}>
             <Icon name="calendar" size={18} stroke={1.9} />
             {label(v.occurredAt, 'persian', 0, { weekday: 'long' })} · {fullDate(v.occurredAt, 'persian')}
           </button>
 
-          <label className="bf-name bf-name-top">
-            <span>چه شد</span>
-            <textarea className="rf-text" value={v.summary} onChange={(e) => set({ summary: e.target.value })} placeholder="مثلاً دربارهٔ بازسازی خانه حرف زدیم" />
-          </label>
-          <label className="bf-name bf-name-top">
-            <span>نتیجه (اختیاری)</span>
-            <textarea className="rf-text" value={v.outcome} onChange={(e) => set({ outcome: e.target.value })} placeholder="مثلاً قرار شد نمونه‌کار بفرستد" />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx('چه شد')}
+            value={v.summary}
+            onChange={(e) => set({ summary: e.target.value })}
+            placeholder={tx('مثلاً دربارهٔ بازسازی خانه حرف زدیم')}
+          />
+          <InputField
+            multiline
+            rows={3}
+            label={tx('نتیجه (اختیاری)')}
+            value={v.outcome}
+            onChange={(e) => set({ outcome: e.target.value })}
+            placeholder={tx('مثلاً قرار شد نمونه‌کار بفرستد')}
+          />
 
           <div className="rf-row">
             <span className="tile purple" aria-hidden="true"><Icon name="bell" size={17} stroke={1.9} /></span>
-            <span className="rf-name">پیگیری</span>
+            <span className="rf-name">{tx('پیگیری')}</span>
             <span className="rf-value">
-              {v.followUpDate ? label(v.followUpDate, 'persian', 0, { day: 'numeric', month: 'long' }) : 'ندارد'}
+              {v.followUpDate ? label(v.followUpDate, 'persian', 0, { day: 'numeric', month: 'long' }) : tx('ندارد')}
               <Icon name="chevronLeft" size={16} stroke={2} />
             </span>
-            <button className="icon-btn small" aria-label="انتخاب تاریخ پیگیری" onClick={() => setPicking('follow')}><Icon name="calendar" size={16} stroke={2} /></button>
-            {v.followUpDate && <button className="icon-btn small" aria-label="حذف پیگیری" onClick={() => set({ followUpDate: '' })}><Icon name="close" size={16} stroke={2} /></button>}
+            <Button variant="ghost" size="icon-sm" aria-label={tx('انتخاب تاریخ پیگیری')} onClick={() => setPicking('follow')} icon="calendar" />
+            {v.followUpDate && <Button variant="ghost" size="icon-sm" aria-label={tx('حذف پیگیری')} onClick={() => set({ followUpDate: '' })} icon="close" />}
           </div>
-          {v.followUpDate && <p className="rf-note"><Icon name="info" size={13} stroke={2} />پیگیری در «امروز» فهرست می‌شود (T3).</p>}
-          {future && <p className="rf-note"><Icon name="info" size={13} stroke={2} />این تاریخ در آینده است؛ به‌عنوان قرار ثبت می‌شود.</p>}
-          {!valid && v.summary.trim() === '' && <p className="hint pe-hint">یک خط بنویس که چه شد؛ همین برای یادآوری کافی است.</p>}
-        </div>
-
-        <button className="primary" disabled={!valid || busy} onClick={save}>
-          <Icon name="check" size={18} stroke={2.4} />
-          {busy ? 'در حال ذخیره…' : initial ? 'ذخیره' : 'ثبت تعامل'}
-        </button>
-        {initial && (
-          <button className="danger-btn" disabled={busy} onClick={remove}>
-            <Icon name="trash" size={16} stroke={2} />
-            حذف این تعامل
-          </button>
-        )}
-      </section>
+          {v.followUpDate && <p className="rf-note"><Icon name="info" size={13} stroke={2} />{tx('پیگیری در «امروز» فهرست می‌شود (T3).')}</p>}
+          {future && <p className="rf-note"><Icon name="info" size={13} stroke={2} />{tx('این تاریخ در آینده است؛ به‌عنوان قرار ثبت می‌شود.')}</p>}
+          {!valid && v.summary.trim() === '' && <p className="hint pe-hint">{tx('یک خط بنویس که چه شد؛ همین برای یادآوری کافی است.')}</p>}
+        </FormSection>
+      </FormPage>
       {picking && (
         <DatePicker
           value={picking === 'when' ? v.occurredAt : v.followUpDate || todayIso()}

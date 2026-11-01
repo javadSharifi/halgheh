@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Task } from './db';
 import { TodoForm } from './TodoForm';
+import { tx } from './i18n';
 
 /**
  * Loads the task once and hands it to the form. The form reads its row only at mount, so a live update cannot overwrite
@@ -14,8 +15,8 @@ export function TodoSheet({ id, seedPersonId, onClose }: { id: string | null; se
       <>
         <div className="scrim dim" onClick={onClose} />
         <section className="sheet" role="dialog" aria-modal="true">
-          <div className="bf-head"><span>کار پیدا نشد</span><button className="text-btn" onClick={onClose}>بستن</button></div>
-          <p className="hint">این کار پاک شده است.</p>
+          <div className="bf-head"><span>{tx('کار پیدا نشد')}</span><button className="text-btn" onClick={onClose}>{tx('بستن')}</button></div>
+          <p className="hint">{tx('این کار پاک شده است.')}</p>
         </section>
       </>
     );

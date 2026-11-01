@@ -1,5 +1,5 @@
 import { type InputHTMLAttributes, type TextareaHTMLAttributes, useId } from 'react';
-import { Icon, type IconName } from './Icon';
+import { Icon, type IconName } from '../Icon';
 
 export interface InputFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
@@ -12,11 +12,6 @@ export interface InputFieldProps extends Omit<InputHTMLAttributes<HTMLInputEleme
   containerClassName?: string;
 }
 
-/**
- * Unified InputField component.
- * Ensures the label is always placed cleanly ABOVE the input,
- * with optional hints, required star, inner icon, and error messaging.
- */
 export function InputField({
   label,
   hint,

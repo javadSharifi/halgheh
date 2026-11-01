@@ -1,5 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type Birthday, type Interaction, type Person, type PersonNote, type PersonSkill, type PersonTag, type Photo, type Rating, type Relationship, type Skill, type Tag, type Task, db } from './db';
+import { locale } from './i18n';
+import { doneDatesFor } from './todoFilters';
 
 /** Everything one profile shows, loaded in one live query so a save anywhere repaints the whole page. */
 export type PersonBundle = {
@@ -30,14 +32,15 @@ export const personBundle = (id: string) =>
   useLiveQuery(async (): Promise<PersonBundle | null> => {
     const person = await db.people.get(id);
     if (!person) return null;
-    const [birthday, notes, interactions, links, tasks, done, personSkills, skills, ratings, rels, everyone, photos] = await Promise.all([
+    // fromPersonId is not indexed and the task table is small, so a scan is cheaper than another schema version
+    const tasks = await db.tasks.filter((t) => t.fromPersonId === id).toArray();
+    const [birthday, notes, interactions, links, done, personSkills, skills, ratings, rels, everyone, photos] = await Promise.all([
       db.birthdays.where('personId').equals(id).first(),
       db.personNotes.where('personId').equals(id).toArray(),
       db.interactions.where('personId').equals(id).toArray(),
       db.personTags.where('personId').equals(id).toArray(),
-      // fromPersonId is not indexed and the task table is small, so a scan is cheaper than another schema version
-      db.tasks.filter((t) => t.fromPersonId === id).toArray(),
-      db.done.toArray(),
+      // only the rows these tasks can own; `askedDone` is a set of task ids, so nothing else is ever read
+      tasks.length ? db.done.where('date').anyOf(doneDatesFor(tasks)).toArray() : [],
       db.personSkills.where('personId').equals(id).toArray(),
       db.skills.toArray(),
       db.ratings.where('personId').equals(id).toArray(),
@@ -53,7 +56,7 @@ export const personBundle = (id: string) =>
       notes: notes.sort((a, b) => b.updatedAt - a.updatedAt),
       // newest first; an interaction may be a future plan, so this sorts by the date it happened/will happen
       interactions: interactions.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)),
-      tags: tags.sort((a, b) => a.name.localeCompare(b.name, 'fa')),
+      tags: tags.sort((a, b) => a.name.localeCompare(b.name, locale())),
       tagLinks: links,
       personSkills,
       skills,

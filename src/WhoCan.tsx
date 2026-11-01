@@ -3,9 +3,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './db';
 import { fa, label } from './cal';
 import { Icon } from './Icon';
+import { Button, Card } from './ui';
 import { CRITERION_LABEL } from './ratings';
 import { STATUS_LABEL } from './skills';
 import { introducers, whoCan, type Hit } from './whoCanEngine';
+import { tn, tx } from './i18n';
+import { personLabel } from './format';
 
 const PALETTE = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
@@ -39,21 +42,21 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
   const trustOf = (h: Hit) => h.why.trust;
   const lastOf = (h: Hit) => (h.why.lastContact ? label(h.why.lastContact, 'persian', 0, { day: 'numeric', month: 'long' }) : null);
 
-  const Card = ({ hit }: { hit: Hit }) => (
+  const WhoHitCard = ({ hit }: { hit: Hit }) => (
     <button className="glass who-card" onClick={() => openPerson(hit.person.id)}>
       <span className={`avatar p${PALETTE(hit.person.displayName)}`} aria-hidden="true">{hit.person.displayName.slice(0, 1)}</span>
       <span className="who-body">
-        <b>{hit.person.displayName}</b>
+        <b>{personLabel(hit.person)}</b>
         {[hit.person.occupation, hit.person.city].filter(Boolean).length > 0 && (
           <span className="who-meta">{[hit.person.occupation, hit.person.city].filter(Boolean).join(' · ')}</span>
         )}
         <span className="why-chips">
-          {hit.why.skills.length > 0 && <i className="w-skill"><Icon name="toolbox" size={11} stroke={2.2} />{hit.why.skills.join('، ')}</i>}
-          {hit.why.evidence && <i className="w-ev">{STATUS_LABEL[hit.why.evidence]}</i>}
+          {hit.why.skills.length > 0 && <i className="w-skill"><Icon name="toolbox" size={11} stroke={2.2} />{hit.why.skills.join(`${tx('،')} `)}</i>}
+          {hit.why.evidence && <i className="w-ev">{tx(STATUS_LABEL[hit.why.evidence])}</i>}
           {/* the one trust criterion, side by side with the evidence, never added to it */}
           <i className={`w-trust${trustOf(hit) === undefined ? ' none' : ''}`}>
             <Icon name="target" size={11} stroke={2.2} />
-            {trustOf(hit) === undefined ? 'ثبت نشده' : `${CRITERION_LABEL.trustworthiness}: ${fa(trustOf(hit)!)}`}
+            {trustOf(hit) === undefined ? tx('ثبت نشده') : tx('{a1}: {a2}', { a1: tx(CRITERION_LABEL.trustworthiness), a2: fa(trustOf(hit)!) })}
           </i>
           {lastOf(hit) && <i className="w-when"><Icon name="history" size={11} stroke={2.2} />{lastOf(hit)}</i>}
         </span>
@@ -65,57 +68,59 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
   return (
     <>
       <header className="dd-head">
-        <button className="icon-btn" aria-label="بازگشت" onClick={onClose}><Icon name="chevronRight" /></button>
-        <span>چه کسی می‌تواند</span>
+        <Button variant="ghost" size="icon-md" aria-label={tx('بازگشت')} onClick={onClose} icon="chevronRight" />
+        <span>{tx('چه کسی می‌تواند')}</span>
         <span className="head-spacer" />
       </header>
 
       <form className="search-top" onSubmit={(e) => e.preventDefault()} role="search">
         <label className="search-field">
           <Icon name="search" size={20} stroke={1.9} />
-          <span className="sr-only">چه کسی می‌تواند</span>
-          <input autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="چه کاری؟ مثلاً لوله‌کشی" />
-          {q && <button type="button" className="clear" aria-label="پاک کردن" onClick={() => setQ('')}><span><Icon name="close" size={12} stroke={3} /></span></button>}
+          <span className="sr-only">{tx('چه کسی می‌تواند')}</span>
+          <input autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tx('چه کاری؟ مثلاً لوله‌کشی')} />
+          {q && <button type="button" className="clear" aria-label={tx('پاک کردن')} onClick={() => setQ('')}><span><Icon name="close" size={12} stroke={3} /></span></button>}
         </label>
       </form>
 
       {!searching && (
-        <section className="glass empty-state search-empty">
+        <Card className="empty-state search-empty">
           <span className="tile purple" aria-hidden="true"><Icon name="toolbox" size={24} stroke={1.8} /></span>
-          <b>چه کاری را می‌خواهی انجام دهد؟</b>
-          <p className="hint">یک مهارت بنویس تا ببینی چه کسی آن را بلد است، و اگر خودت کسی را نمی‌شناسی، چه کسی می‌تواند معرفی کند.</p>
-        </section>
+          <b>{tx('چه کاری را می‌خواهی انجام دهد؟')}</b>
+          <p className="hint">{tx('یک مهارت بنویس تا ببینی چه کسی آن را بلد است، و اگر خودت کسی را نمی‌شناسی، چه کسی می‌تواند معرفی کند.')}</p>
+        </Card>
       )}
 
       {searching && hitList.length === 0 && (
-        <section className="glass empty-state search-empty">
-          <b>کسی پیدا نشد</b>
-          <p className="hint">کلمهٔ دیگری امتحان کن، یا در پروفایل افراد مهارتشان را ثبت کن.</p>
-        </section>
+        <Card className="empty-state search-empty">
+          <b>{tx('کسی پیدا نشد')}</b>
+          <p className="hint">{tx('کلمهٔ دیگری امتحان کن، یا در پروفایل افراد مهارتشان را ثبت کن.')}</p>
+        </Card>
       )}
 
       {specialists.length > 0 && (
         <section>
-          <h2 className="sec-title">متخصص‌ها<small>{fa(specialists.length)} نفر</small></h2>
-          <div className="who-list">{specialists.map((h) => <Card key={h.person.id} hit={h} />)}</div>
+          <h2 className="sec-title">{tx('متخصص‌ها')}<small>{tn('{n} نفر', specialists.length)}</small></h2>
+          <div className="who-list">{specialists.map((h) => <WhoHitCard key={h.person.id} hit={h} />)}</div>
         </section>
       )}
 
       {refs.length > 0 && (
         <section>
-          <h2 className="sec-title">از طریق معرفی<small>{fa(refs.length)} مسیر</small></h2>
+          <h2 className="sec-title">{tx('از طریق معرفی')}<small>{tn('{n} مسیر', refs.length)}</small></h2>
           <div className="who-list">
             {refs.map((s) => (
               <button key={`${s.pathText}`} className="glass who-card ref-card" onClick={() => openPerson(s.person.id)}>
                 <span className={`avatar p${PALETTE(s.person.displayName)}`} aria-hidden="true">{s.person.displayName.slice(0, 1)}</span>
                 <span className="who-body">
-                  <b>{s.specialist.displayName}</b>
+                  <b>{personLabel(s.specialist)}</b>
                   <span className="ref-path">
-                    {s.pathWithTrades}
-                    {s.uncertain && <em className="c-dup">شاید</em>}
+                    <bdi>{s.pathWithTrades}</bdi>
+                    {s.uncertain && <em className="c-dup">{tx('شاید')}</em>}
                   </span>
                   <span className="who-meta">
-                    {s.specialist.occupation ? `${s.specialist.occupation} · ` : ''}از طریق {s.person.displayName}
+                                      {s.specialist.occupation
+                      ? tx('{a1} · از طریق {a2}', { a1: s.specialist.occupation, a2: personLabel(s.person) })
+                      : tx('از طریق {a1}', { a1: personLabel(s.person) })}
                   </span>
                 </span>
                 <Icon name="chevronLeft" size={16} stroke={2} />
@@ -127,8 +132,8 @@ export function WhoCan({ initialQuery, openPerson, onClose }: { initialQuery?: s
 
       {others.length > 0 && (
         <section>
-          <h2 className="sec-title">بقیه<small>{fa(others.length)} نفر</small></h2>
-          <div className="who-list">{others.map((h) => <Card key={h.person.id} hit={h} />)}</div>
+          <h2 className="sec-title">{tx('بقیه')}<small>{tn('{n} نفر', others.length)}</small></h2>
+          <div className="who-list">{others.map((h) => <WhoHitCard key={h.person.id} hit={h} />)}</div>
         </section>
       )}
     </>

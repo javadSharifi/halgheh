@@ -54,10 +54,14 @@ const PATHS = {
 export type IconName = keyof typeof PATHS;
 export const ICON_NAMES = Object.keys(PATHS) as IconName[];
 
+// Arrows drawn for the RTL layout. In LTR they are mirrored so "back" keeps pointing backwards; every other icon is
+// symmetric or vertical and must not flip.
+const FLIP: IconName[] = ['chevronRight', 'chevronLeft'];
+
 export function Icon({ name, size = 20, stroke = 1.8, className }: { name: IconName; size?: number; stroke?: number; className?: string }) {
   return (
     <svg
-      className={className}
+      className={FLIP.includes(name) ? `i-flip ${className ?? ''}` : className}
       width={size}
       height={size}
       viewBox="0 0 24 24"

@@ -1,14 +1,14 @@
 import { Icon, type IconName } from './Icon';
+import { tx } from './i18n';
+import { Card, PageHead } from './ui';
 
 type Props = {
   openSettings: () => void;
   openSync: () => void;
   openArchive: () => void;
   openAbout: () => void;
-  openTasks: () => void;
-  openBirthdays: () => void;
-  openRulebook: () => void;
-  openLedger: () => void;
+  openSearch: () => void;
+  openWeekly: () => void;
   openGallery: () => void;
 };
 
@@ -22,31 +22,20 @@ function Row({ icon, tone, name, onClick }: { icon: IconName; tone: 'blue' | 'pu
   );
 }
 
-export function MorePage({ openSettings, openSync, openArchive, openAbout, openTasks, openBirthdays, openRulebook, openLedger, openGallery }: Props) {
+export function MorePage({ openSettings, openSync, openArchive, openAbout, openSearch, openWeekly, openGallery }: Props) {
   return (
     <>
-      <div className="page-head"><h1>بیشتر</h1></div>
+      <PageHead title={tx('بیشتر')} tools={[{ icon: 'search', label: tx('جستجو'), onClick: openSearch }]} />
 
       <section>
-        <div className="glass set-list">
-          <Row icon="image" tone="purple" name="گالری" onClick={openGallery} />
-          <Row icon="settings" tone="blue" name="تنظیمات" onClick={openSettings} />
-          <Row icon="cloudCheck" tone="purple" name="حساب و پشتیبان" onClick={openSync} />
-          <Row icon="archive" tone="green" name="افراد بایگانی‌شده" onClick={openArchive} />
-          <Row icon="info" tone="blue" name="دربارهٔ حلقه" onClick={openAbout} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="sec-title">قانون‌ها و کارها</h2>
-        <div className="glass set-list">
-          <Row icon="listChecks" tone="purple" name="قوانین من" onClick={openRulebook} />
-        </div>
-        <div className="glass set-list more-gap">
-          <Row icon="repeat" tone="green" name="دادوستدها" onClick={openLedger} />
-          <Row icon="listChecks" tone="blue" name="همهٔ کارها" onClick={openTasks} />
-          <Row icon="cakeCandles" tone="purple" name="تولدها" onClick={openBirthdays} />
-        </div>
+        <Card variant="glass" className="set-list">
+          <Row icon="history" tone="green" name={tx('مرور هفتگی')} onClick={openWeekly} />
+          <Row icon="image" tone="purple" name={tx('گالری')} onClick={openGallery} />
+          <Row icon="settings" tone="blue" name={tx('تنظیمات')} onClick={openSettings} />
+          <Row icon="cloudCheck" tone="purple" name={tx('حساب و پشتیبان')} onClick={openSync} />
+          <Row icon="archive" tone="green" name={tx('افراد بایگانی‌شده')} onClick={openArchive} />
+          <Row icon="info" tone="blue" name={tx('دربارهٔ حلقه')} onClick={openAbout} />
+        </Card>
       </section>
     </>
   );

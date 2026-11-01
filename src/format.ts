@@ -1,23 +1,33 @@
-import { type Cal, addDays, bdayOn, wd } from './cal';
+import { type Cal, addDays, bdayOn, fa, wd, wdName } from './cal';
+import { lang, tx } from './i18n';
 
-const SAT_FIRST = [6, 0, 1, 2, 3, 4, 5]; // JS weekdays in the order Iranians read the week
-const NAMES: Record<number, string> = { 6: 'شنبه', 0: 'یکشنبه', 1: 'دوشنبه', 2: 'سه‌شنبه', 3: 'چهارشنبه', 4: 'پنجشنبه', 5: 'جمعه' };
+export const SAT_FIRST = [6, 0, 1, 2, 3, 4, 5]; // JS weekdays in the order Iranians read the week
 
 /** Weekday mask -> "هر روز", "شنبه تا چهارشنبه" (3+ days in a row) or "شنبه، دوشنبه". */
 export function daysText(mask: number) {
   const on = SAT_FIRST.filter((d) => (mask >> d) & 1);
-  if (on.length === 7) return 'هر روز';
+  if (on.length === 7) return tx('هر روز');
   const idx = on.map((d) => SAT_FIRST.indexOf(d));
   const run = idx.every((v, i) => i === 0 || v === idx[i - 1] + 1);
-  return on.length >= 3 && run ? `${NAMES[on[0]]} تا ${NAMES[on[on.length - 1]]}` : on.map((d) => NAMES[d]).join('، ');
+  return on.length >= 3 && run
+    ? tx('{a1} تا {a2}', { a1: wdName(on[0]), a2: wdName(on[on.length - 1]) })
+    : on.map((d) => wdName(d)).join(lang() === 'fa' ? '، ' : ', ');
 }
 
+/**
+ * A person's name for the screen. The self row is stored as "من" and a nameless contact as "بدون نام": both are data,
+ * so they are translated here and never written back.
+ */
+export const personLabel = (p: { displayName: string; isSelf?: 1 }) =>
+  p.isSelf ? tx('من') : p.displayName === 'بدون نام' ? tx('بدون نام') : p.displayName;
+
 /** What a task repeats on, for list subtitles. */
-export const kindText = (t: { mask: number; on?: string }) => (t.on ? 'یک‌بار' : daysText(t.mask));
+export const kindText = (t: { mask: number; on?: string }) => (t.on ? tx('یک‌بار') : daysText(t.mask));
 
-export const greeting = (hour: number) => (hour < 5 ? 'شب بخیر' : hour < 12 ? 'صبح بخیر' : hour < 17 ? 'ظهر بخیر' : hour < 20 ? 'عصر بخیر' : 'شب بخیر');
+export const greeting = (hour: number) =>
+  tx(hour < 5 ? 'شب بخیر' : hour < 12 ? 'صبح بخیر' : hour < 17 ? 'ظهر بخیر' : hour < 20 ? 'عصر بخیر' : 'شب بخیر');
 
-type B = { id: string; name: string; cal: Cal; month: number; day: number; year?: number };
+type B = { cal: Cal; month: number; day: number };
 
 /** The first birthday strictly after `from` within a year and a bit, or null. */
 export function nextBirthday<T extends B>(bdays: T[], from: string, off: number) {
@@ -46,20 +56,23 @@ export const byTime = <T extends { time?: string }>(a: T, b: T) => (isTime(a.tim
 /** "۰۷:۲۰": local clock time of a timestamp, as Persian digits. */
 export const clock = (ms: number) => {
   const d = new Date(ms);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`.replace(/\d/g, (c) => '۰۱۲۳۴۵۶۷۸۹'[+c]);
+  return faDigits(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
 };
 
 /** "یادآور ۱۰ دقیقه قبل" / "یادآور در همان لحظه" / "یادآور ۱ ساعت قبل". */
-export const leadText = (min: number) => {
-  const fa = (n: number) => String(n).replace(/\d/g, (c) => '۰۱۲۳۴۵۶۷۸۹'[+c]);
-  return min === 0 ? 'یادآور در همان لحظه' : min % 60 === 0 ? `یادآور ${fa(min / 60)} ساعت قبل` : `یادآور ${fa(min)} دقیقه قبل`;
-};
+export const leadText = (min: number) =>
+  min === 0
+    ? tx('یادآور در همان لحظه')
+    : min % 60 === 0
+      ? tx('یادآور {a1} ساعت قبل', { a1: fa(min / 60) })
+      : tx('یادآور {a1} دقیقه قبل', { a1: fa(min) });
 
 /** "18:30" -> "۱۸:۳۰" */
-export const faDigits = (s: string) => s.replace(/\d/g, (c) => '۰۱۲۳۴۵۶۷۸۹'[+c]);
+export const faDigits = (s: string) => (lang() === 'fa' ? s.replace(/\d/g, (c) => '۰۱۲۳۴۵۶۷۸۹'[+c]) : s);
 
 /** "۱۰ دقیقه قبل" for the reminder-lead picker. */
-export const leadLabel = (min: number) => (min === 0 ? 'در همان لحظه' : min % 60 === 0 ? `${faDigits(String(min / 60))} ساعت قبل` : `${faDigits(String(min))} دقیقه قبل`);
+export const leadLabel = (min: number) =>
+  min === 0 ? tx('در همان لحظه') : min % 60 === 0 ? tx('{a1} ساعت قبل', { a1: fa(min / 60) }) : tx('{a1} دقیقه قبل', { a1: fa(min) });
 
 /** The first day on or after `from` (within a week) that the weekday mask runs, or null for an empty mask. */
 export function firstRun(mask: number, from: string) {
@@ -99,15 +112,15 @@ export function nextOccurrence<T extends B>(b: T, from: string, off: number) {
 
 /** "۲٫۴ مگابایت", "۱۲ کیلوبایت", "۹۰ بایت" */
 export function formatBytes(n: number) {
-  const f = (x: number) => faDigits((Math.round(x * 10) / 10).toString().replace('.', '٫'));
-  if (n < 1024) return `${faDigits(String(n))} بایت`;
-  if (n < 1024 * 1024) return `${f(n / 1024)} کیلوبایت`;
-  return `${f(n / 1024 / 1024)} مگابایت`;
+  const f = (x: number) => faDigits((Math.round(x * 10) / 10).toString().replace('.', lang() === 'fa' ? '٫' : '.'));
+  if (n < 1024) return tx('{a1} بایت', { a1: fa(n) });
+  if (n < 1024 * 1024) return tx('{a1} کیلوبایت', { a1: f(n / 1024) });
+  return tx('{a1} مگابایت', { a1: f(n / 1024 / 1024) });
 }
 
 /** Formats a number with 3-digit comma separators in Persian digits: 1500000 -> "۱,۵۰۰,۰۰۰" */
 export function formatNumberFa(n: number): string {
-  if (!Number.isFinite(n)) return '۰';
+  if (!Number.isFinite(n)) return fa(0);
   const rounded = Math.abs(Math.round(n));
   const parts = String(rounded).split('');
   const withCommas: string[] = [];
@@ -115,14 +128,14 @@ export function formatNumberFa(n: number): string {
     if (i > 0 && (parts.length - i) % 3 === 0) withCommas.push(',');
     withCommas.push(parts[i]);
   }
-  const faString = withCommas.join('').replace(/\d/g, (c) => '۰۱۲۳۴۵۶۷۸۹'[+c]);
-  return n < 0 ? `-${faString}` : faString;
+  const s = faDigits(withCommas.join(''));
+  return n < 0 ? `-${s}` : s;
 }
 
 /** Formats an amount with commas and "تومان": 1500000 -> "۱,۵۰۰,۰۰۰ تومان" */
 export function formatToman(n: number | undefined): string {
   if (n === undefined || n === null) return '';
-  return `${formatNumberFa(n)} تومان`;
+  return tx('{a1} تومان', { a1: formatNumberFa(n) });
 }
 
 const FA_UNITS = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
@@ -150,8 +163,9 @@ function chunkToWords(num: number): string {
 /** Converts an integer amount to readable Persian words: 1500000 -> "یک میلیون و پانصد هزار تومان" */
 export function tomanWords(n: number | undefined): string {
   if (n === undefined || n === null || !Number.isFinite(n)) return '';
+  if (lang() === 'en') return tx('{a1} تومان', { a1: formatNumberFa(n) });
   const val = Math.round(n);
-  if (val === 0) return 'صفر تومان';
+  if (val === 0) return tx('صفر تومان');
   const isNeg = val < 0;
   let remaining = Math.abs(val);
   const chunks: string[] = [];

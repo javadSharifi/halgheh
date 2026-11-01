@@ -3,12 +3,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Person, type Rule, type RuleBreak, db } from './db';
 import { fa, label, today } from './cal';
 import { Icon } from './Icon';
+import { Button, FormPage, FormSection, InputField } from './ui';
 import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { ask } from './confirm';
 import { STR } from './strings/rulebook';
 import { createBreak, deleteBreak } from './ruleData';
 import { breakCounts } from './domain/rules/breaks';
+import { tx } from './i18n';
+import { personLabel } from './format';
 
 /**
  * Part 1: record one time I broke a rule. Reached from the review session (the «یادم بود ولی رعایت نکردم» answer), from a
@@ -50,39 +53,53 @@ export function BreakSheet({ rule, seedPersonId, onClose, onSaved }: {
       onSaved?.();
       onClose();
     } catch {
-      setErr(STR.feature.saveFailed);
+      setErr(tx(STR.feature.saveFailed));
       setBusy(false);
     }
   };
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet break-sheet" role="dialog" aria-modal="true" aria-labelledby="break-title">
-        <div className="bf-head">
-          <span id="break-title">{STR.breaks.sheetTitleFor(rule.title)}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
-        </div>
+      <FormPage
+        title={tx(STR.breaks.sheetTitleFor(rule.title))}
+        icon="plus"
+        onClose={onClose}
+        onSave={() => void save(false)}
+        saveLabel={tx(STR.breaks.save)}
+        busy={busy}
+        error={err}
+      >
+        <FormSection>
+          <InputField
+            multiline
+            rows={3}
+            label={tx(STR.breaks.whatHappened)}
+            value={v.whatHappened}
+            maxLength={2000}
+            onChange={(e) => set({ whatHappened: e.target.value })}
+          />
 
-        <div className="pe-scroll">
-          <label className="bf-name bf-name-top">
-            <span>{STR.breaks.whatHappened}</span>
-            <textarea className="rf-text" value={v.whatHappened} maxLength={2000} onChange={(e) => set({ whatHappened: e.target.value })} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx(STR.breaks.whyBroke)}
+            value={v.whyBroke}
+            maxLength={2000}
+            onChange={(e) => set({ whyBroke: e.target.value })}
+          />
 
-          <label className="bf-name bf-name-top">
-            <span>{STR.breaks.whyBroke}</span>
-            <textarea className="rf-text" value={v.whyBroke} maxLength={2000} onChange={(e) => set({ whyBroke: e.target.value })} />
-          </label>
-
-          <label className="bf-name bf-name-top">
-            <span>{STR.breaks.nextTimePlan}</span>
-            <textarea className="rf-text" value={v.nextTimePlan} maxLength={2000} onChange={(e) => set({ nextTimePlan: e.target.value })} />
-          </label>
+          <InputField
+            multiline
+            rows={3}
+            label={tx(STR.breaks.nextTimePlan)}
+            value={v.nextTimePlan}
+            maxLength={2000}
+            onChange={(e) => set({ nextTimePlan: e.target.value })}
+          />
 
           <div className="rf-row">
             <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
-            <span className="rf-name">{STR.breaks.brokenOn}</span>
+            <span className="rf-name">{tx(STR.breaks.brokenOn)}</span>
             <button type="button" className="rf-value as-text" onClick={() => setPicking(true)}>
               {label(v.brokenOn, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' })}
               <Icon name="chevronLeft" size={16} stroke={2} />
@@ -91,30 +108,26 @@ export function BreakSheet({ rule, seedPersonId, onClose, onSaved }: {
 
           <div className="rf-row">
             <span className="tile purple" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
-            <span className="rf-name">{STR.breaks.person}</span>
+            <span className="rf-name">{tx(STR.breaks.person)}</span>
             <span className="rf-value">
-              {v.personId ? (personName(v.personId) ?? '…') : STR.breaks.personNone}
+              {v.personId ? (personName(v.personId) ?? '…') : tx(STR.breaks.personNone)}
               <Choice
                 className="pick-hit"
-                label={STR.breaks.person}
+                label={tx(STR.breaks.person)}
                 value={v.personId}
-                options={[['', STR.breaks.personNone], ...live.map((p: Person): [string, string] => [p.id, p.displayName])]}
+                options={[['', tx(STR.breaks.personNone)], ...live.map((p: Person): [string, string] => [p.id, personLabel(p)])]}
                 onChange={(id) => set({ personId: id })}
               />
             </span>
           </div>
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </div>
+        </FormSection>
 
-        <button className="primary" disabled={busy} onClick={() => void save(false)}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? 'در حال ذخیره…' : STR.breaks.save}
-        </button>
-        <button className="big-btn break-later" disabled={busy} onClick={() => void save(true)}>
-          <Icon name="clock" size={17} stroke={1.9} />{STR.breaks.later}
-        </button>
-        <p className="hint break-hint">{STR.breaks.savedEmpty}</p>
-      </section>
+        <Button variant="secondary" block disabled={busy} onClick={() => void save(true)} icon="clock">
+          {tx(STR.breaks.later)}
+        </Button>
+        <p className="hint break-hint">{tx(STR.breaks.savedEmpty)}</p>
+      </FormPage>
       {picking && <DatePicker value={v.brokenOn} onPick={(d) => { set({ brokenOn: d }); setPicking(false); }} onClose={() => setPicking(false)} />}
     </>
   );
@@ -134,7 +147,7 @@ export function BreakTimeline({ rule, breaks, onEdit, todayIso }: {
   const counts = breakCounts(breaks, rule.id, todayIso);
 
   const remove = async (b: RuleBreak) => {
-    if (!(await ask({ title: STR.breaks.deleteTitle, message: STR.breaks.deleteBody, confirm: STR.feature.delete, icon: 'trash' }))) return;
+    if (!(await ask({ title: tx(STR.breaks.deleteTitle), message: tx(STR.breaks.deleteBody), confirm: tx(STR.feature.delete), icon: 'trash' }))) return;
     await deleteBreak(b);
   };
 
@@ -143,35 +156,31 @@ export function BreakTimeline({ rule, breaks, onEdit, todayIso }: {
       <div className="rf-row break-counts-row">
         <span className="tile peach" aria-hidden="true"><Icon name="close" size={17} stroke={2.2} /></span>
         <span className="rf-name">
-          {STR.breaks.counts}
+          {tx(STR.breaks.counts)}
           <small className="set-sub">
-            {STR.breaks.d30}: {fa(counts.d30)} · {STR.breaks.d90}: {fa(counts.d90)} · {STR.breaks.allTime}: {fa(counts.all)}
+            {tx(STR.breaks.d30)}: {fa(counts.d30)} · {tx(STR.breaks.d90)}: {fa(counts.d90)} · {tx(STR.breaks.allTime)}: {fa(counts.all)}
           </small>
         </span>
         <button type="button" className="text-btn" onClick={() => setOpen((x) => !x)} aria-expanded={open}>
-          {STR.breaks.timeline}
+          {tx(STR.breaks.timeline)}
         </button>
       </div>
 
       {open && (
         <div className="rule-history break-timeline">
-          {breaks.length === 0 && <p className="hint">{STR.breaks.timelineEmpty}</p>}
+          {breaks.length === 0 && <p className="hint">{tx(STR.breaks.timelineEmpty)}</p>}
           {breaks.map((b) => (
             <div key={b.id} className="break-row">
               <div className="break-head">
                 <b>{label(b.brokenOn, 'persian', 0, { day: 'numeric', month: 'long', year: 'numeric' })}</b>
                 <span className="break-actions">
-                  <button className="icon-btn small" aria-label={STR.breaks.editTitle} onClick={() => onEdit(b)}>
-                    <Icon name="note" size={15} stroke={1.9} />
-                  </button>
-                  <button className="icon-btn small danger" aria-label={`${STR.feature.delete}: ${b.brokenOn}`} onClick={() => void remove(b)}>
-                    <Icon name="trash" size={15} stroke={2} />
-                  </button>
+                  <Button variant="ghost" size="icon-sm" aria-label={tx(STR.breaks.editTitle)} onClick={() => onEdit(b)} icon="note" />
+                  <Button variant="ghost" size="icon-sm" className="danger" aria-label={`${tx(STR.feature.delete)}: ${b.brokenOn}`} onClick={() => void remove(b)} icon="trash" />
                 </span>
               </div>
               {b.whatHappened && <p className="break-text">{b.whatHappened}</p>}
-              {b.whyBroke && <p className="break-text break-why"><span className="field-label">{STR.breaks.whyBroke}:</span> {b.whyBroke}</p>}
-              {b.nextTimePlan && <p className="break-text break-plan"><span className="field-label">{STR.breaks.nextTimePlan}:</span> {b.nextTimePlan}</p>}
+              {b.whyBroke && <p className="break-text break-why"><span className="field-label">{tx(STR.breaks.whyBroke)}:</span> {b.whyBroke}</p>}
+              {b.nextTimePlan && <p className="break-text break-plan"><span className="field-label">{tx(STR.breaks.nextTimePlan)}:</span> {b.nextTimePlan}</p>}
               {b.personId && <BreakPerson personId={b.personId} />}
               {/* the rule is only here so the counts above and the rows below read as one thing */}
               <span className="sr-only">{rule.title}</span>
@@ -186,5 +195,5 @@ export function BreakTimeline({ rule, breaks, onEdit, todayIso }: {
 function BreakPerson({ personId }: { personId: string }) {
   const person = useLiveQuery(() => db.people.get(personId), [personId]);
   if (!person) return null;
-  return <p className="break-person"><Icon name="users" size={12} stroke={2} />{person.displayName}</p>;
+  return <p className="break-person"><Icon name="users" size={12} stroke={2} />{personLabel(person)}</p>;
 }

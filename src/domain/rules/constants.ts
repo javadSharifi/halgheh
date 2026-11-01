@@ -1,3 +1,5 @@
+import { tk } from '../../i18n';
+
 /**
  * Every constant of the Rulebook logic, in one file (spec, phase 1). Pure: no UI, no Dexie, no date side effects.
  */
@@ -24,10 +26,10 @@ export type CheckState = (typeof CHECK_STATES)[number];
 
 /**
  * What the seed writes on a fresh install (or an upgrade with no categories). The last two compare purchases. The names
- * are here, not in the strings file, because they are content rows written by the data layer; `strings/rulebook.ts`
- * re-exports them for any screen that needs to show them.
+ * are here, not in the strings file, because they are content rows written by the data layer; screens show them
+ * through tx(), so a renamed category falls back to its own name.
  */
-export const SEED_CATEGORY_NAMES = ['زندگی', 'ارتباط', 'رابطه', 'پول', 'خرید ماشین', 'خرید موبایل'] as const;
+export const SEED_CATEGORY_NAMES = [tk('زندگی'), tk('ارتباط'), tk('رابطه'), tk('پول'), tk('خرید ماشین'), tk('خرید موبایل')] as const;
 /** Marks the one-time seed, so deleting every category does not bring the defaults back on the next start. */
 export const SEEDED_KEY = 'halgheh:rulebook-seeded';
 

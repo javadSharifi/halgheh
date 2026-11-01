@@ -1,28 +1,89 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { type Birthday, db, del, put, uid } from './db';
-import { CAL_NAMES, MONTHS, type Cal, fa, label, parts, today } from './cal';
-import { nextOccurrence } from './format';
+import { type Birthday, type Occasion, db, del, put, uid } from './db';
+import { CALS, CAL_NAMES, MONTHS, type Cal, fa, label, monthName, parts, today } from './cal';
+import { maxDay, nextOccurrence, toLatinDigits } from './format';
 import { ask } from './confirm';
 import { BirthdayFields, draftOf, emptyDraft, readDraft, rowOf } from './BirthdayFields';
+import { Choice } from './Choice';
 import { Icon } from './Icon';
-import { shareText } from './native';
+import { WishSheet } from './WishSheet';
+import { tn, tx } from './i18n';
+import { Card, Button, PageHead, FormPage, FormSection, InputField, Select } from './ui';
 
 // avatar colour (p0..p2 in the stylesheet), picked by name so a person keeps the same colour
 const paletteOf = (name: string) => [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 3;
 
-const congrats = (name: string) => `تولدت مبارک ${name}`;
-const smsHref = (phone: string, name: string) => `sms:${phone}?body=${encodeURIComponent(congrats(name))}`;
+/** The occasion form as typed: a group date, no year and no person. */
+type ODraft = { title: string; cal: Cal; month: number; day: string; remindLead: string; tagId: string };
+const emptyOccasion = (cal: Cal): ODraft => ({ title: '', cal, month: parts(today(), cal, 0).m, day: '', remindLead: '0', tagId: '' });
+const occasionDraft = (o: Occasion): ODraft => ({ title: o.title, cal: o.cal, month: o.month, day: fa(o.day), remindLead: String(o.remindLead ?? 0), tagId: o.tagId ?? '' });
 
-export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: string | null; onFocused?: () => void; openSearch: () => void }) {
+export function BirthdaysPage({ focusId, onFocused, openSearch, startAdd, onStarted }: { focusId?: string | null; onFocused?: () => void; openSearch: () => void; startAdd?: boolean; onStarted?: () => void }) {
   const mainCal: Cal = 'persian';
   const off = 0;
   const t = today();
   const bdays = useLiveQuery(() => db.birthdays.toArray(), []) ?? [];
   const [f, setF] = useState(() => emptyDraft(mainCal, parts(t, mainCal, off).m));
   const [editing, setEditing] = useState<Birthday | null>(null);
-  const formRef = useRef<HTMLElement>(null);
+  const [wish, setWish] = useState<Birthday | null>(null);
+  /** Which add/edit page is open; each is its own full-screen page, never an inline card. */
+  const [form, setForm] = useState<'bday' | 'occ' | null>(null);
+  const occs = useLiveQuery(() => db.occasions.toArray(), []) ?? [];
+  const tags = useLiveQuery(() => db.tags.toArray(), []) ?? [];
+  const [of, setOF] = useState<ODraft>(() => emptyOccasion(mainCal));
+  useEffect(() => {
+    if (!startAdd) return;
+    setForm('bday');
+    onStarted?.();
+  }, [startAdd, onStarted]);
+  const [editingOcc, setEditingOcc] = useState<Occasion | null>(null);
+  const occDated = useMemo(
+    () => occs.map((o) => ({ o, next: nextOccurrence(o, t, off) })).sort((x, y) => (x.next?.inDays ?? 1e6) - (y.next?.inDays ?? 1e6)),
+    [occs, t, off],
+  );
+  const tagName = (id?: string) => (id ? tags.find((x) => x.id === id)?.name : undefined);
+  const occDay = Number(toLatinDigits(of.day));
+  const occValid = of.title.trim() !== '' && Number.isInteger(occDay) && occDay >= 1 && occDay <= maxDay(of.cal, of.month);
+  const resetOcc = () => {
+    setForm(null);
+    setEditingOcc(null);
+    setOF(emptyOccasion(mainCal));
+  };
+  const saveOcc = async () => {
+    if (!occValid) return;
+    const lead = Number(of.remindLead);
+    await put('occasions', {
+      id: editingOcc?.id ?? uid(),
+      title: of.title.trim(),
+      cal: of.cal,
+      month: of.month,
+      day: occDay,
+      ...(lead > 0 && { remindLead: lead }),
+      ...(of.tagId && { tagId: of.tagId }),
+      updatedAt: Date.now(),
+    });
+    resetOcc();
+  };
+  const editOcc = (o: Occasion) => {
+    setEditingOcc(o);
+    setOF(occasionDraft(o));
+    setForm('occ');
+  };
+  const removeOcc = async () => {
+    if (editingOcc && (await ask({ title: tx('حذف مناسبت {a1}؟', { a1: editingOcc.title }), message: tx('این کار قابل بازگشت نیست.'), confirm: tx('حذف') }))) {
+      await del('occasions', editingOcc.id);
+      resetOcc();
+    }
+  };
 
+  // remindLead presets: the digest line appears this many days before the occasion (0 = only on the day)
+  const LEADS: [number, string][] = [
+    [0, tx('همان روز')],
+    [1, tx('{a1} روز قبل', { a1: fa(1) })],
+    [3, tx('{a1} روز قبل', { a1: fa(3) })],
+    [7, tx('{a1} روز قبل', { a1: fa(7) })],
+  ];
   const dated = useMemo(
     () => bdays.map((b) => ({ b, next: nextOccurrence(b, t, off) })).sort((x, y) => (x.next?.inDays ?? 1e6) - (y.next?.inDays ?? 1e6)),
     [bdays, t, off],
@@ -35,13 +96,14 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
     const key = p ? `${p.y}-${p.m}` : 'none';
     const last = acc[acc.length - 1];
     if (last?.key === key) last.items.push(x);
-    else acc.push({ key, title: x.next ? `${label(x.next.date, mainCal, off, { month: 'long' })} ${fa(p!.y)}` : 'بدون تاریخ', items: [x] });
+    else acc.push({ key, title: x.next ? `${label(x.next.date, mainCal, off, { month: 'long' })} ${fa(p!.y)}` : tx('بدون تاریخ'), items: [x] });
     return acc;
   }, []);
 
   const { valid } = readDraft(f);
 
   const reset = () => {
+    setForm(null);
     setEditing(null);
     setF(emptyDraft(mainCal, parts(t, mainCal, off).m));
   };
@@ -53,7 +115,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
   const edit = (b: Birthday) => {
     setEditing(b);
     setF(draftOf(b));
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setForm('bday');
   };
   // arriving from a search result: open that person for editing once
   useEffect(() => {
@@ -64,89 +126,178 @@ export function BirthdaysPage({ focusId, onFocused, openSearch }: { focusId?: st
     }
   }, [focusId, bdays]); // eslint-disable-line react-hooks/exhaustive-deps
   const remove = async () => {
-    if (editing && (await ask({ title: `حذف تولد ${editing.name}؟`, message: 'این کار قابل بازگشت نیست.', confirm: 'حذف' }))) {
+    if (editing && (await ask({ title: tx('حذف تولد {a1}؟', { a1: editing.name }), message: tx('این کار قابل بازگشت نیست.'), confirm: tx('حذف') }))) {
       await del('birthdays', editing.id);
       reset();
     }
   };
 
-  const age = (b: Birthday, date: string) => (b.year ? ` · ${fa(parts(date, b.cal, off).y - b.year)} سالگی` : '');
+  const age = (b: Birthday, date: string) => (b.year ? fa(parts(date, b.cal, off).y - b.year) : '');
   // "born 12 Aban 1380 · turns 25": the age is the one reached on the coming birthday
-  const born = (b: Birthday, date: string) => (b.year ? `متولد ${fa(b.day)} ${MONTHS[b.cal][b.month - 1]} ${fa(b.year).replace(/٬/g, '')} · ${fa(parts(date, b.cal, off).y - b.year)} ساله می‌شود` : '');
-  const phoneBtns = (b: Birthday) => b.phone && (
+  const born = (b: Birthday, date: string) =>
+    b.year
+      ? tx('متولد {a1} {a2} {a3} · {a4} ساله می‌شود', {
+          a1: fa(b.day),
+          a2: monthName(b.cal, b.month),
+          a3: fa(b.year).replace(/٬/g, ''),
+          a4: fa(parts(date, b.cal, off).y - b.year),
+        })
+      : '';
+  const phoneBtns = (b: Birthday) => (
     <>
-      <a className="icon-btn small" href={`tel:${b.phone}`} aria-label={`تماس با ${b.name}`}><Icon name="phone" size={17} stroke={1.9} /></a>
-      <a className="icon-btn small" href={smsHref(b.phone, b.name)} aria-label={`ارسال تبریک به ${b.name}`}><Icon name="gift" size={17} stroke={1.9} /></a>
+      {b.phone && <a className="icon-btn small" href={`tel:${b.phone}`} aria-label={tx('تماس با {a1}', { a1: b.name })}><Icon name="phone" size={17} stroke={1.9} /></a>}
+      <button className="icon-btn small" aria-label={tx('ارسال تبریک به {a1}', { a1: b.name })} onClick={() => setWish(b)}><Icon name="gift" size={17} stroke={1.9} /></button>
     </>
   );
   // the date as the person's own calendar writes it; for another calendar than the main one, the main date follows in brackets
-  const when = (b: Birthday, date: string) => {
+  const when = (b: { cal: Cal }, date: string) => {
     const own = label(date, b.cal, off, { day: 'numeric', month: 'long' });
     return b.cal === mainCal
-      ? `${label(date, mainCal, off, { weekday: 'long' })} ${own} · ${CAL_NAMES[b.cal]}`
-      : `${own} · ${CAL_NAMES[b.cal]} (${label(date, mainCal, off, { day: 'numeric', month: 'long' })})`;
+      ? `${label(date, mainCal, off, { weekday: 'long' })} ${own} · ${tx(CAL_NAMES[b.cal])}`
+      : `${own} · ${tx(CAL_NAMES[b.cal])} (${label(date, mainCal, off, { day: 'numeric', month: 'long' })})`;
   };
 
   return (
     <>
-      <div className="page-head">
-        <h1>تولدها</h1>
-        <button className="icon-btn" aria-label="جستجو در تولدها" onClick={openSearch}><Icon name="search" size={20} stroke={1.8} /></button>
-      </div>
+      <PageHead
+        title={tx('تولدها')}
+        tools={[
+          { icon: 'search', label: tx('جستجو در تولدها'), onClick: openSearch },
+          { icon: 'plus', label: tx('افزودن تولد'), onClick: () => setForm('bday'), primary: true },
+        ]}
+      />
 
       {todays.map(({ b }) => (
-        <section key={b.id} className="bday-today" aria-label="تولد امروز">
+        <section key={b.id} className="bday-today" aria-label={tx('تولد امروز')}>
           <span className="avatar xl" aria-hidden="true">{b.name.slice(0, 1)}</span>
           <div>
-            <em>امروز</em>
-            <b>{b.name}{age(b, t)}</b>
-            <span>{label(t, b.cal, off, { day: 'numeric', month: 'long' })} · تقویم {CAL_NAMES[b.cal]}</span>
+            <em>{tx('امروز')}</em>
+            <b><bdi>{b.year ? tx('{a1} · {a2} ساله', { a1: b.name, a2: age(b, t) }) : b.name}</bdi></b>
+            <span>{tx('{a1} · تقویم {a2}', { a1: label(t, b.cal, off, { day: 'numeric', month: 'long' }), a2: tx(CAL_NAMES[b.cal]) })}</span>
           </div>
-          {b.phone
-            ? <a className="icon-btn" href={smsHref(b.phone, b.name)} aria-label="ارسال تبریک"><Icon name="gift" size={19} stroke={1.9} /></a>
-            : <button className="icon-btn" aria-label="ارسال تبریک" onClick={() => shareText(congrats(b.name))}><Icon name="gift" size={19} stroke={1.9} /></button>}
+          {b.phone && <a className="icon-btn small" href={`tel:${b.phone}`} aria-label={tx('تماس با {a1}', { a1: b.name })}><Icon name="phone" size={17} stroke={1.9} /></a>}
+          <button className="icon-btn" aria-label={tx('ارسال تبریک')} onClick={() => setWish(b)}><Icon name="gift" size={19} stroke={1.9} /></button>
         </section>
       ))}
 
       {groups.length === 0 && (
         <section>
-          <h2 className="sec-title">به‌زودی</h2>
-          <div className="glass bday-list"><p className="hint empty">{bdays.length ? 'تولد دیگری در پیش نیست.' : 'هنوز تولدی ثبت نکرده‌اید.'}</p></div>
+          <h2 className="sec-title">{tx('به‌زودی')}</h2>
+          <Card variant="glass" className="bday-list">
+            <p className="hint empty">{bdays.length ? tx('تولد دیگری در پیش نیست.') : tx('هنوز تولدی ثبت نکرده‌اید.')}</p>
+          </Card>
         </section>
       )}
       {groups.map((g) => (
         <section key={g.key}>
-          <h2 className="sec-title">{g.title}<small>{fa(g.items.length)} تولد</small></h2>
-          <div className="glass bday-list">
+          <h2 className="sec-title">{g.title}<small>{tn('{n} تولد', g.items.length)}</small></h2>
+          <Card variant="glass" className="bday-list">
             {g.items.map(({ b, next }) => (
               <div key={b.id} className="bday-item">
-                <button className="bday-row" onClick={() => edit(b)} aria-label={`ویرایش ${b.name}`}>
+                <button className="bday-row" onClick={() => edit(b)} aria-label={tx('ویرایش {a1}', { a1: b.name })}>
                   <span className={`avatar p${paletteOf(b.name)}`} aria-hidden="true">{b.name.slice(0, 1)}</span>
                   <div>
-                    <b>{b.name}</b>
-                    <span>{next ? when(b, next.date) : `${CAL_NAMES[b.cal]}`}</span>
+                    <b><bdi>{b.name}</bdi></b>
+                    <span>{next ? when(b, next.date) : tx(CAL_NAMES[b.cal])}</span>
                     {next && b.year && <span>{born(b, next.date)}</span>}
                   </div>
-                  {next && <span className={`days-chip${next.inDays <= 7 ? ' near' : ''}`}>{fa(next.inDays)} روز</span>}
+                  {next && <span className={`days-chip${next.inDays <= 7 ? ' near' : ''}`}>{tn('{n} روز', next.inDays)}</span>}
                 </button>
                 {phoneBtns(b)}
               </div>
             ))}
-          </div>
+          </Card>
         </section>
       ))}
 
-      <section ref={formRef} className="glass bday-form" aria-label={editing ? 'ویرایش تولد' : 'افزودن تولد'}>
-        <div className="bf-head">
-          <span>{editing ? 'ویرایش تولد' : 'افزودن تولد'}</span>
-          <span className="inline-actions">
-            {editing && <button className="mini-btn" onClick={reset}>انصراف</button>}
-            <button className="mini-btn primary" disabled={!valid} onClick={save}>ذخیره</button>
-          </span>
-        </div>
-        <BirthdayFields d={f} set={(patch) => setF((x) => ({ ...x, ...patch }))} />
-        {editing && <button className="danger-btn" onClick={remove}>حذف این تولد</button>}
+      <section>
+        <h2 className="sec-title">{tx('مناسبت‌ها')}<small>{tn('{n} مورد', occDated.length)}</small>
+          <button type="button" className="text-btn" onClick={() => setForm('occ')}>{tx('افزودن مناسبت')}</button></h2>
+        <Card variant="glass" className="bday-list">
+          {occDated.length === 0 && <p className="hint empty">{tx('هنوز مناسبتی ثبت نشده است.')}</p>}
+          {occDated.map(({ o, next }) => (
+            <div key={o.id} className="bday-item">
+              <button className="bday-row" onClick={() => editOcc(o)} aria-label={tx('ویرایش {a1}', { a1: o.title })}>
+                <span className={`avatar p${paletteOf(o.title)}`} aria-hidden="true">{o.title.slice(0, 1)}</span>
+                <div>
+                  <b><bdi>{o.title}</bdi></b>
+                  <span>{next ? when(o, next.date) : tx(CAL_NAMES[o.cal])}</span>
+                  {tagName(o.tagId) && <span>{tagName(o.tagId)}</span>}
+                </div>
+                {next && <span className={`days-chip${next.inDays <= 7 ? ' near' : ''}`}>{tn('{n} روز', next.inDays)}</span>}
+              </button>
+            </div>
+          ))}
+        </Card>
       </section>
+
+      {form === 'occ' && (
+        <FormPage
+          title={editingOcc ? tx('ویرایش مناسبت') : tx('افزودن مناسبت')}
+          icon={editingOcc ? 'edit' : 'plus'}
+          onClose={resetOcc}
+          onSave={saveOcc}
+          saveDisabled={!occValid}
+          onDelete={editingOcc ? removeOcc : undefined}
+          deleteLabel={tx('حذف این مناسبت')}
+        >
+          <FormSection>
+            <InputField
+              label={tx('نام مناسبت')}
+              value={of.title}
+              onChange={(e) => setOF({ ...of, title: e.target.value })}
+            />
+            <div className="radios bf-cal-radios" role="radiogroup" aria-label={tx('نوع تقویم')}>
+              {CALS.map((c) => (
+                <button key={c} role="radio" aria-checked={of.cal === c} className={of.cal === c ? 'on' : ''} onClick={() => setOF({ ...of, cal: c })}>{tx(CAL_NAMES[c])}</button>
+              ))}
+            </div>
+            <InputField
+              label={tx('روز')}
+              inputMode="numeric"
+              value={of.day}
+              onChange={(e) => setOF({ ...of, day: e.target.value })}
+              error={of.day && !(occDay >= 1 && occDay <= maxDay(of.cal, of.month)) ? tx('روز این ماه باید بین ۱ و {a1} باشد.', { a1: fa(maxDay(of.cal, of.month)) }) : undefined}
+            />
+            <Select
+              label={tx('ماه')}
+              value={of.month}
+              onChange={(e) => setOF({ ...of, month: Number(e.target.value) })}
+              options={MONTHS[of.cal].map((_, i) => ({ value: i + 1, label: monthName(of.cal, i + 1) }))}
+            />
+            <Select
+              label={tx('یادآوری')}
+              value={of.remindLead}
+              onChange={(e) => setOF({ ...of, remindLead: e.target.value })}
+              options={LEADS.map(([value, name]) => ({ value, label: name }))}
+            />
+            <Select
+              label={tx('برچسب')}
+              value={of.tagId}
+              onChange={(e) => setOF({ ...of, tagId: e.target.value })}
+              options={[{ value: '', label: tx('همه') }, ...tags.map((tg) => ({ value: tg.id, label: tg.name }))]}
+            />
+          </FormSection>
+        </FormPage>
+      )}
+
+      {form === 'bday' && (
+        <FormPage
+          title={editing ? tx('ویرایش تولد') : tx('افزودن تولد')}
+          icon={editing ? 'edit' : 'plus'}
+          onClose={reset}
+          onSave={save}
+          saveDisabled={!valid}
+          onDelete={editing ? remove : undefined}
+          deleteLabel={tx('حذف این تولد')}
+        >
+          <FormSection>
+            <BirthdayFields d={f} set={(patch) => setF((x) => ({ ...x, ...patch }))} />
+          </FormSection>
+        </FormPage>
+      )}
+
+      {wish && <WishSheet name={wish.name} phone={wish.phone} personId={wish.personId} onClose={() => setWish(null)} />}
     </>
   );
 }

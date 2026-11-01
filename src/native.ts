@@ -5,11 +5,13 @@ import { Share } from '@capacitor/share';
 import { liveQuery } from 'dexie';
 import { fa, label, today } from './cal';
 import { db, exportAll } from './db';
+import { nextOccurrence } from './format';
 import { buildPlan } from './plan';
 import { taskReminders } from './reminders';
 import { listTodos } from './todoFilters';
 import { importAll } from './db';
 import { base64ToBytes, bytesToBase64, makeZip, readZip } from './zip';
+import { tx } from './i18n';
 
 export const isNative = Capacitor.isNativePlatform();
 
@@ -25,6 +27,7 @@ const Today = registerPlugin<{
     openCount: number;
     totalCount: number;
     tasks: string[];
+    upcoming: string[];
   }): Promise<void>;
   getWidgetAction(): Promise<{ quickTask: boolean }>;
 }>('Today');
@@ -39,7 +42,7 @@ export const biometric = {
 };
 export const setSecure = (on: boolean) => (isNative ? Today.setSecure({ on }).catch(() => {}) : undefined);
 
-export type NativePrefs = { remind: boolean };
+export type NativePrefs = { remind: boolean; hideNames: boolean };
 
 export async function askNotifications() {
   return (await LocalNotifications.requestPermissions()).display === 'granted';
@@ -49,7 +52,7 @@ export async function askNotifications() {
 const REMIND_HOUR = 8;
 const MAX_TASK_ALARMS = 150; // Android limits alarms per app; the rest are scheduled when the app is opened again
 
-async function push({ remind }: NativePrefs) {
+async function push({ remind, hideNames }: NativePrefs) {
   const plan = await buildPlan();
 
   const { notifications } = await LocalNotifications.getPending();
@@ -65,22 +68,24 @@ async function push({ remind }: NativePrefs) {
       // reminder of its own and belongs in the digest
       const lines = p.items.filter((i) => !i.r);
       if (!lines.length || at.getTime() <= now) continue;
+      // A birthday line carries a name; with hideNames the digest says only how many things are due.
+      const count = tx('{a1} مورد برای امروز', { a1: fa(lines.length) });
       planned.push({
         id: Number(date.replaceAll('-', '').slice(2)), // 261021: stable and unique per day
-        title: p.title,
-        body: lines.map((i) => i.t).join(' · '),
-        largeBody: lines.map((i) => i.t).join('\n'),
+        title: hideNames ? tx('یادآوری') : p.title,
+        body: hideNames ? count : lines.map((i) => i.t).join(' · '),
+        largeBody: hideNames ? count : lines.map((i) => i.t).join('\n'),
         at,
       });
     }
     const doneIds = new Set((await db.done.where('date').aboveOrEqual(today()).toArray()).map((d) => d.id));
     for (const r of taskReminders(await db.tasks.toArray(), doneIds, today(), 30, now, MAX_TASK_ALARMS)) {
-      planned.push({ id: r.id, title: r.title, body: r.body, largeBody: r.body, at: new Date(r.at) });
+      planned.push({ id: r.id, title: hideNames ? tx('یادآوری') : r.title, body: r.body, largeBody: r.body, at: new Date(r.at) });
     }
   }
   if (!planned.length) return;
 
-  await LocalNotifications.createChannel({ id: 'reminders', name: 'یادآوری', importance: 3 });
+  await LocalNotifications.createChannel({ id: 'reminders', name: tx('یادآوری'), importance: 3 });
   await LocalNotifications.schedule({
     notifications: planned.map(({ at, ...n }) => ({
       ...n,
@@ -103,16 +108,32 @@ export async function syncWidget() {
 
     const weekday = label(t, 'persian', 0, { weekday: 'long' });
     const dayMonth = label(t, 'persian', 0, { day: 'numeric', month: 'long' });
-    const fullDate = `${weekday}، ${dayMonth}`;
+    const fullDate = tx('{a1}، {a2}', { a1: weekday, a2: dayMonth });
 
-    let summary = 'کارهای امروز';
+    let summary = tx('کارهای امروز');
     if (todays.length > 0) {
       if (openTasks.length === 0) {
-        summary = 'همهٔ کارهای امروز انجام شدند!';
+        summary = tx('همهٔ کارهای امروز انجام شدند!');
       } else {
-        summary = `${fa(openTasks.length)} کار باقی‌مانده از ${fa(todays.length)} کار`;
+        summary = tx('{a1} کار باقی‌مانده از {a2} کار', { a1: fa(openTasks.length), a2: fa(todays.length) });
       }
     }
+
+    // The other widget lists what is coming: nearest birthdays and group occasions, three at most.
+    const [bdays, occs] = await Promise.all([db.birthdays.toArray(), db.occasions.toArray()]);
+    const soon: { title: string; inDays: number }[] = [];
+    for (const b of bdays) {
+      const n = nextOccurrence(b, t, 0);
+      if (n) soon.push({ title: tx('تولد {a1}', { a1: b.name }), inDays: n.inDays });
+    }
+    for (const o of occs) {
+      const n = nextOccurrence(o, t, 0);
+      if (n) soon.push({ title: tx('مناسبت {a1}', { a1: o.title }), inDays: n.inDays });
+    }
+    const upcoming = soon
+      .sort((a, b) => a.inDays - b.inDays)
+      .slice(0, 3)
+      .map((x) => (x.inDays === 0 ? x.title : tx('{a1} روز تا {a2}', { a1: fa(x.inDays), a2: x.title })));
 
     await Today.syncWidgetData({
       date: fullDate,
@@ -120,6 +141,7 @@ export async function syncWidget() {
       openCount: openTasks.length,
       totalCount: todays.length,
       tasks: openTasks.slice(0, 3).map((r) => r.task.title),
+      upcoming,
     }).catch(() => {});
   } catch (err) {
     console.error('Failed to sync widget:', err);
@@ -140,7 +162,7 @@ export function watchNative(prefs: NativePrefs) {
     }, 800);
   };
   const sub = liveQuery(() =>
-    Promise.all([db.tasks.toArray(), db.birthdays.toArray(), db.done.where('date').aboveOrEqual(today()).toArray()]),
+    Promise.all([db.tasks.toArray(), db.birthdays.toArray(), db.occasions.toArray(), db.done.where('date').aboveOrEqual(today()).toArray()]),
   ).subscribe({ next: run });
   document.addEventListener('visibilitychange', run); // re-plan on resume so the 30-day window keeps moving
   // Trigger initial widget sync right away
@@ -160,7 +182,7 @@ export async function shareBackup() {
     directory: Directory.Cache,
     encoding: Encoding.UTF8,
   });
-  await Share.share({ title: 'پشتیبان حلقه', url: uri });
+  await Share.share({ title: tx('پشتیبان حلقه'), url: uri });
 }
 
 /**
@@ -200,7 +222,7 @@ export async function shareBackupZip(): Promise<{ photos: number; missing: numbe
   const name = `halgheh-backup-${today()}.zip`;
   if (isNative) {
     const { uri } = await Filesystem.writeFile({ path: name, data: base64, directory: Directory.Cache });
-    await Share.share({ title: 'پشتیبان حلقه', url: uri });
+    await Share.share({ title: tx('پشتیبان حلقه'), url: uri });
   } else {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

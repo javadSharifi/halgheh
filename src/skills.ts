@@ -1,6 +1,7 @@
 import type { PersonSkill, Skill } from './db';
 import { fa, today } from './cal';
 import { normalize } from './search';
+import { locale, tx, tk } from './i18n';
 
 /**
  * R1 pure logic: the shared skill vocabulary and the evidence attached to one person's skill. No UI, no Dexie import.
@@ -9,10 +10,10 @@ import { normalize } from './search';
 export const STALE_MONTHS = 12;
 
 export const EVIDENCE_STATUS = [
-  ['verified', 'تأییدشده'],
-  ['seen', 'دیدم'],
-  ['claimed', 'ادعا'],
-  ['unknown', 'نامشخص'],
+  ['verified', tk('تأییدشده')],
+  ['seen', tk('دیدم')],
+  ['claimed', tk('ادعا')],
+  ['unknown', tk('نامشخص')],
 ] as const;
 
 export type EvidenceStatus = PersonSkill['evidenceStatus'];
@@ -42,7 +43,7 @@ export function isStale(s: Pick<PersonSkill, 'lastVerifiedAt'>, from = today()) 
 }
 
 /** Human text for the stale badge. */
-export const staleText = (from = today()) => `بیش از ${fa(STALE_MONTHS)} ماه است تأیید نشده`;
+export const staleText = (from = today()) => tx('بیش از {a1} ماه است تأیید نشده', { a1: fa(STALE_MONTHS) });
 
 /**
  * Keys used to match a typed name against the vocabulary. `normalize` drops ZWNJ and collapses nothing, so
@@ -63,7 +64,7 @@ export function findSkill(skills: Skill[], name: string): Skill | undefined {
 
 /** The vocabulary ordered for a picker: parents with their children directly under them. */
 export function skillTree(skills: Skill[]) {
-  const byName = (a: Skill, b: Skill) => a.name.localeCompare(b.name, 'fa');
+  const byName = (a: Skill, b: Skill) => a.name.localeCompare(b.name, locale());
   const roots = skills.filter((s) => !s.parentId || !skills.some((p) => p.id === s.parentId)).sort(byName);
   return roots.flatMap((r) => [r, ...skills.filter((s) => s.parentId === r.id).sort(byName)]);
 }
@@ -80,7 +81,7 @@ export function suggestSkills(skills: Skill[], q: string, limit = 6): Skill[] {
       return { s, score: name === k ? 0 : name.startsWith(k) ? 1 : name.includes(k) ? 2 : 3 };
     })
     .filter((x): x is { s: Skill; score: number } => !!x)
-    .sort((a, b) => a.score - b.score || a.s.name.localeCompare(b.s.name, 'fa'))
+    .sort((a, b) => a.score - b.score || a.s.name.localeCompare(b.s.name, locale()))
     .slice(0, limit)
     .map((x) => x.s);
 }
@@ -93,7 +94,7 @@ export function orderPersonSkills(rows: PersonSkill[], skills: Skill[]) {
     if (d) return d;
     const an = byId.get(a.skillId)?.name ?? '';
     const bn = byId.get(b.skillId)?.name ?? '';
-    return an.localeCompare(bn, 'fa') || (b.lastVerifiedAt ?? '').localeCompare(a.lastVerifiedAt ?? '');
+    return an.localeCompare(bn, locale()) || (b.lastVerifiedAt ?? '').localeCompare(a.lastVerifiedAt ?? '');
   });
 }
 

@@ -1,6 +1,8 @@
+import { lang, num, tk } from './i18n';
+
 export type Cal = 'persian' | 'gregory' | 'islamic';
 export const CALS: Cal[] = ['persian', 'gregory', 'islamic'];
-export const CAL_NAMES: Record<Cal, string> = { persian: 'شمسی', gregory: 'میلادی', islamic: 'قمری' };
+export const CAL_NAMES: Record<Cal, string> = { persian: tk('شمسی'), gregory: tk('میلادی'), islamic: tk('قمری') };
 // shortcut: umalqura (Saudi) can differ 1-2 days from Iran's official Hijri; the user-set offset covers it
 const ID: Record<Cal, string> = { persian: 'persian', gregory: 'gregory', islamic: 'islamic-umalqura' };
 
@@ -20,9 +22,20 @@ export const wd = (iso: string) => new Date(ms(iso)).getUTCDay(); // JS weekday,
  * ICU build without Persian digits and then renders "۴" as "4" — which is exactly what happened on the emulator.
  */
 const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
-export const fa = (n: number) => String(n).replace(/\d/g, (d) => FA_DIGITS[+d]);
+const EN_WD = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const FA_WD = ['ی', 'د', 'س', 'چ', 'پ', 'ج', 'ش'];
+/** Single-letter weekday header, by JS weekday (0 = Sunday). */
+export const wdInitial = (d: number) => (lang() === 'fa' ? FA_WD : EN_WD)[d];
+// Persian month and weekday names stay hand tables: an Android WebView with a cut-down ICU would fall back to English
+// names, the same failure that made digits come out latin. English comes from Intl.
+const FA_WEEK = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه']; // index = JS weekday
+const SUNDAY = '2024-01-07';
+/** Long weekday name by JS weekday (0 = Sunday). */
+export const wdName = (d: number) => (lang() === 'fa' ? FA_WEEK[d] : label(addDays(SUNDAY, d), 'gregory', 0, { weekday: 'long' }));
+/** Persian digits in fa, latin in en. Kept under the old name: ~30 files call it. */
+export const fa = (n: number) => num(n);
 
-const num = Object.fromEntries(
+const fmt = Object.fromEntries(
   CALS.map((c) => [c, new Intl.DateTimeFormat(`en-u-ca-${ID[c]}-nu-latn`, { timeZone: 'UTC' })]),
 ) as Record<Cal, Intl.DateTimeFormat>;
 
@@ -30,12 +43,32 @@ const shift = (iso: string, cal: Cal, off: number) => (cal === 'islamic' ? addDa
 
 export function parts(iso: string, cal: Cal, off = 0) {
   const p: Record<string, string> = {};
-  for (const x of num[cal].formatToParts(ms(shift(iso, cal, off)))) p[x.type] = x.value;
+  for (const x of fmt[cal].formatToParts(ms(shift(iso, cal, off)))) p[x.type] = x.value;
   return { y: +p.year, m: +p.month, d: +p.day };
 }
 
 export const label = (iso: string, cal: Cal, off: number, o: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat(`fa-u-ca-${ID[cal]}`, { ...o, timeZone: 'UTC' }).format(ms(shift(iso, cal, off)));
+  new Intl.DateTimeFormat(`${lang()}-u-ca-${ID[cal]}`, { ...o, timeZone: 'UTC' }).format(ms(shift(iso, cal, off)));
+
+// First day of a month in each calendar, used only to walk a full year and read the English month names out of Intl.
+const MONTH_SEED: Record<Cal, string> = { persian: '2020-03-21', gregory: '2020-01-01', islamic: '2020-08-20' };
+const enMonths: Partial<Record<Cal, string[]>> = {};
+function monthNames(cal: Cal) {
+  const cached = enMonths[cal];
+  if (cached) return cached;
+  const names: string[] = [];
+  for (let d = MONTH_SEED[cal], n = 0; n < 12; d = addDays(d, 1)) {
+    const m = parts(d, cal).m;
+    if (!names[m]) {
+      names[m] = label(d, cal, 0, { month: 'long' });
+      n++;
+    }
+  }
+  return (enMonths[cal] = names);
+}
+
+/** Month name for a 1-based month index in `cal`. */
+export const monthName = (cal: Cal, m: number) => (lang() === 'fa' ? MONTHS[cal][m - 1] : monthNames(cal)[m]);
 
 /** "۱۰ جمادی‌الاول ۱۴۴۸": day, month name and plain year (the locale's own year text adds an era suffix like "ه‍.ق."). */
 export const fullDate = (iso: string, cal: Cal, off = 0) =>

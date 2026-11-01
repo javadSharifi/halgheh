@@ -14,6 +14,7 @@ import {
   uid,
 } from './db';
 import { fa, today } from './cal';
+import { locale, tx } from './i18n';
 import { applyReview, newRuleSchedule } from './domain/rules/schedule';
 import { MAX_BOX } from './domain/rules/constants';
 
@@ -25,7 +26,7 @@ import { MAX_BOX } from './domain/rules/constants';
 // ---- ordering and labels ----
 
 /** Categories in the user's own order; the order is stored as `sortOrder`, never as an array position. */
-export const orderCategories = (cats: RuleCategory[]) => [...cats].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'fa'));
+export const orderCategories = (cats: RuleCategory[]) => [...cats].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, locale()));
 
 /** A category's next free order number, so a new one lands at the end. */
 export const nextOrder = (cats: RuleCategory[]) => (cats.length ? Math.max(...cats.map((c) => c.sortOrder)) + 1 : 0);
@@ -33,21 +34,21 @@ export const nextOrder = (cats: RuleCategory[]) => (cats.length ? Math.max(...ca
 /** Active rules, pinned first, then the ones that need attention soonest. Rules with no pin follow in due order. */
 export function orderRules(rules: Rule[]) {
   return [...rules].sort(
-    (a, b) => Number(!!b.pinned) - Number(!!a.pinned) || a.nextReviewOn.localeCompare(b.nextReviewOn) || a.title.localeCompare(b.title, 'fa'),
+    (a, b) => Number(!!b.pinned) - Number(!!a.pinned) || a.nextReviewOn.localeCompare(b.nextReviewOn) || a.title.localeCompare(b.title, locale()),
   );
 }
 
 /** "برای مرور", "فردا", "۳ روز دیگر", "۲ روز دیر". A date-only difference, so no clock is involved. */
 export function dueLabel(nextReviewOn: string, t = today()) {
   const diff = Math.round((Date.parse(`${nextReviewOn}T00:00:00Z`) - Date.parse(`${t}T00:00:00Z`)) / 86_400_000);
-  if (diff < 0) return `${fa(-diff)} روز دیر`;
-  if (diff === 0) return 'امروز';
-  if (diff === 1) return 'فردا';
-  return `${fa(diff)} روز دیگر`;
+  if (diff < 0) return tx('{a1} روز دیر', { a1: fa(-diff) });
+  if (diff === 0) return tx('امروز');
+  if (diff === 1) return tx('فردا');
+  return tx('{a1} روز دیگر', { a1: fa(diff) });
 }
 
 /** A rule's place in the Leitner scale, 1-based for humans: box 0 is "جعبهٔ ۱". */
-export const boxLabel = (box: number) => `جعبهٔ ${fa(Math.min(Math.max(box, 0), MAX_BOX) + 1)}`;
+export const boxLabel = (box: number) => tx('جعبهٔ {a1}', { a1: fa(Math.min(Math.max(box, 0), MAX_BOX) + 1) });
 
 /** The rule's own history, newest first (the screens show the latest few). */
 export const reviewsOf = async (ruleId: string) => (await db.ruleReviews.where('ruleId').equals(ruleId).toArray()).sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt));
@@ -181,7 +182,7 @@ export async function deleteCategory(cat: RuleCategory, rules: Rule[], choice: {
 
 export async function addSession(categoryId: string, title: string) {
   const now = Date.now();
-  const row: CompareSession = { id: uid(), categoryId, title: title.trim() || 'مقایسه', status: 'open', createdAt: now, updatedAt: now };
+  const row: CompareSession = { id: uid(), categoryId, title: title.trim() || tx('مقایسه'), status: 'open', createdAt: now, updatedAt: now };
   await put('compareSessions', row);
   return row;
 }
@@ -264,7 +265,7 @@ export async function deleteSession(session: CompareSession) {
 }
 
 /** "مرور بعدی" line for a rule; the archived case is spelled out rather than shown as a date that never comes. */
-export const nextReviewText = (rule: Rule, t = today()) => (rule.archivedAt ? 'بایگانی‌شده' : dueLabel(rule.nextReviewOn, t));
+export const nextReviewText = (rule: Rule, t = today()) => (rule.archivedAt ? tx('بایگانی‌شده') : dueLabel(rule.nextReviewOn, t));
 
 // ---- Part 1: the broken-rule log ----
 
@@ -378,4 +379,17 @@ export const itemsOfCheck = async (checkId: string) => db.ruleCheckItems.where('
 export async function deletePersonCheck(check: RuleCheck) {
   for (const i of await db.ruleCheckItems.where('checkId').equals(check.id).toArray()) await del('ruleCheckItems', i.id);
   await del('ruleChecks', check.id);
+}
+
+/** The one rule category shopping tasks compare against. Created on first use, and switched to comparison mode if it was not. */
+export const SHOPPING_CATEGORY = 'خرید';
+export async function ensureShoppingCategory(): Promise<RuleCategory> {
+  const cats = await db.ruleCategories.toArray();
+  const found = cats.find((c) => c.name === SHOPPING_CATEGORY);
+  if (!found) {
+    const made = await addCategory(cats, SHOPPING_CATEGORY);
+    return setCompareEnabled(made, true).then(() => ({ ...made, compareEnabled: true }));
+  }
+  if (!found.compareEnabled) await setCompareEnabled(found, true);
+  return { ...found, compareEnabled: true };
 }

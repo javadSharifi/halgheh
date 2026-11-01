@@ -12,9 +12,13 @@
     <script>
       // set the theme before the first paint so a dark phone never flashes light
       try {
-        var t = (JSON.parse(localStorage.getItem('halgheh:settings')) || {}).theme;
+        var s = JSON.parse(localStorage.getItem('halgheh:settings')) || {};
+        var t = s.theme;
         var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        // the language decides the reading direction, so it has to land before the first paint too
+        document.documentElement.lang = s.lang === 'en' ? 'en' : 'fa';
+        document.documentElement.dir = s.lang === 'en' ? 'ltr' : 'rtl';
       } catch (e) {}
     </script>
     <title>حلقه</title>

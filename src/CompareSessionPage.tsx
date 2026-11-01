@@ -10,9 +10,11 @@ import { addItem, deleteItem, deleteSession, itemsOf, saveItem, setCheck } from 
 import { differences as differencesOf, orderItems as orderByRules, parsePrice, statsFor, strictFailures, uncheckedCount } from './domain/compare';
 import { Toggle } from './Toggle';
 import type { CheckState } from './domain/rules/constants';
+import { tx } from './i18n';
+import { InputField, Button, Select, FormPage, FormSection } from './ui';
 
 /** Formats a price in Toman with Persian digits; a missing price is "ثبت نشده"-style silence, never a zero. */
-export const priceText = (price: number | undefined) => (price === undefined ? '' : `${fa(price)} ${STR.compare.priceUnit}`);
+export const priceText = (price: number | undefined) => (price === undefined ? '' : `${fa(price)} ${tx(STR.compare.priceUnit)}`);
 
 /**
  * Phase 5: the comparison session. Items, their counts, the quick-check walk, the matrix, the two-item comparison and the
@@ -54,11 +56,11 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
     return (
       <>
         <header className="dd-head">
-          <button className="icon-btn" aria-label={STR.feature.close} onClick={onBack}><Icon name="chevronRight" /></button>
-          <span>{STR.compare.title}</span>
+          <button className="icon-btn" aria-label={tx(STR.feature.close)} onClick={onBack}><Icon name="chevronRight" /></button>
+          <span>{tx(STR.compare.title)}</span>
           <span className="head-spacer" />
         </header>
-        <p className="hint">{STR.compare.noSessions}</p>
+        <p className="hint">{tx(STR.compare.noSessions)}</p>
       </>
     );
   }
@@ -75,92 +77,106 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
   };
 
   const removeItem = async (item: CompareItem) => {
-    const ok = await ask({ title: STR.compare.deleteItemTitle(item.name), message: STR.compare.deleteItemBody, confirm: STR.feature.delete, icon: 'trash' });
+    const ok = await ask({ title: tx(STR.compare.deleteItemTitle(item.name)), message: tx(STR.compare.deleteItemBody), confirm: tx(STR.feature.delete), icon: 'trash' });
     if (ok) await deleteItem(item);
+    return ok;
   };
+
+  const decided = session.status === 'decided';
+  const stats = new Map(ordered.map((i) => [i.id, statsFor(i.id, rulesOf, myChecks)]));
+  // the first card is the best only when it really passes something and breaks no red line
+  const topId = ordered[0] && (stats.get(ordered[0].id)?.pass ?? 0) > 0 && strictFailures(ordered[0].id, rulesOf, myChecks).length === 0 ? ordered[0].id : null;
 
   return (
     <>
-      <header className="dd-head">
-        <button className="icon-btn" aria-label={STR.feature.close} onClick={onBack}><Icon name="chevronRight" /></button>
-        <span>{session.title}</span>
-        <button className="icon-btn" aria-label={STR.compare.matrix} onClick={() => setMatrix(true)}><Icon name="toolbox" size={19} stroke={1.9} /></button>
-      </header>
+      <FormPage title={session.title} icon="contrast" onClose={onBack}>
+        {decided && chosen && (
+          <section className="cmp-decided">
+            <span className="cmp-decided-icon" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.9} /></span>
+            <div>
+              <b>{chosen.name}</b>
+              <span>{tx(STR.compare.chosen)}{session.decisionNote ? ` · ${session.decisionNote}` : ''}</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={async () => { const { reopen } = await import('./ruleData'); await reopen(session); }}>{tx(STR.compare.reopen)}</Button>
+          </section>
+        )}
 
-      {session.status === 'decided' && chosen && (
-        <section className="glass decided-card">
-          <span className="tile green" aria-hidden="true"><Icon name="checkCircle" size={20} stroke={1.9} /></span>
-          <div>
-            <b>{chosen.name}</b>
-            <span className="set-sub">{STR.compare.chosen}{session.decisionNote ? ` · ${session.decisionNote}` : ''}</span>
-          </div>
-          <button className="text-btn" onClick={async () => { const { reopen } = await import('./ruleData'); await reopen(session); }}>{STR.compare.reopen}</button>
-        </section>
-      )}
+        {rulesOf.length === 0 && <p className="cmp-warn"><Icon name="info" size={16} stroke={2} />{tx(STR.compare.noRules)}</p>}
 
-      <section className="glass rule-quick">
-        <label className="rule-quick-field">
-          <Icon name="plus" size={16} stroke={2.2} />
-          <input
+        <FormSection title={tx(STR.compare.addItem)} icon="plus">
+          <InputField
             value={quickName}
             maxLength={120}
-            placeholder={STR.compare.itemNamePlaceholder}
-            aria-label={STR.compare.addItem}
+            placeholder={tx(STR.compare.itemNamePlaceholder)}
+            aria-label={tx(STR.compare.addItem)}
             onChange={(e) => setQuickName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void addQuick(); }}
             enterKeyHint="done"
           />
-        </label>
-        <button className="mini-btn" disabled={!quickName.trim()} onClick={() => void addQuick()}>{STR.compare.addItem}</button>
-      </section>
+          <Button variant="primary" block icon="plus" disabled={!quickName.trim()} onClick={() => void addQuick()}>{tx(STR.compare.addItem)}</Button>
+        </FormSection>
 
-      {ordered.length === 0 && <p className="hint empty">{STR.compare.noItems}</p>}
-
-      <div className="glass compare-list">
-        {ordered.map((item) => {
-          const st = statsFor(item.id, rulesOf, myChecks);
-          const strict = strictFailures(item.id, rulesOf, myChecks);
-          return (
-            <div key={item.id} className={`compare-item${strict.length ? ' flagged' : ''}`}>
-              <button className="ci-open" onClick={() => setEditing(item)}>
-                <span className="ci-name">{item.name}</span>
-                <span className="ci-meta">
-                  {[item.shopName, priceText(item.price), item.seenOn !== today() ? label(item.seenOn, 'persian', 0, { day: 'numeric', month: 'long' }) : ''].filter(Boolean).join(' · ')}
-                </span>
-                <span className="ci-counts">
-                  <em className="ci-pass"><Icon name="check" size={12} stroke={3} />{STR.compare.checkedOf(st.pass, st.total)}</em>
-                  {st.fail > 0 && <em className="ci-fail"><Icon name="close" size={12} stroke={3} />{STR.compare.failedCount(st.fail)}</em>}
-                  {st.unknown > 0 && <em className="ci-unknown"><Icon name="info" size={12} stroke={2.2} />{STR.compare.unknownCount(st.unknown)}</em>}
-                </span>
-                {strict.length > 0 && (
-                  <span className="ci-strict"><Icon name="target" size={12} stroke={2.2} />{STR.compare.strictFail}</span>
-                )}
-              </button>
-              <div className="ci-actions">
-                <button className="icon-btn small" aria-label={`${STR.compare.checkMode}: ${item.name}`} onClick={() => onOpenCheck(item.id)}>
-                  <Icon name="listChecks" size={17} stroke={1.9} />
-                </button>
-                <button className="icon-btn small" aria-label={`${STR.compare.decide}: ${item.name}`} onClick={() => setDecideFor(item)}>
-                  <Icon name="target" size={17} stroke={1.9} />
-                </button>
-                <button className="icon-btn small danger" aria-label={`${STR.feature.delete} ${item.name}`} onClick={() => void removeItem(item)}>
-                  <Icon name="trash" size={16} stroke={2} />
-                </button>
-              </div>
+        {ordered.length === 0 ? (
+          <p className="hint empty">{tx(STR.compare.noItems)}</p>
+        ) : (
+          <>
+            <div className="cmp-summary">
+              <b>{tx('{a1} کالا', { a1: fa(ordered.length) })}</b>
+              <span>{tx('{a1} قانون', { a1: fa(rulesOf.length) })}</span>
+              <span className="cmp-legend"><i className="pass" />{tx(STR.compare.pass)}<i className="fail" />{tx(STR.compare.fail)}<i className="unknown" />{tx(STR.compare.unknown)}</span>
             </div>
-          );
-        })}
-      </div>
 
-      <div className="set-actions compare-actions">
-        <button disabled={mine.length < 2} onClick={() => setTwo(true)}><Icon name="contrast" size={17} stroke={1.9} />{STR.compare.compareTwo}</button>
-        <button className="danger-btn" onClick={async () => {
-          const ok = await ask({ title: STR.compare.deleteSessionTitle(session.title), message: STR.compare.deleteSessionBody, confirm: STR.feature.delete, icon: 'trash' });
+            {ordered.map((item, idx) => {
+              const st = stats.get(item.id)!;
+              const strict = strictFailures(item.id, rulesOf, myChecks);
+              const pct = (n: number) => (st.total ? `${(n / st.total) * 100}%` : '0%');
+              const meta = [item.shopName, priceText(item.price), item.seenOn !== today() ? label(item.seenOn, 'persian', 0, { day: 'numeric', month: 'long' }) : ''].filter(Boolean).join(' · ');
+              return (
+                <article key={item.id} className={`cmp-card${strict.length ? ' flagged' : ''}${item.id === topId ? ' top' : ''}${decided && item.id === session.chosenItemId ? ' chosen' : ''}`}>
+                  <button type="button" className="cmp-card-main" onClick={() => setEditing(item)} aria-label={`${tx(STR.compare.itemDetails)}: ${item.name}`}>
+                    <span className="cmp-rank" aria-hidden="true">{fa(idx + 1)}</span>
+                    <span className="cmp-card-text">
+                      <span className="cmp-name">{item.name}</span>
+                      {meta && <span className="cmp-meta">{meta}</span>}
+                    </span>
+                    {item.id === topId && <span className="cmp-best">{tx('بهترین فعلی')}</span>}
+                    <Icon name="chevronLeft" size={16} stroke={2} />
+                  </button>
+
+                  <div className="cmp-bar" role="img" aria-label={tx(STR.compare.checkedOf(st.pass, st.total))}>
+                    <i className="pass" style={{ width: pct(st.pass) }} />
+                    <i className="fail" style={{ width: pct(st.fail) }} />
+                    <i className="unknown" style={{ width: pct(st.unknown) }} />
+                  </div>
+                  <div className="cmp-counts">
+                    <span className="pass"><Icon name="check" size={12} stroke={3} />{fa(st.pass)}</span>
+                    <span className="fail"><Icon name="close" size={12} stroke={3} />{fa(st.fail)}</span>
+                    <span className="unknown"><Icon name="info" size={12} stroke={2.4} />{fa(st.unknown)}</span>
+                    {strict.length > 0 && <span className="cmp-strict"><Icon name="target" size={12} stroke={2.2} />{tx(STR.compare.strictFail)}</span>}
+                  </div>
+
+                  <div className="cmp-card-actions">
+                    <Button size="sm" variant={st.unknown > 0 ? 'primary' : 'secondary'} icon="listChecks" onClick={() => onOpenCheck(item.id)}>
+                      {st.unknown > 0 ? tx(STR.compare.checkMode) : tx('بازبینی')}
+                    </Button>
+                    <Button size="sm" variant="secondary" icon="target" onClick={() => setDecideFor(item)}>{tx(STR.compare.decide)}</Button>
+                  </div>
+                </article>
+              );
+            })}
+
+            <FormSection title={tx('مقایسهٔ کامل')} icon="contrast">
+              <Button block icon="toolbox" disabled={rulesOf.length === 0} onClick={() => setMatrix(true)}>{tx(STR.compare.matrixTitle)}</Button>
+              <Button block icon="contrast" disabled={ordered.length < 2} onClick={() => setTwo(true)}>{tx(STR.compare.compareTwo)}</Button>
+            </FormSection>
+          </>
+        )}
+
+        <Button variant="danger" block icon="trash" onClick={async () => {
+          const ok = await ask({ title: tx(STR.compare.deleteSessionTitle(session.title)), message: tx(STR.compare.deleteSessionBody), confirm: tx(STR.feature.delete), icon: 'trash' });
           if (ok) { await deleteSession(session); onBack(); }
-        }}><Icon name="trash" size={16} stroke={2} />{STR.feature.delete}</button>
-      </div>
-
-      {changesHint(rulesOf.length)}
+        }}>{tx('حذف این مقایسه')}</Button>
+      </FormPage>
 
       {editing && (
         <ItemSheet
@@ -170,6 +186,7 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
           rules={rulesOf}
           checks={myChecks}
           onCheck={(id) => { setEditing(null); onOpenCheck(id); }}
+          onDelete={editing !== 'new' ? async () => { const gone = editing; if (await removeItem(gone)) setEditing(null); } : undefined}
           onClose={() => setEditing(null)}
         />
       )}
@@ -182,16 +199,17 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
 
 function changesHint(ruleCount: number) {
   if (ruleCount > 0) return null;
-  return <p className="hint">{STR.compare.noRules}</p>;
+  return <p className="hint">{tx(STR.compare.noRules)}</p>;
 }
 
 /** Item details: name, shop, price, seen-on date and note. The quick-check entry lives here too. */
-function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
+function ItemSheet({ item, session, rules, checks, onCheck, onDelete, onClose }: {
   item: CompareItem | null;
   session: CompareSession;
   rules: Rule[];
   checks: CompareCheck[];
   onCheck: (id: string) => void;
+  onDelete?: () => void;
   onClose: () => void;
 }) {
   const [v, setV] = useState(() => ({
@@ -217,66 +235,78 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
       else await addItem(session, patch);
       onClose();
     } catch {
-      setErr(STR.feature.saveFailed);
+      setErr(tx(STR.feature.saveFailed));
       setBusy(false);
     }
   };
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet item-sheet" role="dialog" aria-modal="true" aria-labelledby="item-sheet-title">
-        <div className="bf-head">
-          <span id="item-sheet-title">{item ? STR.compare.itemDetails : STR.compare.addItem}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
-        </div>
+      <FormPage
+        title={item ? tx(STR.compare.itemDetails) : tx(STR.compare.addItem)}
+        icon={item ? 'edit' : 'plus'}
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={item ? tx(STR.feature.save) : tx('ثبت')}
+        saveDisabled={!valid}
+        busy={busy}
+        error={err}
+        onDelete={onDelete}
+        deleteLabel={tx('حذف این کالا')}
+      >
+        <FormSection>
+          <InputField
+            label={tx(STR.feature.ruleTitle)}
+            autoFocus
+            value={v.name}
+            maxLength={120}
+            onChange={(e) => set({ name: e.target.value })}
+            placeholder={tx(STR.compare.itemNamePlaceholder)}
+            enterKeyHint="done"
+          />
 
-        <label className={`bf-name${!valid && v.name !== '' ? ' bad' : ''}`}>
-          <span>{STR.feature.ruleTitle}</span>
-          <input autoFocus value={v.name} maxLength={120} onChange={(e) => set({ name: e.target.value })} placeholder={STR.compare.itemNamePlaceholder} enterKeyHint="done" />
-        </label>
+          <InputField
+            label={`${tx(STR.compare.shop)} (${tx(STR.compare.optional)})`}
+            value={v.shopName}
+            maxLength={80}
+            onChange={(e) => set({ shopName: e.target.value })}
+          />
 
-        <label className="bf-name">
-          <span>{STR.compare.shop} ({STR.compare.optional})</span>
-          <input value={v.shopName} maxLength={80} onChange={(e) => set({ shopName: e.target.value })} />
-        </label>
+          <InputField
+            label={tx(STR.compare.price)}
+            hint={tx(STR.compare.priceUnit)}
+            dir="ltr"
+            inputMode="numeric"
+            value={v.price}
+            onChange={(e) => set({ price: e.target.value })}
+            placeholder="0"
+          />
 
-        <div className="rf-row">
-          <span className="tile peach" aria-hidden="true"><Icon name="tag" size={17} stroke={1.9} /></span>
-          <span className="rf-name">{STR.compare.price}</span>
-          <span className="rf-value">
-            <input className="price-input" dir="ltr" inputMode="numeric" value={v.price} onChange={(e) => set({ price: e.target.value })} aria-label={STR.compare.price} placeholder="0" />
-            <em className="price-unit">{STR.compare.priceUnit}</em>
-          </span>
-        </div>
+          <div className="rf-row">
+            <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
+            <span className="rf-name">{tx(STR.compare.seenOn)}</span>
+            <button type="button" className="rf-value as-text" onClick={() => setPicking(true)}>
+              {label(v.seenOn, 'persian', 0, { day: 'numeric', month: 'long' })}
+              <Icon name="chevronLeft" size={16} stroke={2} />
+            </button>
+          </div>
 
-        <div className="rf-row">
-          <span className="tile blue" aria-hidden="true"><Icon name="calendar" size={17} stroke={1.9} /></span>
-          <span className="rf-name">{STR.compare.seenOn}</span>
-          <button type="button" className="rf-value as-text" onClick={() => setPicking(true)}>
-            {label(v.seenOn, 'persian', 0, { day: 'numeric', month: 'long' })}
-            <Icon name="chevronLeft" size={16} stroke={2} />
-          </button>
-        </div>
-
-        <label className="bf-name bf-name-top">
-          <span>{STR.compare.note} ({STR.compare.optional})</span>
-          <textarea className="rf-text" value={v.note} maxLength={1000} onChange={(e) => set({ note: e.target.value })} />
-        </label>
-
-        {err && <p className="form-error" role="alert">{err}</p>}
-
-        <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? 'در حال ذخیره…' : STR.feature.save}
-        </button>
+          <InputField
+            label={`${tx(STR.compare.note)} (${tx(STR.compare.optional)})`}
+            multiline
+            rows={3}
+            value={v.note}
+            maxLength={1000}
+            onChange={(e) => set({ note: e.target.value })}
+          />
+        </FormSection>
 
         {item && (
-          <button className="text-btn item-check-link" onClick={() => onCheck(item.id)}>
-            <Icon name="listChecks" size={15} stroke={1.9} />
-            {STR.compare.checkMode} · {STR.compare.checkProgress(rules.length - uncheckedCount(item.id, rules, checks), rules.length)}
-          </button>
+          <Button variant="ghost" block icon="listChecks" onClick={() => onCheck(item.id)}>
+            {tx(STR.compare.checkMode)} · {tx(STR.compare.checkProgress(rules.length - uncheckedCount(item.id, rules, checks), rules.length))}
+          </Button>
         )}
-      </section>
+      </FormPage>
       {picking && <DatePicker value={v.seenOn} onPick={(d) => { set({ seenOn: d }); setPicking(false); }} onClose={() => setPicking(false)} />}
     </>
   );
@@ -284,12 +314,12 @@ function ItemSheet({ item, session, rules, checks, onCheck, onClose }: {
 
 const stateIcon = (s: CheckState) => (s === 'pass' ? 'check' : s === 'fail' ? 'close' : 'info');
 const stateClass = (s: CheckState) => (s === 'pass' ? 'pass' : s === 'fail' ? 'fail' : 'unknown');
-const stateLabel = (s: CheckState) => (s === 'pass' ? STR.compare.pass : s === 'fail' ? STR.compare.fail : STR.compare.unknown);
+const stateLabel = (s: CheckState) => (s === 'pass' ? tx(STR.compare.pass) : s === 'fail' ? tx(STR.compare.fail) : tx(STR.compare.unknown));
 /** The matrix's tap order. `unknown` is a real state, so it is reachable in the cycle instead of being skipped. */
 const nextState = (s: CheckState): CheckState => (s === 'pass' ? 'fail' : s === 'fail' ? 'unknown' : 'pass');
 
 /** The matrix: rules as rows, items as columns, horizontal scroll inside its own container, sticky rule column. */
-function MatrixSheet({ session, items, rules, checks, onClose }: {
+function MatrixSheet({ items, rules, checks, onClose }: {
   session: CompareSession;
   items: CompareItem[];
   rules: Rule[];
@@ -297,75 +327,66 @@ function MatrixSheet({ session, items, rules, checks, onClose }: {
   onClose: () => void;
 }) {
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet matrix-sheet" role="dialog" aria-modal="true" aria-labelledby="matrix-title">
-        <div className="bf-head">
-          <span id="matrix-title">{STR.compare.matrixTitle}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
-        </div>
-
-        <div className="matrix-wrap" role="group" aria-label={STR.compare.matrixTitle} tabIndex={0}>
-          <table className="matrix">
-            <thead>
-              <tr>
-                <th className="mx-rule-col" scope="col">{STR.feature.ruleTitle}</th>
-                {items.map((it) => <th key={it.id} scope="col" title={it.name}>{it.name}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((rule) => (
-                <tr key={rule.id}>
-                  <th scope="row" className="mx-rule-col">
-                    {rule.title}
-                    {rule.strict && <em className="rule-chip strict">{STR.feature.strict}</em>}
-                  </th>
-                  {items.map((it) => {
-                    const c = checks.find((x) => x.itemId === it.id && x.ruleId === rule.id);
-                    const s: CheckState = c?.state ?? 'unknown';
-                    // A single check can be changed from the matrix: tapping cycles pass -> fail -> unknown -> pass, so
-                    // one hand can correct a wrong tap without leaving the overview.
-                    return (
-                      <td key={it.id}>
-                        <button
-                          className={`mx-state ${stateClass(s)}`}
-                          aria-label={`${it.name}، ${rule.title}: ${stateLabel(s)}`}
-                          title={stateLabel(s)}
-                          onClick={() => void setCheck(it.id, rule.id, nextState(s))}
-                        >
-                          <Icon name={stateIcon(s)} size={15} stroke={2.4} />
-                        </button>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <th scope="row" className="mx-rule-col">{STR.compare.matrixSummary}</th>
+    <FormPage title={tx(STR.compare.matrixTitle)} icon="toolbox" onClose={onClose}>
+      <p className="hint">{tx('روی هر خانه بزن تا وضعیتش عوض شود: رعایت، نقض، بررسی نشده.')}</p>
+      <div className="matrix-wrap" role="group" aria-label={tx(STR.compare.matrixTitle)} tabIndex={0}>
+        <table className="matrix">
+          <thead>
+            <tr>
+              <th className="mx-rule-col" scope="col">{tx(STR.feature.ruleTitle)}</th>
+              {items.map((it) => <th key={it.id} scope="col" title={it.name}>{it.name}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rules.map((rule) => (
+              <tr key={rule.id}>
+                <th scope="row" className="mx-rule-col">
+                  <bdi>{rule.title}</bdi>
+                  {rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}
+                </th>
                 {items.map((it) => {
-                  const st = statsFor(it.id, rules, checks);
+                  const c = checks.find((x) => x.itemId === it.id && x.ruleId === rule.id);
+                  const s: CheckState = c?.state ?? 'unknown';
                   return (
-                    <td key={it.id} className="mx-sum">
-                      <b>{fa(st.pass)}</b>
-                      <span>{STR.compare.failedCount(st.fail)}</span>
-                      <span>{STR.compare.unknownCount(st.unknown)}</span>
+                    <td key={it.id}>
+                      <button
+                        className={`mx-state ${stateClass(s)}`}
+                        aria-label={tx('{a1}، {a2}: {a3}', { a1: it.name, a2: rule.title, a3: stateLabel(s) })}
+                        title={stateLabel(s)}
+                        onClick={() => void setCheck(it.id, rule.id, nextState(s))}
+                      >
+                        <Icon name={stateIcon(s)} size={15} stroke={2.4} />
+                      </button>
                     </td>
                   );
                 })}
               </tr>
-            </tfoot>
-          </table>
-        </div>
-        <p className="hint matrix-hint">{STR.compare.unknownNotZero}</p>
-        <p className="hint matrix-hint">{STR.compare.archivedHidden}</p>
-      </section>
-    </>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" className="mx-rule-col">{tx(STR.compare.matrixSummary)}</th>
+              {items.map((it) => {
+                const st = statsFor(it.id, rules, checks);
+                return (
+                  <td key={it.id} className="mx-sum">
+                    <b>{fa(st.pass)}</b>
+                    <span>{tx(STR.compare.failedCount(st.fail))}</span>
+                    <span>{tx(STR.compare.unknownCount(st.unknown))}</span>
+                  </td>
+                );
+              })}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p className="hint">{tx(STR.compare.unknownNotZero)}</p>
+      <p className="hint">{tx(STR.compare.archivedHidden)}</p>
+    </FormPage>
   );
 }
 
-/** Two items side by side, with the «فقط تفاوت‌ها» switch. */
+/** Two items head to head: who wins on how many rules, then each differing rule as a small card. */
 function TwoSheet({ items, rules, checks, onClose }: {
   items: CompareItem[];
   rules: Rule[];
@@ -380,67 +401,58 @@ function TwoSheet({ items, rules, checks, onClose }: {
   const diffs = a && b ? differencesOf(a.id, b.id, rules, checks, onlyDiff) : [];
   const stA = a ? statsFor(a.id, rules, checks) : null;
   const stB = b ? statsFor(b.id, rules, checks) : null;
+  const winsA = diffs.filter((d) => d.a === 'pass' && d.b !== 'pass').length;
+  const winsB = diffs.filter((d) => d.b === 'pass' && d.a !== 'pass').length;
+  const opts = items.map((i) => ({ value: i.id, label: i.name }));
 
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet two-sheet" role="dialog" aria-modal="true" aria-labelledby="two-title">
-        <div className="bf-head">
-          <span id="two-title">{STR.compare.compareTwoTitle}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
-        </div>
+    <FormPage title={tx(STR.compare.compareTwoTitle)} icon="contrast" onClose={onClose}>
+      <FormSection>
+        <Select label={tx(STR.compare.columnA)} value={aId} onChange={(e) => setAId(e.target.value)} options={opts} />
+        <Select label={tx(STR.compare.columnB)} value={bId} onChange={(e) => setBId(e.target.value)} options={opts} />
+      </FormSection>
 
-        <div className="two-pickers">
-          {[{ label: STR.compare.columnA, value: aId, set: setAId }, { label: STR.compare.columnB, value: bId, set: setBId }].map(({ label, value, set }) => (
-            <label key={label} className="two-pick">
-              <span>{label}</span>
-              <select value={value} onChange={(e) => set(e.target.value)} aria-label={label}>
-                {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-              </select>
-            </label>
+      {a && b && stA && stB && (
+        <section className="cmp-vs">
+          {[{ it: a, st: stA, wins: winsA }, { it: b, st: stB, wins: winsB }].map(({ it, st, wins }, i) => (
+            <div key={it.id + i} className={`cmp-vs-col${wins > (i === 0 ? winsB : winsA) ? ' lead' : ''}`}>
+              <b>{it.name}</b>
+              {it.price !== undefined && <span>{priceText(it.price)}</span>}
+              <span className="cmp-vs-wins">{tx('{a1} برتری', { a1: fa(wins) })}</span>
+              <span className="cmp-counts">
+                <span className="pass"><Icon name="check" size={12} stroke={3} />{fa(st.pass)}</span>
+                <span className="fail"><Icon name="close" size={12} stroke={3} />{fa(st.fail)}</span>
+                <span className="unknown"><Icon name="info" size={12} stroke={2.4} />{fa(st.unknown)}</span>
+              </span>
+            </div>
           ))}
-        </div>
+        </section>
+      )}
 
-        <div className="rf-row">
-          <span className="tile blue" aria-hidden="true"><Icon name="contrast" size={17} stroke={1.9} /></span>
-          <span className="rf-name">{STR.compare.onlyDiff}</span>
-          <Toggle on={onlyDiff} label={STR.compare.onlyDiff} onChange={setOnlyDiff} />
-        </div>
+      <div className="rf-row">
+        <span className="rf-name">{tx(STR.compare.onlyDiff)}</span>
+        <Toggle on={onlyDiff} label={tx(STR.compare.onlyDiff)} onChange={setOnlyDiff} />
+      </div>
 
-        {stA && stB && (
-          <div className="two-heads">
-            <div className="two-head">
-              <b>{a?.name}</b>
-              <span>{STR.compare.checkedOf(stA.pass, stA.total)} · {STR.compare.failedCount(stA.fail)} · {STR.compare.unknownCount(stA.unknown)}</span>
-              {a?.price !== undefined && <span>{priceText(a.price)}</span>}
-            </div>
-            <div className="two-head">
-              <b>{b?.name}</b>
-              <span>{STR.compare.checkedOf(stB.pass, stB.total)} · {STR.compare.failedCount(stB.fail)} · {STR.compare.unknownCount(stB.unknown)}</span>
-              {b?.price !== undefined && <span>{priceText(b.price)}</span>}
-            </div>
-          </div>
-        )}
-
-        {diffs.length === 0 ? (
-          <p className="hint">{STR.compare.noDiff}</p>
-        ) : (
-          <div className="two-list">
-            {diffs.map(({ rule, a: sa, b: sb }) => (
-              <div key={rule.id} className="two-row">
-                <span className="two-rule">{rule.title}{rule.strict && <em className="rule-chip strict">{STR.feature.strict}</em>}</span>
-                <span className={`mx-state ${stateClass(sa)}`} aria-label={`${a?.name}: ${STR.compare[sa === 'pass' ? 'pass' : sa === 'fail' ? 'fail' : 'unknown']}`}>
-                  <Icon name={stateIcon(sa)} size={15} stroke={2.4} />
+      {diffs.length === 0 ? (
+        <p className="hint empty">{tx(STR.compare.noDiff)}</p>
+      ) : (
+        diffs.map(({ rule, a: sa, b: sb }) => (
+          <article key={rule.id} className="cmp-diff">
+            <span className="cmp-diff-rule"><bdi>{rule.title}</bdi>{rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}</span>
+            <div className="cmp-diff-cells">
+              {[{ it: a, s: sa }, { it: b, s: sb }].map(({ it, s }, i) => (
+                <span key={i} className={`cmp-cell ${stateClass(s)}`}>
+                  <Icon name={stateIcon(s)} size={16} stroke={2.6} />
+                  <small>{it?.name}</small>
+                  <em>{stateLabel(s)}</em>
                 </span>
-                <span className={`mx-state ${stateClass(sb)}`} aria-label={`${b?.name}: ${STR.compare[sb === 'pass' ? 'pass' : sb === 'fail' ? 'fail' : 'unknown']}`}>
-                  <Icon name={stateIcon(sb)} size={15} stroke={2.4} />
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </>
+              ))}
+            </div>
+          </article>
+        ))
+      )}
+    </FormPage>
   );
 }
 
@@ -461,22 +473,22 @@ function DecideSheet({ session, item, onClose }: { session: CompareSession; item
   };
 
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="decide-title">
-        <div className="bf-head">
-          <span id="decide-title">{STR.compare.decide}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
-        </div>
-        <p className="hint">{item.name}</p>
-        <label className="bf-name bf-name-top">
-          <span>{STR.compare.decisionNote}</span>
-          <textarea className="rf-text" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder={STR.compare.decisionNotePlaceholder} />
-        </label>
-        <button className="primary" disabled={busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />{STR.compare.decide}
-        </button>
+    <FormPage title={tx(STR.compare.decide)} icon="target" onClose={onClose} onSave={() => void save()} saveLabel={tx(STR.compare.decide)} busy={busy}>
+      <section className="cmp-decided">
+        <span className="cmp-decided-icon" aria-hidden="true"><Icon name="target" size={22} stroke={1.9} /></span>
+        <div><b>{item.name}</b></div>
       </section>
-    </>
+      <FormSection>
+        <InputField
+          label={tx(STR.compare.decisionNote)}
+          multiline
+          rows={3}
+          value={note}
+          maxLength={1000}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={tx(STR.compare.decisionNotePlaceholder)}
+        />
+      </FormSection>
+    </FormPage>
   );
 }

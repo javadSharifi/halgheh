@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from './Icon';
+import { Button } from './ui';
+import { tx } from './i18n';
 
 type Options = {
   title: string;
@@ -61,8 +63,8 @@ export function ConfirmHost() {
         <b id="confirm-title">{pending.title}</b>
         {pending.message && <p id="confirm-text">{pending.message}</p>}
         <div className="confirm-actions">
-          <button ref={cancelRef} onClick={() => done(false)}>{pending.cancel ?? 'انصراف'}</button>
-          <button className={danger ? 'danger-fill' : 'primary'} onClick={() => done(true)}>{pending.confirm}</button>
+          <Button ref={cancelRef} variant="secondary" onClick={() => done(false)}>{pending.cancel ?? tx('انصراف')}</Button>
+          <Button variant={danger ? 'danger' : 'primary'} onClick={() => done(true)}>{pending.confirm}</Button>
         </div>
       </div>
     </>

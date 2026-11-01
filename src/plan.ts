@@ -3,6 +3,7 @@ import { addDays, bdayOn, fa, label, parts, taskOn, today } from './cal';
 import { byTime, faDigits, isTime } from './format';
 import { dueCount } from './domain/rules/schedule';
 import { dueExchanges } from './domain/ledger';
+import { tx } from './i18n';
 
 /** One line in the daily digest: a birthday (no id) or a task (id), with its done flag. */
 export type PlanItem = {
@@ -24,13 +25,21 @@ export type PlanDay = {
 /** What each of the next `n` days looks like, for the daily digest and task reminders. */
 export async function buildPlan(n = 30): Promise<Record<string, PlanDay>> {
   const start = today();
-  const [tasks, bdays, done, rules, exchanges] = await Promise.all([
+  const [tasks, bdays, occasions, done, rules, exchanges] = await Promise.all([
     db.tasks.toArray(),
     db.birthdays.toArray(),
+    db.occasions.toArray(),
     db.done.where('date').aboveOrEqual(start).toArray(),
     db.rules.toArray(),
     db.exchanges.toArray(),
   ]);
+  // A group occasion (Nowruz, Mother's Day) is a same-day line, or `remindLead` days earlier so it is not a surprise.
+  const occasionLines = (date: string): PlanItem[] =>
+    occasions.flatMap((o) => {
+      if (bdayOn(o, date, 0)) return [{ t: tx('مناسبت {a1}', { a1: o.title }), d: 0 as const }];
+      if (o.remindLead && bdayOn(o, addDays(date, o.remindLead), 0)) return [{ t: tx('{a1} روز تا {a2}', { a1: fa(o.remindLead), a2: o.title }), d: 0 as const }];
+      return [];
+    });
   // Part 3: the ledger's own line in the same 08:00 digest, on today's entry only (a due date is "now", not a schedule).
   const ledgerDue = dueExchanges(exchanges, start).length;
   // Phase 4: the daily 08:00 digest gets one line for the rulebook, only on days that actually have rules coming due.
@@ -57,9 +66,10 @@ export async function buildPlan(n = 30): Promise<Record<string, PlanDay>> {
     out[date] = {
       title: label(date, 'persian', 0, { weekday: 'long', day: 'numeric', month: 'long' }),
       items: [
-        ...(dueCount_ > 0 ? [{ t: `${fa(dueCount_)} قانون برای مرور`, d: 0 as const, rules: 1 as const }] : []),
-        ...(i === 0 && ledgerDue > 0 ? [{ t: `${fa(ledgerDue)} دادوستد سررسید`, d: 0 as const, ledger: 1 as const }] : []),
-        ...bdays.filter((b) => bdayOn(b, date, 0)).map((b) => ({ t: `تولد ${b.name}`, d: 0 as const })),
+        ...(dueCount_ > 0 ? [{ t: tx('{a1} قانون برای مرور', { a1: fa(dueCount_) }), d: 0 as const, rules: 1 as const }] : []),
+        ...(i === 0 && ledgerDue > 0 ? [{ t: tx('{a1} دادوستد سررسید', { a1: fa(ledgerDue) }), d: 0 as const, ledger: 1 as const }] : []),
+        ...bdays.filter((b) => bdayOn(b, date, 0)).map((b) => ({ t: tx('تولد {a1}', { a1: b.name }), d: 0 as const })),
+        ...occasionLines(date),
         // open tasks by time first, then the done ones in the order they were ticked: the order the board shows
         ...todo.filter((x) => x.at === undefined).sort((a, b) => byTime(a.t, b.t)).map(task),
         ...todo.filter((x) => x.at !== undefined).sort((a, b) => (a.at ?? 0) - (b.at ?? 0)).map(task),

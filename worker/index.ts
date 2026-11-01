@@ -32,6 +32,8 @@ const TABLES = new Set([
   'ruleCheckItems',
   'exchanges',
   'exchangeSettlements',
+  // yearly non-birthday dates (Nowruz, Mother's Day)
+  'occasions',
 ]);
 const MAX_CHANGES = 200; // per request
 const MAX_ROW_BYTES = 20_000;

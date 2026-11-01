@@ -14,6 +14,7 @@ import type {
 import { checkCounts, strictBreaking } from '../rules/personCheck';
 import { isSettled, moneyBalance } from '../ledger';
 import { breaksOfPerson } from '../rules/breaks';
+import { locale } from '../../i18n';
 
 /**
  * Part 4 pure logic: what a pre-meeting brief shows. No UI, no Dexie import, no clock — `today` is always passed in.
@@ -38,10 +39,10 @@ export function openFollowUps(interactions: Interaction[], today: string) {
 }
 
 /** Open todos this person asked for ("کارهایی که گفته"), earliest due first; a dateless one goes last. */
-export function openTodos(tasks: { id: string; title: string; on?: string; fromPersonId?: string }[], doneIds: Set<string>, personId: string) {
+export function openTodos<T extends { id: string; title: string; on?: string; fromPersonId?: string }>(tasks: T[], doneIds: Set<string>, personId: string) {
   const rows = tasks.filter((t) => t.fromPersonId === personId && !doneIds.has(t.id));
   if (rows.length === 0) return undefined;
-  return rows.sort((a, b) => (a.on ?? '9999-99-99').localeCompare(b.on ?? '9999-99-99') || a.title.localeCompare(b.title, 'fa'));
+  return rows.sort((a, b) => (a.on ?? '9999-99-99').localeCompare(b.on ?? '9999-99-99') || a.title.localeCompare(b.title, locale()));
 }
 
 /** Open exchanges with this person, undated last, and the money balance as three separate numbers. */

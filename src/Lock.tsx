@@ -3,6 +3,7 @@ import { Icon } from './Icon';
 import { PIN_LEN, checkPin, clearLock, getLock, setPin, useLock } from './lockStore';
 import { biometric } from './native';
 import { fa } from './cal';
+import { tx } from './i18n';
 
 /** Dots and a keypad; calls `onDone` with the PIN once it is complete. */
 function PinPad({ title, hint, error, onDone, onBio, onCancel }: { title: string; hint?: string; error?: string; onDone: (pin: string) => void; onBio?: () => void; onCancel?: () => void }) {
@@ -18,17 +19,17 @@ function PinPad({ title, hint, error, onDone, onBio, onCancel }: { title: string
       <span className="ob-icon" aria-hidden="true"><Icon name="lock" size={26} stroke={1.8} /></span>
       <h1>{title}</h1>
       {hint && <p className="hint">{hint}</p>}
-      <div className="pin-dots" role="img" aria-label={`${fa(pin.length)} از ${fa(PIN_LEN)} رقم`}>
+      <div className="pin-dots" role="img" aria-label={tx('{a1} از {a2} رقم', { a1: fa(pin.length), a2: fa(PIN_LEN) })}>
         {Array.from({ length: PIN_LEN }, (_, i) => <i key={i} className={i < pin.length ? 'on' : ''} />)}
       </div>
       <p className="form-error pin-err" role="alert">{error ?? ' '}</p>
       <div className="keypad">
         {keys.map((k) => <button key={k} onClick={() => push(k)}>{fa(+k)}</button>)}
-        {onBio ? <button aria-label="باز کردن با اثر انگشت" onClick={onBio}><Icon name="smartphone" size={22} stroke={1.8} /></button> : <span />}
+        {onBio ? <button aria-label={tx('باز کردن با اثر انگشت')} onClick={onBio}><Icon name="smartphone" size={22} stroke={1.8} /></button> : <span />}
         <button onClick={() => push('0')}>{fa(0)}</button>
-        <button aria-label="پاک کردن" onClick={() => setP(pin.slice(0, -1))}><Icon name="chevronLeft" size={22} stroke={1.8} /></button>
+        <button aria-label={tx('پاک کردن')} onClick={() => setP(pin.slice(0, -1))}><Icon name="chevronLeft" size={22} stroke={1.8} /></button>
       </div>
-      {onCancel && <button className="text-btn big" onClick={onCancel}>انصراف</button>}
+      {onCancel && <button className="text-btn big" onClick={onCancel}>{tx('انصراف')}</button>}
     </div>
   );
 }
@@ -52,18 +53,18 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const submit = async (pin: string) => {
-    if (Date.now() < until) return setErr('کمی صبر کن و دوباره امتحان کن.');
+    if (Date.now() < until) return setErr(tx('کمی صبر کن و دوباره امتحان کن.'));
     if (await checkPin(pin)) return onUnlock();
     const n = fails + 1;
     setFails(n % 5);
     if (n % 5 === 0) {
       setUntil(Date.now() + 30_000);
-      setErr('۵ بار اشتباه. ۳۰ ثانیه صبر کن.');
-    } else setErr('پین درست نیست.');
+      setErr(tx('۵ بار اشتباه. ۳۰ ثانیه صبر کن.'));
+    } else setErr(tx('پین درست نیست.'));
   };
   return (
-    <div className="lock-screen" role="dialog" aria-label="قفل برنامه">
-      <PinPad title="پین را وارد کن" error={err} onDone={submit} onBio={hasBio ? bio : undefined} />
+    <div className="lock-screen" role="dialog" aria-label={tx('قفل برنامه')}>
+      <PinPad title={tx('پین را وارد کن')} error={err} onDone={submit} onBio={hasBio ? bio : undefined} />
     </div>
   );
 }
@@ -78,7 +79,7 @@ export function PinFlow({ mode, onClose }: { mode: 'set' | 'change' | 'off'; onC
   const done = async (pin: string) => {
     setErr('');
     if (step === 'old') {
-      if (!(await checkPin(pin))) return setErr('پین درست نیست.');
+      if (!(await checkPin(pin))) return setErr(tx('پین درست نیست.'));
       if (mode === 'off') {
         clearLock();
         return onClose();
@@ -91,14 +92,14 @@ export function PinFlow({ mode, onClose }: { mode: 'set' | 'change' | 'off'; onC
     }
     if (pin !== first) {
       setStep('new');
-      return setErr('دو پین یکی نبود. دوباره از اول.');
+      return setErr(tx('دو پین یکی نبود. دوباره از اول.'));
     }
     await setPin(pin, mode === 'change' ? !!getLock()?.bio : hasBio);
     onClose();
   };
-  const title = { old: 'پین فعلی را وارد کن', new: mode === 'set' ? 'یک پین ۴ رقمی انتخاب کن' : 'پین جدید', again: 'پین را دوباره وارد کن' }[step];
+  const title = { old: tx('پین فعلی را وارد کن'), new: mode === 'set' ? tx('یک پین ۴ رقمی انتخاب کن') : tx('پین جدید'), again: tx('پین را دوباره وارد کن') }[step];
   return (
-    <div className="lock-screen" role="dialog" aria-label="تنظیم قفل برنامه">
+    <div className="lock-screen" role="dialog" aria-label={tx('تنظیم قفل برنامه')}>
       <PinPad key={step} title={title} error={err} onDone={done} onCancel={onClose} />
     </div>
   );

@@ -18,7 +18,6 @@ test('TodayWidget renders live clock display, calendar, and quick-add input', ()
   const html = renderToStaticMarkup(
     <TodayWidget
       tasks={[dummyTask]}
-      dones={[]}
       todays={[{ task: dummyTask, done: false }]}
       openTask={() => {}}
       nameOf={new Map()}
@@ -27,7 +26,6 @@ test('TodayWidget renders live clock display, calendar, and quick-add input', ()
 
   // Checks widget sections
   expect(html).toContain('today-widget');
-  expect(html).toContain('tw-clock-display');
   expect(html).toContain('tw-cal-block');
   expect(html).toContain('کاری که باید امروز انجام بدم...');
   expect(html).toContain('افزودن');
@@ -39,7 +37,6 @@ test('TodayWidget renders empty state message when there are no tasks today', ()
   const html = renderToStaticMarkup(
     <TodayWidget
       tasks={[]}
-      dones={[]}
       todays={[]}
       openTask={() => {}}
       nameOf={new Map()}

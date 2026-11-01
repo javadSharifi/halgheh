@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PersonNote } from './db';
 import { Icon } from './Icon';
+import { Button, Card, InputField } from './ui';
+import { tx } from './i18n';
 
 /**
  * The person's free-text note. One row per person in the MVP, so this is a single box: it saves on blur and when the
@@ -33,27 +35,27 @@ export function NoteBox({ note, onSave }: { note: PersonNote | undefined; onSave
   };
 
   return (
-    <section className="glass note-box">
-      <label className="note-label">
-        <span className="field-label">یادداشت خصوصی</span>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={commit}
-          placeholder="هر چیزی که باید یادت بماند…"
-          maxLength={4000}
-        />
-      </label>
+    <Card className="note-box">
+      <InputField
+        multiline
+        rows={4}
+        label={tx('یادداشت خصوصی')}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        placeholder={tx('هر چیزی که باید یادت بماند…')}
+        maxLength={4000}
+      />
       <div className="note-foot">
         {saved === 'saving' ? (
-          <span className="hint"><Icon name="refresh" size={13} stroke={2} />در حال ذخیره…</span>
+          <span className="hint"><Icon name="refresh" size={13} stroke={2} />{tx('در حال ذخیره…')}</span>
         ) : saved === 'done' ? (
-          <span className="hint"><Icon name="checkCircle" size={13} stroke={2} />ذخیره شد</span>
+          <span className="hint"><Icon name="checkCircle" size={13} stroke={2} />{tx('ذخیره شد')}</span>
         ) : (
-          <span className="hint">{text.trim() ? 'خودکار ذخیره می‌شود' : 'خالی'}</span>
+          <span className="hint">{text.trim() ? tx('خودکار ذخیره می‌شود') : tx('خالی')}</span>
         )}
-        <button className="text-btn" disabled={text === last.current} onClick={commit}>ذخیره</button>
+        <Button variant="ghost" size="sm" disabled={text === last.current} onClick={commit}>{tx('ذخیره')}</Button>
       </div>
-    </section>
+    </Card>
   );
 }

@@ -1,6 +1,7 @@
 import type { Rule, RuleReview } from '../../db';
 import { addDays } from '../../cal';
 import { INTERVAL_DAYS, MAX_BOX, MAX_REVIEWS_PER_SESSION, NEW_RULE_BOX, type ReviewResult } from './constants';
+import { locale } from '../../i18n';
 
 /**
  * Phase 1: the Leitner schedule of a rule, as pure functions (no UI, no Dexie, no timezone conversion).
@@ -55,7 +56,7 @@ export const daysLate = (rule: Pick<Rule, 'nextReviewOn'>, today: string) =>
 export function dueRules(rules: Rule[], today: string, cap = MAX_REVIEWS_PER_SESSION): Rule[] {
   return rules
     .filter((r) => isDue(r, today))
-    .sort((a, b) => a.nextReviewOn.localeCompare(b.nextReviewOn) || a.title.localeCompare(b.title, 'fa'))
+    .sort((a, b) => a.nextReviewOn.localeCompare(b.nextReviewOn) || a.title.localeCompare(b.title, locale()))
     .slice(0, cap);
 }
 

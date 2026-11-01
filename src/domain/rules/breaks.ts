@@ -1,5 +1,6 @@
 import type { RuleBreak } from '../../db';
 import { addDays } from '../../cal';
+import { locale } from '../../i18n';
 
 /**
  * Part 1 pure logic: the broken-rule log. No UI, no Dexie import, no clock — every function takes the day it should use,
@@ -77,7 +78,7 @@ export function orderByBreaks<T extends { id: string; title: string }>(rules: T[
     const rb = byRule.get(b.id);
     if ((rb?.count ?? 0) !== (ra?.count ?? 0)) return (rb?.count ?? 0) - (ra?.count ?? 0);
     if ((rb?.latest ?? '') !== (ra?.latest ?? '')) return (rb?.latest ?? '').localeCompare(ra?.latest ?? '');
-    return a.title.localeCompare(b.title, 'fa');
+    return a.title.localeCompare(b.title, locale());
   });
 }
 

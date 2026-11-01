@@ -3,6 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type PersonTag, type Tag, db, del, put, uid } from './db';
 import { normalize } from './search';
 import { Icon } from './Icon';
+import { locale, tx } from './i18n';
+
+import { InputField, Button } from './ui';
 
 const MAX_TAG = 30;
 
@@ -19,7 +22,7 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
   const chosen = new Set(links.map((l) => l.tagId));
   const known = [...new Map([...tags, ...allTags].map((t) => [t.id, t])).values()]
     .filter((t) => !chosen.has(t.id))
-    .sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+    .sort((a, b) => a.name.localeCompare(b.name, locale()));
   const query = text.replace(/\s+/g, ' ').trim();
   // compare through the Persian normalizer (ي/ك variants, ZWNJ, digits), or "همكار" would become a second "همکار"
   const exists = query ? allTags.find((t) => normalize(t.name).n === normalize(query).n) : undefined;
@@ -61,35 +64,37 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
           const t = tags.find((x) => x.id === l.tagId) ?? allTags.find((x) => x.id === l.tagId);
           if (!t) return null;
           return (
-            <button key={l.id} className="tag-chip on c1" onClick={() => remove(l.tagId)} aria-label={`برداشتن برچسب ${t.name}`}>
-              {t.name}
+            <button key={l.id} className="tag-chip on c1" onClick={() => remove(l.tagId)} aria-label={tx('برداشتن برچسب {a1}', { a1: t.name })}>
+              <bdi>{t.name}</bdi>
               <Icon name="close" size={13} stroke={2.4} />
             </button>
           );
         })}
         <button className="tag-chip" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          <Icon name="plus" size={14} stroke={2.4} />
-          برچسب
-        </button>
+          <Icon name="plus" size={14} stroke={2.4} />{tx('برچسب')}</button>
       </div>
 
       {open && (
         <div className="tag-add">
-          <label className="bf-name">
-            <span>برچسب تازه</span>
-            <input autoFocus value={text} maxLength={MAX_TAG} onChange={(e) => setText(e.target.value)} placeholder="مثلاً همکار" />
-          </label>
-          {canCreate && <button className="mini-btn primary" disabled={busy} onClick={create}><Icon name="plus" size={14} stroke={2.4} />ساختن «{query}»</button>}
-          {canReuse && <button className="mini-btn primary" disabled={busy} onClick={() => add(exists)}><Icon name="check" size={14} stroke={2.4} />افزودن «{exists.name}»</button>}
-          {already && <p className="hint pe-hint">این برچسب از قبل روی این فرد هست.</p>}
+          <InputField
+            label={tx('برچسب تازه')}
+            autoFocus
+            value={text}
+            maxLength={MAX_TAG}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={tx('مثلاً همکار')}
+          />
+          {canCreate && <button className="mini-btn primary" disabled={busy} onClick={create}><Icon name="plus" size={14} stroke={2.4} />{tx('ساختن «')}{query}»</button>}
+          {canReuse && <button className="mini-btn primary" disabled={busy} onClick={() => add(exists)}><Icon name="check" size={14} stroke={2.4} />{tx('افزودن «')}{exists.name}»</button>}
+          {already && <p className="hint pe-hint">{tx('این برچسب از قبل روی این فرد هست.')}</p>}
           {known.length > 0 && (
             <div className="tag-chips">
               {known.slice(0, 12).map((t) => (
-                <button key={t.id} className="tag-chip" disabled={busy} onClick={() => add(t)}>{t.name}</button>
+                <button key={t.id} className="tag-chip" disabled={busy} onClick={() => add(t)}><bdi>{t.name}</bdi></button>
               ))}
             </div>
           )}
-          {query === '' && known.length === 0 && <p className="hint pe-hint">هنوز برچسبی ساخته نشده؛ اولی را همین‌جا بنویس.</p>}
+          {query === '' && known.length === 0 && <p className="hint pe-hint">{tx('هنوز برچسبی ساخته نشده؛ اولی را همین‌جا بنویس.')}</p>}
         </div>
       )}
     </div>

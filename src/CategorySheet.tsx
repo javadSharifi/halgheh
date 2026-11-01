@@ -7,6 +7,8 @@ import { Toggle } from './Toggle';
 import { Choice } from './Choice';
 import { STR } from './strings/rulebook';
 import { addCategory, deleteCategory, deleteCategory as removeCategory, moveCategory, renameCategory, setCompareEnabled } from './ruleData';
+import { tn, tx } from './i18n';
+import { Button, FormPage, FormSection, InputField } from './ui';
 
 /**
  * Phase 2: category management. Add, rename, reorder, delete and the per-category purchase-comparison switch. Deleting a
@@ -26,7 +28,7 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
   const add = async () => {
     const name = adding.trim();
     if (!name) return;
-    if (categories.some((c) => c.name.trim() === name)) return setErr(STR.categories.nameTaken);
+    if (categories.some((c) => c.name.trim() === name)) return setErr(tx(STR.categories.nameTaken));
     setErr('');
     await addCategory(categories, name);
     setAdding('');
@@ -37,8 +39,8 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
     const cat = categories.find((c) => c.id === renaming.id);
     const name = renaming.name.trim();
     if (!cat) return;
-    if (!name) return setErr(STR.categories.emptyName);
-    if (categories.some((c) => c.id !== cat.id && c.name.trim() === name)) return setErr(STR.categories.nameTaken);
+    if (!name) return setErr(tx(STR.categories.emptyName));
+    if (categories.some((c) => c.id !== cat.id && c.name.trim() === name)) return setErr(tx(STR.categories.nameTaken));
     setErr('');
     await renameCategory(cat, name);
     setRenaming(null);
@@ -47,12 +49,12 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
   const remove = async (cat: RuleCategory) => {
     setErr('');
     if (categories.length <= 1) {
-      await ask({ title: STR.categories.deleteLastTitle, message: STR.categories.deleteLastBody, confirm: STR.feature.close, icon: 'info', tone: 'default' });
+      await ask({ title: tx(STR.categories.deleteLastTitle), message: tx(STR.categories.deleteLastBody), confirm: tx(STR.feature.close), icon: 'info', tone: 'default' });
       return;
     }
     const n = countIn(cat.id);
     if (n === 0) {
-      const ok = await ask({ title: STR.categories.deleteTitle(cat.name), message: STR.categories.deleteEmptyBody, confirm: STR.categories.deleteConfirm });
+      const ok = await ask({ title: tx(STR.categories.deleteTitle(tx(cat.name))), message: tx(STR.categories.deleteEmptyBody), confirm: tx(STR.categories.deleteConfirm) });
       if (ok) await deleteCategory(cat, [], { deleteRules: true });
       return;
     }
@@ -65,19 +67,27 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet cat-sheet" role="dialog" aria-modal="true" aria-labelledby="cat-sheet-title">
-        <div className="bf-head">
-          <span id="cat-sheet-title">{pending ? STR.categories.deleteTitle(pending.name) : STR.categories.manageTitle}</span>
-          <button className="text-btn" onClick={() => (pending ? setPending(null) : onClose())}>{pending ? STR.feature.cancel : STR.feature.close}</button>
-        </div>
-
+      <FormPage
+        title={pending ? tx(STR.categories.deleteTitle(tx(pending.name))) : tx(STR.categories.manageTitle)}
+        icon={pending ? 'trash' : 'tag'}
+        onClose={() => (pending ? setPending(null) : onClose())}
+        error={err}
+      >
         {!pending && (
           <>
-            <div className="cat-add">
-              <input value={adding} maxLength={60} onChange={(e) => setAdding(e.target.value)} placeholder={STR.categories.namePlaceholder} aria-label={STR.categories.add} enterKeyHint="done" />
-              <button className="mini-btn" disabled={!adding.trim()} onClick={() => void add()}><Icon name="plus" size={14} stroke={2.4} />{STR.categories.add}</button>
-            </div>
+            <FormSection>
+              <InputField
+                label={tx(STR.categories.add)}
+                value={adding}
+                maxLength={60}
+                onChange={(e) => setAdding(e.target.value)}
+                placeholder={tx(STR.categories.namePlaceholder)}
+                enterKeyHint="done"
+              />
+              <Button variant="primary" block icon="plus" disabled={!adding.trim()} onClick={() => void add()}>
+                {tx(STR.categories.add)}
+              </Button>
+            </FormSection>
 
             <div className="cat-list">
               {categories.map((cat, i) => (
@@ -88,70 +98,90 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
                       className="cat-rename"
                       onSubmit={(e) => { e.preventDefault(); void rename(); }}
                     >
-                      <input autoFocus value={renaming.name} maxLength={60} onChange={(e) => setRenaming({ id: cat.id, name: e.target.value })} aria-label={STR.categories.rename} />
-                      <button type="submit" className="icon-btn small" aria-label={STR.feature.save}><Icon name="check" size={17} stroke={2.4} /></button>
+                      <input autoFocus value={renaming.name} maxLength={60} onChange={(e) => setRenaming({ id: cat.id, name: e.target.value })} aria-label={tx(STR.categories.rename)} />
+                      <Button type="submit" variant="ghost" size="icon-sm" icon="check" aria-label={tx(STR.feature.save)} />
                     </form>
                   ) : (
                     <button className="cat-name" onClick={() => setRenaming({ id: cat.id, name: cat.name })}>
-                      {cat.name}
-                      <small className="set-sub">{fa(countIn(cat.id))} قانون</small>
+                      {tx(cat.name)}
+                      <small className="set-sub">{tn('{n} قانون', countIn(cat.id))}</small>
                     </button>
                   )}
-                  <span className="cat-compare" title={STR.categories.compareToggle}>
-                    <Toggle on={!!cat.compareEnabled} label={`${STR.categories.compareToggle} ${cat.name}`} onChange={(on) => void setCompareEnabled(cat, on)} />
+                  <span className="cat-compare" title={tx(STR.categories.compareToggle)}>
+                    <Toggle on={!!cat.compareEnabled} label={`${tx(STR.categories.compareToggle)} ${tx(cat.name)}`} onChange={(on) => void setCompareEnabled(cat, on)} />
                   </span>
-                  <button className="icon-btn small" aria-label={`${STR.categories.moveUp} ${cat.name}`} disabled={i === 0} onClick={() => void moveCategory(categories, cat.id, -1)}>
-                    <Icon name="chevronDown" size={17} stroke={2} />
-                  </button>
-                  <button className="icon-btn small" aria-label={`${STR.categories.moveDown} ${cat.name}`} disabled={i === categories.length - 1} onClick={() => void moveCategory(categories, cat.id, 1)}>
-                    <Icon name="chevronDown" size={17} stroke={2} />
-                  </button>
-                  <button className="icon-btn small danger" aria-label={`${STR.feature.delete} ${cat.name}`} onClick={() => void remove(cat)}>
-                    <Icon name="trash" size={16} stroke={2} />
-                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    icon="chevronDown"
+                    className="icon-btn small"
+                    aria-label={`${tx(STR.categories.moveUp)} ${tx(cat.name)}`}
+                    disabled={i === 0}
+                    onClick={() => void moveCategory(categories, cat.id, -1)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    icon="chevronDown"
+                    className="icon-btn small"
+                    aria-label={`${tx(STR.categories.moveDown)} ${tx(cat.name)}`}
+                    disabled={i === categories.length - 1}
+                    onClick={() => void moveCategory(categories, cat.id, 1)}
+                  />
+                  <Button
+                    variant="danger"
+                    size="icon-sm"
+                    icon="trash"
+                    className="icon-btn small danger"
+                    aria-label={`${tx(STR.feature.delete)} ${tx(cat.name)}`}
+                    onClick={() => void remove(cat)}
+                  />
                 </div>
               ))}
             </div>
 
-            <p className="hint cat-hint">{STR.categories.compareHint}</p>
-            {err && <p className="form-error" role="alert">{err}</p>}
+            <p className="hint cat-hint">{tx(STR.categories.compareHint)}</p>
           </>
         )}
 
         {pending && (
           <>
-            <p className="hint">{STR.categories.deleteAskWhere}</p>
-            <p className="hint cat-count">{fa(countIn(pending.id))} قانون در این دسته</p>
+            <p className="hint">{tx(STR.categories.deleteAskWhere)}</p>
+            <p className="hint cat-count">{tn('{n} قانون در این دسته', countIn(pending.id))}</p>
             <div className="rf-row">
               <span className="tile blue" aria-hidden="true"><Icon name="tag" size={17} stroke={1.9} /></span>
-              <span className="rf-name">{STR.categories.deleteMoveTo}</span>
+              <span className="rf-name">{tx(STR.categories.deleteMoveTo)}</span>
               <span className="rf-value">
-                {others.find((c) => c.id === target)?.name ?? '—'}
+                {tx(others.find((c) => c.id === target)?.name ?? '—')}
                 <Choice
                   className="pick-hit"
-                  label={STR.categories.deleteMoveTo}
+                  label={tx(STR.categories.deleteMoveTo)}
                   value={target}
-                  options={others.map((c): [string, string] => [c.id, c.name])}
+                  options={others.map((c): [string, string] => [c.id, tx(c.name)])}
                   onChange={setTarget}
                 />
               </span>
             </div>
-            <button
-              className="primary"
+            <Button
+              variant="primary"
+              block
               disabled={busy || !target}
               onClick={async () => { if (target) { await removeCategory(pending, rules.filter((r) => r.categoryId === pending.id), { moveTo: target }); setPending(null); } }}
+              icon="undo"
             >
-              <Icon name="undo" size={18} stroke={2.2} />{STR.categories.deleteMoveTo}
-            </button>
-            <button
-              className="danger-btn"
+              {tx(STR.categories.deleteMoveTo)}
+            </Button>
+            <Button
+              variant="danger"
+              block
               onClick={async () => { await removeCategory(pending, rules.filter((r) => r.categoryId === pending.id), { deleteRules: true }); setPending(null); }}
+              icon="trash"
             >
-              <Icon name="trash" size={16} stroke={2} />{STR.categories.deleteWithRules}
-            </button>
+              {tx(STR.categories.deleteWithRules)}
+            </Button>
           </>
         )}
-      </section>
+      </FormPage>
     </>
   );
 }

@@ -6,6 +6,8 @@ import { fa } from './cal';
 import { normalize } from './search';
 import { importPicks, markDuplicates, permissionText, toPicks, type Pick } from './contacts';
 import { Icon } from './Icon';
+import { Button } from './ui';
+import { tn, tx } from './i18n';
 
 type Phase = 'idle' | 'asking' | 'loading' | 'ready' | 'denied' | 'error' | 'saving' | 'done';
 
@@ -44,7 +46,7 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
       setPhase('ready');
     } catch {
       setPhase('error');
-      setNote('خواندن مخاطبین ممکن نشد. افزودن دستی همچنان کار می‌کند.');
+      setNote(tx('خواندن مخاطبین ممکن نشد. افزودن دستی همچنان کار می‌کند.'));
     }
   };
 
@@ -86,14 +88,14 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
       const r = await importPicks(picked, people);
       setPhase('done');
       setNote(
-        [r.added ? `${fa(r.added)} نفر اضافه شد` : '', r.merged ? `${fa(r.merged)} نفر تکمیل شد` : '', r.skipped ? `${fa(r.skipped)} نفر از قبل بود` : '']
+        [r.added ? tx('{a1} نفر اضافه شد', { a1: fa(r.added) }) : '', r.merged ? tx('{a1} نفر تکمیل شد', { a1: fa(r.merged) }) : '', r.skipped ? tx('{a1} نفر از قبل بود', { a1: fa(r.skipped) }) : '']
           .filter(Boolean)
           .join(' · '),
       );
       onImported?.(r.added + r.merged);
     } catch {
       setPhase('error');
-      setNote('ذخیره نشد؛ دوباره تلاش کن.');
+      setNote(tx('ذخیره نشد؛ دوباره تلاش کن.'));
     }
   };
 
@@ -105,26 +107,26 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet contacts-sheet" role="dialog" aria-modal="true" aria-labelledby="contacts-title">
         <div className="bf-head">
-          <span id="contacts-title">افزودن از مخاطبین</span>
-          <button className="text-btn" onClick={onClose}>بستن</button>
+          <span id="contacts-title">{tx('افزودن از مخاطبین')}</span>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tx('بستن')}</Button>
         </div>
 
         {(phase === 'asking' || phase === 'loading') && (
           <div className="contacts-busy" role="status">
             <Icon name="refresh" size={20} stroke={2} />
-            <span>{phase === 'asking' ? 'در حال گرفتن اجازه…' : 'در حال خواندن مخاطبین…'}</span>
+            <span>{phase === 'asking' ? tx('در حال گرفتن اجازه…') : tx('در حال خواندن مخاطبین…')}</span>
           </div>
         )}
 
         {(phase === 'denied' || phase === 'error') && (
           <div className="contacts-note" role="alert">
             <span className="tile peach" aria-hidden="true"><Icon name="info" size={17} stroke={1.9} /></span>
-            <p>{note || 'خواندن مخاطبین ممکن نشد.'}</p>
+            <p>{note || tx('خواندن مخاطبین ممکن نشد.')}</p>
           </div>
         )}
 
         {(phase === 'denied' || phase === 'error') && (
-          <button className="mini-btn" onClick={() => void load()}><Icon name="refresh" size={14} stroke={2.2} />تلاش دوباره</button>
+          <Button variant="secondary" size="sm" onClick={() => void load()} icon="refresh">{tx('تلاش دوباره')}</Button>
         )}
 
         {(phase === 'ready' || phase === 'saving' || phase === 'done') && (
@@ -132,18 +134,18 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
             {total === 0 ? (
               <div className="contacts-note">
                 <span className="tile blue" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
-                <p>مخاطبی با نام یا شماره پیدا نشد.</p>
+                <p>{tx('مخاطبی با نام یا شماره پیدا نشد.')}</p>
               </div>
             ) : (
               <>
                 <label className="search-field contacts-search">
                   <Icon name="search" size={18} stroke={1.9} />
-                  <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="جستجو در مخاطبین" aria-label="جستجو در مخاطبین" />
+                  <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tx('جستجو در مخاطبین')} aria-label={tx('جستجو در مخاطبین')} />
                 </label>
 
                 <div className="contacts-meta">
-                  <span>{fa(total)} مخاطب{dupCount ? ` · ${fa(dupCount)} از قبل هست` : ''}</span>
-                  <button className="text-btn" onClick={toggleAll}>{allShownChosen ? 'برداشتن همه' : `انتخاب ${query ? 'نتایج' : 'همه'}`}</button>
+                  <span>{dupCount ? tn('{n} مخاطب · {a1} از قبل هست', total, { a1: fa(dupCount) }) : tn('{n} مخاطب', total)}</span>
+                  <Button variant="ghost" size="sm" onClick={toggleAll}>{allShownChosen ? tx('برداشتن همه') : tx('انتخاب {a1}', { a1: query ? tx('نتایج') : tx('همه') })}</Button>
                 </div>
 
                 <div className="contacts-list">
@@ -159,15 +161,15 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
                       >
                         <span className="c-check" aria-hidden="true">{on && <Icon name="check" size={13} stroke={3} />}</span>
                         <span className="c-body">
-                          <b>{p.displayName}</b>
-                          <span>{p.phones.length ? p.phones.slice(0, 2).join(' · ') : p.emails[0] ?? 'بدون شماره'}</span>
+                          <b><bdi>{p.displayName}</bdi></b>
+                          <span>{p.phones.length ? p.phones.slice(0, 2).join(' · ') : p.emails[0] ?? tx('بدون شماره')}</span>
                         </span>
-                        {p.existing && <em className="c-dup">از قبل</em>}
+                        {p.existing && <em className="c-dup">{tx('از قبل')}</em>}
                       </button>
                     );
                   })}
-                  {visible.length > shown.length && <p className="hint contacts-more">و {fa(visible.length - shown.length)} مخاطب دیگر؛ برای دیدنشان جستجو کن.</p>}
-                  {visible.length === 0 && <p className="hint contacts-more">مخاطبی با این نام پیدا نشد.</p>}
+                  {visible.length > shown.length && <p className="hint contacts-more">{tn('و {n} مخاطب دیگر؛ برای دیدنشان جستجو کن.', visible.length - shown.length)}</p>}
+                  {visible.length === 0 && <p className="hint contacts-more">{tx('مخاطبی با این نام پیدا نشد.')}</p>}
                 </div>
               </>
             )}
@@ -179,12 +181,11 @@ export function ContactsImport({ onClose, onImported }: { onClose: () => void; o
               </p>
             )}
             {phase === 'done' ? (
-              <button className="primary" onClick={onClose}><Icon name="check" size={18} stroke={2.4} />بستن</button>
+              <Button variant="primary" block onClick={onClose} icon="check">{tx('بستن')}</Button>
             ) : (
-              <button className="primary" disabled={phase !== 'ready' || chosen.size === 0} onClick={() => void save()}>
-                <Icon name="plus" size={18} stroke={2.4} />
-                {phase === 'saving' ? 'در حال ذخیره…' : chosen.size ? `افزودن ${fa(chosen.size)} نفر` : 'کسی انتخاب نشده'}
-              </button>
+              <Button variant="primary" block disabled={phase !== 'ready' || chosen.size === 0} onClick={() => void save()} icon="plus">
+                {phase === 'saving' ? tx('در حال ذخیره…') : chosen.size ? tx('افزودن {a1} نفر', { a1: fa(chosen.size) }) : tx('کسی انتخاب نشده')}
+              </Button>
             )}
           </>
         )}

@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { type Exchange, type Interaction, type PersonNote, type RatingCriterion, db, del, put, uid } from './db';
+import { type Exchange, type Interaction, type Photo, type PersonNote, type RatingCriterion, db, del, put, uid } from './db';
 import { fa } from './cal';
 import { ask } from './confirm';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { primaryNote, personBundle } from './personData';
 import { PersonEditor } from './PersonEditor';
 import { InteractionForm } from './InteractionForm';
 import { usePhotoUrls } from './usePhotoUrls';
+import { usePhotoAdd } from './photoAdd';
+import { PhotoViewer } from './PhotoViewer';
+import { PhotoEdit } from './PhotoEdit';
+import { removePhoto } from './storePhoto';
+import { isNative } from './native';
 import { SkillForm } from './SkillForm';
 import { RatingForm } from './RatingForm';
 import { RelationshipForm } from './RelationshipForm';
@@ -15,20 +20,21 @@ import { orderPersonSkills } from './skills';
 import { orderExchanges, isSettled } from './domain/ledger';
 import { TodoSheet } from './TodoSheet';
 import { NewCheckSheet } from './PersonCheck';
-import { ExchangeSheet } from './ledger/ExchangeSheet';
 import { PersonHero } from './person/PersonHero';
 import { OverviewTab } from './person/OverviewTab';
 import { ActivityTab } from './person/ActivityTab';
 import { EvaluationTab } from './person/EvaluationTab';
 import { LedgerTab } from './person/LedgerTab';
+import { tk, tx } from './i18n';
 
-export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
+export function PersonPage({ id, onBack, openCheck, openBrief, openLedger, openExchange }: {
   id: string;
   onBack: () => void;
   /** Parts 2 and 4: the rule check and the pre-meeting brief, both opened as their own pages by `App`. */
   openCheck: (id: string) => void;
   openBrief: () => void;
   openLedger: () => void;
+  openExchange: (seedPersonId?: string, exchangeId?: string | null) => void;
 }) {
   const bundle = personBundle(id);
   const [editing, setEditing] = useState(false);
@@ -44,26 +50,35 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
   const [relFor, setRelFor] = useState<string | null>(null);
   /** Part 2: the "new check" sheet. Part 3: the exchange sheet, editing an existing one or creating one. */
   const [newCheck, setNewCheck] = useState(false);
-  const [exchange, setExchange] = useState<Exchange | 'new' | null>(null);
 
   // Hooks must run on every render, so they sit above the early returns. A person's photos are device-local and only
   // needed once the bundle is there, but the hook itself has to be called unconditionally.
+  const photoAdd = usePhotoAdd(id);
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
   const photoPaths = useMemo(() => new Map((bundle?.photoFiles ?? []).map((f) => [f.photoId, f.path])), [bundle?.photoFiles]);
-  const photoUrls = usePhotoUrls(bundle?.photos ?? [], photoPaths);
-  // Parts 2 and 3: this person's rule checks and their ledger, loaded here so the sections repaint on any save
+  const { thumb: photoUrls, full: photoFull } = usePhotoUrls(bundle?.photos ?? [], photoPaths);
+  // Parts 2 and 3: this person's rule checks and their ledger, loaded here so the sections repaint on any save.
+  // Settlements and check items are read through this person's own rows, so the global history never loads.
   const checks = useLiveQuery(() => db.ruleChecks.where('personId').equals(id).toArray(), [id]) ?? [];
   const exchanges = useLiveQuery(() => db.exchanges.where('personId').equals(id).toArray(), [id]) ?? [];
-  const settlements = useLiveQuery(() => db.exchangeSettlements.toArray(), []) ?? [];
+  const settlements = useLiveQuery(async () => {
+    const ids = exchanges.map((e) => e.id);
+    return ids.length ? db.exchangeSettlements.where('exchangeId').anyOf(ids).toArray() : [];
+  }, [exchanges]) ?? [];
   const allRules = useLiveQuery(() => db.rules.toArray(), []) ?? [];
-  const checkItems = useLiveQuery(() => db.ruleCheckItems.toArray(), []) ?? [];
+  const checkItems = useLiveQuery(async () => {
+    const ids = checks.map((c) => c.id);
+    return ids.length ? db.ruleCheckItems.where('checkId').anyOf(ids).toArray() : [];
+  }, [checks]) ?? [];
 
   if (bundle === undefined) return <p className="hint">…</p>;
   if (bundle === null) {
     return (
       <>
-        <div className="page-head"><h1>پیدا نشد</h1></div>
-        <p className="hint">این فرد پاک شده است.</p>
-        <button onClick={onBack}>بازگشت</button>
+        <div className="page-head"><h1>{tx('پیدا نشد')}</h1></div>
+        <p className="hint">{tx('این فرد پاک شده است.')}</p>
+        <button onClick={onBack}>{tx('بازگشت')}</button>
       </>
     );
   }
@@ -77,9 +92,9 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
 
   const remove = async () => {
     if (!(await ask({
-      title: `«${p.displayName}» حذف شود؟`,
-      message: 'یادداشت‌ها، تعامل‌ها، برچسب‌ها و تولدِ او هم پاک می‌شوند. این کار قابل بازگشت نیست؛ اگر فقط نمی‌خواهی در فهرست باشد، بایگانی کن.',
-      confirm: 'حذف',
+      title: tx('«{a1}» حذف شود؟', { a1: p.displayName }),
+      message: tx('یادداشت‌ها، تعامل‌ها، برچسب‌ها و تولدِ او هم پاک می‌شوند. این کار قابل بازگشت نیست؛ اگر فقط نمی‌خواهی در فهرست باشد، بایگانی کن.'),
+      confirm: tx('حذف'),
       icon: 'trash',
     }))) return;
     // everything hanging off the person goes with them; the birthday row is theirs too (only the profile links one)
@@ -106,68 +121,49 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
     await put('personNotes', row);
   };
 
+  const sections: { key: typeof tab; icon: IconName; name: string; hint: string; count: number }[] = [
+    { key: 'overview', icon: 'info', name: tk('اطلاعات'), hint: tk('شماره، ایمیل، تولد، برچسب‌ها و یادداشت'), count: 0 },
+    { key: 'activity', icon: 'history', name: tk('فعالیت'), hint: tk('تعامل‌ها و کارهایی که این فرد از تو خواسته'), count: askedTasks.length + interactions.length },
+    { key: 'evaluation', icon: 'target', name: tk('ارزیابی'), hint: tk('امتیازها، مهارت‌ها، رابطه‌ها و بررسی قوانین'), count: mySkills.length + checks.length },
+    { key: 'ledger', icon: 'repeat', name: tk('مالی و عکس'), hint: tk('دادوستدها، خلاصهٔ قبل از قرار و عکس‌ها'), count: openExchanges.length + photos.length },
+  ];
+
   return (
     <>
       <header className="dd-head">
-        <button className="icon-btn" aria-label="بازگشت" onClick={onBack}><Icon name="chevronRight" /></button>
-        <span>پروفایل مخاطب</span>
-        <button className="text-btn" aria-label="ویرایش پروفایل" onClick={() => setEditing(true)}>
+        <button className="icon-btn" aria-label={tx('بازگشت')} onClick={onBack}><Icon name="chevronRight" /></button>
+        <span>{tx('پروفایل مخاطب')}</span>
+        <button className="text-btn" aria-label={tx('ویرایش پروفایل')} onClick={() => setEditing(true)}>
           <Icon name="edit" size={16} stroke={2.2} />
-          <span>ویرایش</span>
+          <span>{tx('ویرایش')}</span>
         </button>
       </header>
 
-      <PersonHero person={p} onEdit={() => setEditing(true)} openBrief={openBrief} />
+      <PersonHero person={p} onEdit={() => setEditing(true)} openBrief={openBrief} onInteraction={() => setInteraction('new')} onExchange={() => openExchange(p.id, null)} />
 
-      {/* نوار دسته‌بندی تب‌ها */}
-      <div className="profile-tabs" role="tablist" aria-label="دسته‌بندی‌های پروفایل">
-        <button
-          role="tab"
-          aria-selected={tab === 'overview'}
-          className={`pt-tab${tab === 'overview' ? ' active' : ''}`}
-          onClick={() => setTab('overview')}
-        >
-          <span>اطلاعات</span>
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === 'activity'}
-          className={`pt-tab${tab === 'activity' ? ' active' : ''}`}
-          onClick={() => setTab('activity')}
-        >
-          <span>فعالیت</span>
-          {(askedTasks.length + interactions.length) > 0 && (
-            <span className="pt-badge">{fa(askedTasks.length + interactions.length)}</span>
-          )}
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === 'evaluation'}
-          className={`pt-tab${tab === 'evaluation' ? ' active' : ''}`}
-          onClick={() => setTab('evaluation')}
-        >
-          <span>ارزیابی</span>
-          {(mySkills.length + checks.length) > 0 && (
-            <span className="pt-badge">{fa(mySkills.length + checks.length)}</span>
-          )}
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === 'ledger'}
-          className={`pt-tab${tab === 'ledger' ? ' active' : ''}`}
-          onClick={() => setTab('ledger')}
-        >
-          <span>مالی و عکس</span>
-          {(openExchanges.length + photos.length) > 0 && (
-            <span className="pt-badge">{fa(openExchanges.length + photos.length)}</span>
-          )}
-        </button>
+      {/* Section switcher: every section gets its own icon and a one-line description, so none looks hidden */}
+      <div className="profile-tabs" role="tablist" aria-label={tx('دسته‌بندی‌های پروفایل')}>
+        {sections.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
+            className={`pt-tab${tab === t.key ? ' active' : ''}`}
+            onClick={() => setTab(t.key)}
+          >
+            <Icon name={t.icon} size={17} stroke={1.9} />
+            <span>{tx(t.name)}</span>
+            {t.count > 0 && <span className="pt-badge">{fa(t.count)}</span>}
+          </button>
+        ))}
       </div>
+      <p className="pt-hint">{tx(sections.find((t) => t.key === tab)?.hint ?? '')}</p>
 
       {tab === 'overview' && (
         <OverviewTab
           person={p}
           birthday={bd}
+          interactions={interactions}
           note={note}
           tags={tags}
           tagLinks={tagLinks}
@@ -214,12 +210,29 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
           settlements={settlements}
           photos={photos}
           photoUrls={photoUrls}
+          onOpenPhoto={setViewingPhoto}
+          onAddPhoto={isNative ? () => void photoAdd.start() : undefined}
           openLedger={openLedger}
           openBrief={openBrief}
-          onExchange={setExchange}
+          onExchange={(ex) => openExchange(p.id, ex === 'new' ? null : ex.id)}
         />
       )}
 
+      {photoAdd.form}
+      {viewingPhoto && (
+        <PhotoViewer
+          photoId={viewingPhoto}
+          photos={photos}
+          urls={photoFull}
+          title={(pid) => photos.find((x) => x.id === pid)?.title ?? ''}
+          onClose={() => setViewingPhoto(null)}
+          onEdit={(ph) => { setViewingPhoto(null); setEditingPhoto(ph); }}
+          onRemove={(ph) => void removePhoto(ph).then((gone) => gone && setViewingPhoto(null))}
+          onNavigate={setViewingPhoto}
+        />
+      )}
+      {editingPhoto && <PhotoEdit key={editingPhoto.id} photo={editingPhoto} onClose={() => setEditingPhoto(null)} />}
+      {photoAdd.err && <p className="form-error" role="alert">{photoAdd.err}</p>}
       {editing && <PersonEditor data={{ person: p, birthday: bd }} onClose={() => setEditing(false)} />}
       {relFor && (
         <RelationshipForm
@@ -263,15 +276,6 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger }: {
           personId={p.id}
           onClose={() => setNewCheck(false)}
           onCreated={(cid) => { setNewCheck(false); openCheck(cid); }}
-        />
-      )}
-      {exchange && (
-        <ExchangeSheet
-          key={exchange === 'new' ? 'new' : exchange.id}
-          people={everyone.filter((x) => !x.archivedAt && !x.isSelf)}
-          seedPersonId={p.id}
-          exchange={exchange === 'new' ? null : exchange}
-          onClose={() => setExchange(null)}
         />
       )}
       {interaction && (

@@ -4,6 +4,7 @@ import { type Person, type Rule, type RuleCheck, type RuleCheckItem, type RuleCa
 import { fa, label } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
+import { Button, Card, FormPage, FormSection, InputField } from './ui';
 import { Toggle } from './Toggle';
 import { STR, CHECK_ITEM_LABEL } from './strings/rulebook';
 import { normalize } from './search';
@@ -24,6 +25,8 @@ import {
   setCheckItem,
 } from './ruleData';
 import { BreakSheet } from './BreakSheet';
+import { tx } from './i18n';
+import { personLabel } from './format';
 
 /**
  * Part 2: going through my rules for one person before doing something with them. Every non-archived rule is listed under
@@ -70,11 +73,11 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
     return (
       <>
         <header className="dd-head">
-          <button className="icon-btn" aria-label={STR.feature.close} onClick={onBack}><Icon name="chevronRight" /></button>
-          <span>{STR.personCheck.title}</span>
+          <Button variant="ghost" size="icon-md" aria-label={tx(STR.feature.close)} onClick={onBack} icon="chevronRight" />
+          <span>{tx(STR.personCheck.title)}</span>
           <span className="head-spacer" />
         </header>
-        <p className="hint">{STR.personCheck.empty}</p>
+        <p className="hint">{tx(STR.personCheck.empty)}</p>
       </>
     );
   }
@@ -88,16 +91,16 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
   };
 
   const removeCheck = async () => {
-    if (!(await ask({ title: STR.personCheck.deleteTitle, message: STR.personCheck.deleteBody, confirm: STR.feature.delete, icon: 'trash' }))) return;
+    if (!(await ask({ title: tx(STR.personCheck.deleteTitle), message: tx(STR.personCheck.deleteBody), confirm: tx(STR.feature.delete), icon: 'trash' }))) return;
     await deletePersonCheck(check);
     onBack();
   };
 
   const head = (
     <header className="dd-head">
-      <button className="icon-btn" aria-label={STR.feature.close} onClick={onBack}><Icon name="chevronRight" /></button>
-      <span>{STR.personCheck.title}</span>
-      <button className="icon-btn" aria-label={STR.personCheck.cardMode} onClick={() => setCardMode(true)}><Icon name="listChecks" size={19} stroke={1.9} /></button>
+      <Button variant="ghost" size="icon-md" aria-label={tx(STR.feature.close)} onClick={onBack} icon="chevronRight" />
+      <span>{tx(STR.personCheck.title)}</span>
+      <Button variant="ghost" size="icon-md" aria-label={tx(STR.personCheck.cardMode)} onClick={() => setCardMode(true)} icon="listChecks" />
     </header>
   );
 
@@ -105,11 +108,11 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
     return (
       <>
         {head}
-        <section className="glass empty-state">
+        <Card className="empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="listChecks" size={24} stroke={1.7} /></span>
-          <b>{STR.personCheck.empty}</b>
-          <p className="hint">{STR.personCheck.emptyBody}</p>
-        </section>
+          <b>{tx(STR.personCheck.empty)}</b>
+          <p className="hint">{tx(STR.personCheck.emptyBody)}</p>
+        </Card>
       </>
     );
   }
@@ -121,30 +124,30 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
       <section className="glass check-head">
         {renaming ? (
           <form className="cat-rename check-rename" onSubmit={(e) => { e.preventDefault(); void saveTitle(); }}>
-            <input autoFocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} aria-label={STR.personCheck.titleLabel} placeholder={STR.personCheck.titlePlaceholder} />
-            <button type="submit" className="icon-btn small" aria-label={STR.feature.save}><Icon name="check" size={17} stroke={2.4} /></button>
+            <input autoFocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} aria-label={tx(STR.personCheck.titleLabel)} placeholder={tx(STR.personCheck.titlePlaceholder)} />
+            <Button variant="ghost" size="icon-sm" type="submit" aria-label={tx(STR.feature.save)} icon="check" />
           </form>
         ) : (
           <button className="check-title" onClick={() => setRenaming(true)}>
-            {check.title || STR.personCheck.titlePlaceholder}
+            {check.title || tx(STR.personCheck.titlePlaceholder)}
             <small className="set-sub">
-              {(person as Person | undefined)?.displayName ?? ''}
-              {check.status === 'closed' ? ` · ${STR.personCheck.closed}` : ''}
+              {person ? personLabel(person as Person) : ''}
+              {check.status === 'closed' ? ` · ${tx(STR.personCheck.closed)}` : ''}
               {check.closedAt ? ` · ${label(new Date(check.closedAt).toLocaleDateString('sv'), 'persian', 0, { day: 'numeric', month: 'long' })}` : ''}
             </small>
           </button>
         )}
-        <div className="check-summary" role="group" aria-label={STR.personCheck.summary}>
-          <div className="cs keeping"><b>{fa(counts.keeping)}</b><span>{STR.personCheck.keepingCount}</span></div>
-          <div className="cs breaking"><b>{fa(counts.breaking)}</b><span>{STR.personCheck.breakingCount}</span></div>
-          <div className="cs na"><b>{fa(counts.na)}</b><span>{STR.personCheck.na}</span></div>
-          <div className="cs unknown"><b>{fa(counts.unknown)}</b><span>{STR.personCheck.unknownCount}</span></div>
+        <div className="check-summary" role="group" aria-label={tx(STR.personCheck.summary)}>
+          <div className="cs keeping"><b>{fa(counts.keeping)}</b><span>{tx(STR.personCheck.keepingCount)}</span></div>
+          <div className="cs breaking"><b>{fa(counts.breaking)}</b><span>{tx(STR.personCheck.breakingCount)}</span></div>
+          <div className="cs na"><b>{fa(counts.na)}</b><span>{tx(STR.personCheck.na)}</span></div>
+          <div className="cs unknown"><b>{fa(counts.unknown)}</b><span>{tx(STR.personCheck.unknownCount)}</span></div>
         </div>
-        <p className="hint check-no-score">{STR.personCheck.noScore} · {STR.personCheck.unknownNotBreaking}</p>
+        <p className="hint check-no-score">{tx(STR.personCheck.noScore)} · {tx(STR.personCheck.unknownNotBreaking)}</p>
 
         {strict.length > 0 && (
-          <div className="strict-list" role="group" aria-label={STR.personCheck.strictBreaks}>
-            <b className="strict-title"><Icon name="target" size={14} stroke={2.2} />{STR.personCheck.strictBreaks}</b>
+          <div className="strict-list" role="group" aria-label={tx(STR.personCheck.strictBreaks)}>
+            <b className="strict-title"><Icon name="target" size={14} stroke={2.2} />{tx(STR.personCheck.strictBreaks)}</b>
             {strict.map((r) => (
               <span key={r.id} className="strict-row">{r.title}</span>
             ))}
@@ -154,30 +157,30 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
 
       <label className="search-field check-search">
         <Icon name="search" size={18} stroke={1.9} />
-        <input type="search" value={q} placeholder={STR.personCheck.searchRules} aria-label={STR.personCheck.searchRules} onChange={(e) => setQ(e.target.value)} />
+        <input type="search" value={q} placeholder={tx(STR.personCheck.searchRules)} aria-label={tx(STR.personCheck.searchRules)} onChange={(e) => setQ(e.target.value)} />
       </label>
 
-      <div className="tabs rule-cats" role="tablist" aria-label={STR.feature.category}>
-        <button role="tab" aria-selected={cat === null} className={cat === null ? 'on' : ''} onClick={() => setCat(null)}>{STR.feature.allCategories}</button>
+      <div className="tabs rule-cats" role="tablist" aria-label={tx(STR.feature.category)}>
+        <button role="tab" aria-selected={cat === null} className={cat === null ? 'on' : ''} onClick={() => setCat(null)}>{tx(STR.feature.allCategories)}</button>
         {categories.map((c) => (
-          <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? 'on' : ''} onClick={() => setCat(c.id)}>{c.name}</button>
+          <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? 'on' : ''} onClick={() => setCat(c.id)}><bdi>{tx(c.name)}</bdi></button>
         ))}
       </div>
 
       <div className="rf-row check-only-chosen">
         <span className="tile blue" aria-hidden="true"><Icon name="listChecks" size={17} stroke={1.9} /></span>
         <span className="rf-name">
-          {STR.personCheck.onlyChosen}
-          <small className="set-sub">{STR.personCheck.onlyChosenHint}</small>
+          {tx(STR.personCheck.onlyChosen)}
+          <small className="set-sub">{tx(STR.personCheck.onlyChosenHint)}</small>
         </span>
-        <Toggle on={onlyChosen} label={STR.personCheck.onlyChosen} onChange={setOnlyChosen} />
+        <Toggle on={onlyChosen} label={tx(STR.personCheck.onlyChosen)} onChange={setOnlyChosen} />
       </div>
 
-      {shown.length === 0 && <p className="hint empty">{onlyChosen ? STR.personCheck.selectHint : STR.personCheck.emptyBody}</p>}
+      {shown.length === 0 && <p className="hint empty">{onlyChosen ? tx(STR.personCheck.selectHint) : tx(STR.personCheck.emptyBody)}</p>}
 
       {groups.map((g) => (
         <section key={g.category?.id ?? 'none'}>
-          <h2 className="sec-title">{g.category?.name ?? STR.feature.category}<small>{fa(g.rules.length)}</small></h2>
+          <h2 className="sec-title">{g.category ? tx(g.category.name) : tx(STR.feature.category)}<small>{fa(g.rules.length)}</small></h2>
           <div className="glass check-rule-list">
             {g.rules.map((rule) => {
               const state = stateOf(items, rule.id);
@@ -185,16 +188,16 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
                 <div key={rule.id} className={`check-rule state-${state}`}>
                   <div className="cr-head">
                     <span className="cr-title">
-                      {rule.title}
-                      {rule.strict && <em className="rule-chip strict">{STR.feature.strict}</em>}
+                      <bdi>{rule.title}</bdi>
+                      {rule.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}
                     </span>
-                    <button
-                      className="icon-btn small"
-                      aria-label={`${STR.personCheck.note}: ${rule.title}`}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`${tx(STR.personCheck.note)}: ${rule.title}`}
                       onClick={() => { setNoteFor(rule.id); setNote(items.find((i) => i.ruleId === rule.id)?.note ?? ''); }}
-                    >
-                      <Icon name="note" size={15} stroke={1.9} />
-                    </button>
+                      icon="note"
+                    />
                   </div>
                   {rule.why && <p className="cr-why">{rule.why}</p>}
                   <div className="cr-states" role="radiogroup" aria-label={rule.title}>
@@ -213,7 +216,7 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
                   </div>
                   {state === 'breaking' && (
                     <button className="text-btn cr-record" onClick={() => setBreakFor(rule)}>
-                      <Icon name="plus" size={13} stroke={2.4} />{STR.personCheck.recordBreak}
+                      <Icon name="plus" size={13} stroke={2.4} />{tx(STR.personCheck.recordBreak)}
                     </button>
                   )}
                 </div>
@@ -224,21 +227,21 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
       ))}
 
       <div className="rf-foot check-foot">
-        <button className="big-btn" onClick={() => setCardMode(true)}>
-          <Icon name="listChecks" size={17} stroke={1.9} />{STR.personCheck.cardMode}
-        </button>
+        <Button size="lg" onClick={() => setCardMode(true)} icon="listChecks">
+          {tx(STR.personCheck.cardMode)}
+        </Button>
         {closed ? (
-          <button className="primary big-btn" onClick={() => void reopenPersonCheck(check)}>
-            <Icon name="undo" size={17} stroke={2.2} />{STR.personCheck.reopen}
-          </button>
+          <Button variant="primary" size="lg" onClick={() => void reopenPersonCheck(check)} icon="undo">
+            {tx(STR.personCheck.reopen)}
+          </Button>
         ) : (
-          <button className="primary big-btn" onClick={() => void closePersonCheck(check)}>
-            <Icon name="check" size={18} stroke={2.4} />{STR.personCheck.close}
-          </button>
+          <Button variant="primary" size="lg" onClick={() => void closePersonCheck(check)} icon="check">
+            {tx(STR.personCheck.close)}
+          </Button>
         )}
       </div>
       <div className="set-actions">
-        <button className="danger-btn" onClick={() => void removeCheck()}><Icon name="trash" size={16} stroke={2} />{STR.feature.delete}</button>
+        <Button variant="danger" block onClick={() => void removeCheck()} icon="trash">{tx(STR.feature.delete)}</Button>
       </div>
 
       {noteFor && (
@@ -281,20 +284,19 @@ export function PersonCheckPage({ checkId, onBack }: { checkId: string; onBack: 
 function NoteSheet({ ruleTitle, note, onSave, onClose }: { ruleTitle: string; note: string; onSave: (text: string) => void; onClose: () => void }) {
   const [text, setText] = useState(note);
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="check-note-title">
-        <div className="bf-head">
-          <span id="check-note-title">{STR.personCheck.note} · {ruleTitle}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
-        </div>
-        <label className="bf-name bf-name-top">
-          <span>{STR.personCheck.note}</span>
-          <textarea className="rf-text" autoFocus value={text} maxLength={1000} onChange={(e) => setText(e.target.value)} />
-        </label>
-        <button className="primary" onClick={() => onSave(text)}><Icon name="check" size={18} stroke={2.4} />{STR.feature.save}</button>
-      </section>
-    </>
+    <FormPage title={`${tx(STR.personCheck.note)} · ${ruleTitle}`} icon="note" onClose={onClose} onSave={() => onSave(text)} saveLabel={tx(STR.feature.save)}>
+      <FormSection>
+        <InputField
+          multiline
+          autoFocus
+          rows={3}
+          label={tx(STR.personCheck.note)}
+          value={text}
+          maxLength={1000}
+          onChange={(e) => setText(e.target.value)}
+        />
+      </FormSection>
+    </FormPage>
   );
 }
 
@@ -327,40 +329,40 @@ function CheckCardMode({ check, rules, items, onClose }: { check: RuleCheck; rul
       <div className="scrim dim" onClick={onClose} />
       <section className="sheet check-card-sheet" role="dialog" aria-modal="true" aria-labelledby="check-card-title">
         <div className="bf-head">
-          <span id="check-card-title">{STR.personCheck.cardModeTitle}</span>
-          <button className="text-btn check-back" onClick={onClose}>{STR.feature.close}</button>
+          <span id="check-card-title">{tx(STR.personCheck.cardModeTitle)}</span>
+          <button className="text-btn check-back" onClick={onClose}>{tx(STR.feature.close)}</button>
         </div>
 
         {!current ? (
           <section className="glass empty-state small">
-            <b>{STR.personCheck.cardDone}</b>
-            <p className="hint">{STR.personCheck.cardProgress(answered, rules.length)}</p>
+            <b>{tx(STR.personCheck.cardDone)}</b>
+            <p className="hint">{tx(STR.personCheck.cardProgress(answered, rules.length))}</p>
           </section>
         ) : (
           <>
             <div className="review-progress">
-              <span role="status">{STR.personCheck.cardProgress(index + 1, rules.length)}</span>
+              <span role="status">{tx(STR.personCheck.cardProgress(index + 1, rules.length))}</span>
               <div className="review-bar" aria-hidden="true"><i style={{ width: `${(index / Math.max(rules.length, 1)) * 100}%` }} /></div>
             </div>
             <div className="review-card check-card">
-              {current.strict && <span className="rule-chip strict">{STR.feature.strict}</span>}
+              {current.strict && <span className="rule-chip strict">{tx(STR.feature.strict)}</span>}
               <h2>{current.title}</h2>
               {current.why && <p className="read-why">{current.why}</p>}
             </div>
-            <div className="check-actions check-card-actions" role="group" aria-label={STR.personCheck.cardModeTitle}>
+            <div className="check-actions check-card-actions" role="group" aria-label={tx(STR.personCheck.cardModeTitle)}>
               <button className="check-btn pass" disabled={busy} onClick={() => void answer('keeping')}>
-                <Icon name="check" size={26} stroke={2.6} /><span>{STR.personCheck.keeping}</span>
+                <Icon name="check" size={26} stroke={2.6} /><span>{tx(STR.personCheck.keeping)}</span>
               </button>
               <button className="check-btn fail" disabled={busy} onClick={() => void answer('breaking')}>
-                <Icon name="close" size={26} stroke={2.6} /><span>{STR.personCheck.breaking}</span>
+                <Icon name="close" size={26} stroke={2.6} /><span>{tx(STR.personCheck.breaking)}</span>
               </button>
             </div>
-            <div className="check-actions check-card-actions two" role="group" aria-label={STR.personCheck.cardModeTitle}>
+            <div className="check-actions check-card-actions two" role="group" aria-label={tx(STR.personCheck.cardModeTitle)}>
               <button className="check-btn unknown" disabled={busy} onClick={() => void answer('na')}>
-                <Icon name="undo" size={22} stroke={2.2} /><span>{STR.personCheck.na}</span>
+                <Icon name="undo" size={22} stroke={2.2} /><span>{tx(STR.personCheck.na)}</span>
               </button>
               <button className="check-btn unknown" disabled={busy} onClick={() => void answer('unknown')}>
-                <Icon name="info" size={22} stroke={2.2} /><span>{STR.personCheck.unknown}</span>
+                <Icon name="info" size={22} stroke={2.2} /><span>{tx(STR.personCheck.unknown)}</span>
               </button>
             </div>
           </>
@@ -387,23 +389,20 @@ export function NewCheckSheet({ personId, onClose, onCreated }: { personId: stri
   };
 
   return (
-    <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="new-check-title">
-        <div className="bf-head">
-          <span id="new-check-title">{STR.personCheck.newTitle}</span>
-          <button className="text-btn" onClick={onClose}>{STR.feature.close}</button>
-        </div>
-        <p className="hint">{STR.personCheck.createAskBody}</p>
-        <label className="bf-name">
-          <span>{STR.personCheck.titleLabel}</span>
-          <input autoFocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder={STR.personCheck.titlePlaceholder} enterKeyHint="done" />
-        </label>
-        <button className="primary" disabled={busy} onClick={() => void create()}>
-          <Icon name="check" size={18} stroke={2.4} />{busy ? 'در حال ذخیره…' : STR.personCheck.start}
-        </button>
-      </section>
-    </>
+    <FormPage title={tx(STR.personCheck.newTitle)} icon="plus" onClose={onClose} onSave={() => void create()} saveLabel={tx(STR.personCheck.start)} busy={busy}>
+      <FormSection>
+        <p className="hint">{tx(STR.personCheck.createAskBody)}</p>
+        <InputField
+          autoFocus
+          label={tx(STR.personCheck.titleLabel)}
+          value={title}
+          maxLength={120}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={tx(STR.personCheck.titlePlaceholder)}
+          enterKeyHint="done"
+        />
+      </FormSection>
+    </FormPage>
   );
 }
 
@@ -411,7 +410,7 @@ export function NewCheckSheet({ personId, onClose, onCreated }: { personId: stri
 export function PersonChecks({ personId, checks, onOpen }: { personId: string; checks: RuleCheck[]; onOpen: (id: string) => void }) {
   const items = useLiveQuery(() => db.ruleCheckItems.toArray(), []) ?? [];
   const rules = useLiveQuery(() => db.rules.toArray(), []) ?? [];
-  if (checks.length === 0) return <p className="hint">{STR.personCheck.historyEmpty}</p>;
+  if (checks.length === 0) return <p className="hint">{tx(STR.personCheck.historyEmpty)}</p>;
   return (
     <div className="glass set-list">
       {checks.map((c) => {
@@ -423,10 +422,10 @@ export function PersonChecks({ personId, checks, onOpen }: { personId: string; c
               <Icon name={c.status === 'closed' ? 'checkCircle' : 'listChecks'} size={16} stroke={1.9} />
             </span>
             <span className="set-name">
-              {c.title || STR.personCheck.newTitle}
+              {c.title || tx(STR.personCheck.newTitle)}
               <small className="set-sub">
-                {c.status === 'closed' ? STR.personCheck.closed : STR.personCheck.cardMode} ·{' '}
-                {fa(counts.keeping)} {STR.personCheck.keepingCount} · {fa(counts.breaking)} {STR.personCheck.breakingCount}
+                {c.status === 'closed' ? tx(STR.personCheck.closed) : tx(STR.personCheck.cardMode)} ·{' '}
+                {fa(counts.keeping)} {tx(STR.personCheck.keepingCount)} · {fa(counts.breaking)} {tx(STR.personCheck.breakingCount)}
               </small>
             </span>
             <Icon name="chevronLeft" size={16} stroke={2} />

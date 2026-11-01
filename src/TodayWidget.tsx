@@ -1,16 +1,14 @@
-import { useState, useEffect, useMemo, type FormEvent, useRef } from 'react';
+import { useState, useMemo, type FormEvent, useRef } from 'react';
 import { type Task, put, uid } from './db';
-import { addDays, bdayOn, fa, label, parts, taskOn, today, wd } from './cal';
-import { faDigits, greeting, isTime } from './format';
+import { addDays, bdayOn, fa, label, parts, taskOn, today, wd, wdInitial } from './cal';
+import { faDigits, isTime } from './format';
 import { Icon } from './Icon';
 import { isOverdue } from './todoFilters';
 import { toggleTodo } from './Todos';
-
-const WEEKDAYS = ['ی', 'د', 'س', 'چ', 'پ', 'ج', 'ش']; // by JS weekday, 0 = Sunday
+import { tn, tx } from './i18n';
 
 export type TodayWidgetProps = {
   tasks: Task[];
-  dones: { taskId: string; date: string }[];
   todays: { task: Task; done: boolean }[];
   openTask: (id: string | null) => void;
   openSearch?: () => void;
@@ -44,7 +42,7 @@ function WidgetTaskItem({
         className="widget-task-tick"
         type="button"
         aria-pressed={done}
-        aria-label={done ? `${task.title}، انجام شد` : `${task.title}، انجام نشده`}
+        aria-label={done ? tx('{a1}، انجام شد', { a1: task.title }) : tx('{a1}، انجام نشده', { a1: task.title })}
         onClick={onToggle}
       >
         <span className="widget-tick-circle">
@@ -56,11 +54,11 @@ function WidgetTaskItem({
         className="widget-task-body"
         type="button"
         onClick={onOpen}
-        aria-label={`مشاهده یا ویرایش ${task.title}`}
+        aria-label={tx('مشاهده یا ویرایش {a1}', { a1: task.title })}
       >
-        <span className="widget-task-title">{task.title}</span>
+        <span className="widget-task-title"><bdi>{task.title}</bdi></span>
         <div className="widget-task-meta">
-          {late && <span className="ti-chip late">عقب‌افتاده</span>}
+          {late && <span className="ti-chip late">{tx('عقب‌افتاده')}</span>}
           {isTime(task.time) && (
             <span className="ti-chip time">
               <Icon name="clock" size={11} stroke={2} />
@@ -87,7 +85,7 @@ function WidgetTaskItem({
 /**
  * TodayWidget:
  * A rich all-in-one widget featuring:
- * 1. Live Digital Clock with seconds & time-of-day greeting
+ * 1. Persian Solar Calendar with weekday & interactive week ribbon
  * 2. Persian Solar Calendar with weekday & interactive week ribbon
  * 3. Quick-Add section to immediately add a task for today
  * 4. Today's Tasks checklist with one-tap toggle and progress bar
@@ -102,19 +100,6 @@ export function TodayWidget({
   statusChip,
 }: TodayWidgetProps) {
   const t = today();
-
-  // 1. Live Clock State
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const hoursStr = String(now.getHours()).padStart(2, '0');
-  const minutesStr = String(now.getMinutes()).padStart(2, '0');
-  const secondsStr = String(now.getSeconds()).padStart(2, '0');
-  const clockText = `${hoursStr}:${minutesStr}`;
-  const greet = greeting(now.getHours());
 
   // 2. Persian Calendar Date
   const weekdayName = label(t, 'persian', 0, { weekday: 'long' });
@@ -168,17 +153,11 @@ export function TodayWidget({
   };
 
   return (
-    <section className="glass today-widget" aria-label="ویجت کارهای امروز">
-      {/* Top Header: Clock, Greeting & Status */}
+    <div className="today-widget">
+      {/* Hero card: date, week ribbon and search */}
+      <section className="glass tw-hero" aria-label={tx('امروز')}>
+      {/* Top Header: date & status */}
       <div className="tw-header">
-        <div className="tw-clock-block">
-          <div className="tw-clock-display" aria-label={`ساعت فعلی: ${clockText}`}>
-            <span className="tw-clock-time">{faDigits(clockText)}</span>
-            <span className="tw-clock-seconds">:{faDigits(secondsStr)}</span>
-          </div>
-          <span className="tw-greeting-badge">{greet}</span>
-        </div>
-
         <div className="tw-cal-block">
           <div className="tw-cal-date">
             <span className="tw-cal-weekday">{weekdayName}</span>
@@ -189,7 +168,7 @@ export function TodayWidget({
       </div>
 
       {/* Week Ribbon mini-calendar */}
-      <div className="week-ribbon tw-week-ribbon" role="group" aria-label="روزهای هفته جاری">
+      <div className="week-ribbon tw-week-ribbon" role="group" aria-label={tx('روزهای هفته جاری')}>
         {week.map((x) => {
           const isCurrent = x === t;
           const isFriday = wd(x) === 5;
@@ -199,7 +178,7 @@ export function TodayWidget({
               className={`wr-day${isCurrent ? ' today' : ''}${isFriday ? ' fri' : ''}`}
               aria-current={isCurrent ? 'date' : undefined}
             >
-              <span>{WEEKDAYS[wd(x)]}</span>
+              <span>{wdInitial(wd(x))}</span>
               <b>{fa(parts(x, 'persian', 0).d)}</b>
               <i className={hasOn(x) ? 'has' : ''} />
             </div>
@@ -213,13 +192,16 @@ export function TodayWidget({
           type="button"
           className="today-search-trigger tw-search-trigger"
           onClick={openSearch}
-          aria-label="جستجو در حلقه"
+          aria-label={tx('جستجو در حلقه')}
         >
           <Icon name="search" size={16} stroke={2} />
-          <span>جستجو در آدم‌ها، کارها، یادداشت‌ها...</span>
+          <span>{tx('جستجو در آدم‌ها، کارها، یادداشت‌ها...')}</span>
         </button>
       )}
+      </section>
 
+      {/* Tasks card: quick add + today's checklist */}
+      <section className="glass tw-tasks-card" aria-label={tx('کارهای امروز')}>
       {/* Quick Add Section: Type and press Enter to immediately add to today */}
       <div className="tw-quick-section">
         <form className="tw-quick-form" onSubmit={handleQuickAdd}>
@@ -233,18 +215,18 @@ export function TodayWidget({
               className="tw-quick-input"
               value={quickTitle}
               onChange={(e) => setQuickTitle(e.target.value)}
-              placeholder="کاری که باید امروز انجام بدم..."
+              placeholder={tx('کاری که باید امروز انجام بدم...')}
               maxLength={140}
-              aria-label="عنوان کاری که باید امروز انجام دهید"
+              aria-label={tx('عنوان کاری که باید امروز انجام دهید')}
               enterKeyHint="done"
             />
             <button
               type="submit"
               className="tw-quick-submit"
               disabled={!quickTitle.trim() || saving}
-              aria-label="افزودن به کارهای امروز"
+              aria-label={tx('افزودن به کارهای امروز')}
             >
-              <span>{saving ? '...' : 'افزودن'}</span>
+              <span>{saving ? '...' : tx('افزودن')}</span>
             </button>
           </div>
         </form>
@@ -254,19 +236,19 @@ export function TodayWidget({
       <div className="tw-tasks-section">
         <div className="tw-tasks-header">
           <div className="tw-tasks-title-wrap">
-            <h2 className="tw-tasks-title">کارهای امروز</h2>
+            <h2 className="tw-tasks-title">{tx('کارهای امروز')}</h2>
             {openToday.length > 0 && (
-              <span className="tw-count-badge">{fa(openToday.length)} باقی‌مانده</span>
+              <span className="tw-count-badge">{tx('{a1} باقی‌مانده', { a1: fa(openToday.length) })}</span>
             )}
           </div>
           <button
             type="button"
             className="tw-full-add-btn"
             onClick={() => openTask(null)}
-            aria-label="فرم کامل ثبت کار با جزییات"
+            aria-label={tx('فرم کامل ثبت کار با جزییات')}
           >
             <Icon name="plus" size={13} stroke={2.5} />
-            <span>جزئیات بیشتر</span>
+            <span>{tx('جزئیات بیشتر')}</span>
           </button>
         </div>
 
@@ -274,15 +256,15 @@ export function TodayWidget({
         {totalCount > 0 && (
           <div className="today-progress-widget tw-progress">
             <div className="tpw-header">
-              <span className="tpw-label">پیشرفت کارهای امروز</span>
+              <span className="tpw-label">{tx('پیشرفت کارهای امروز')}</span>
               <span className="tpw-count">
                 {doneCount === totalCount ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <Icon name="checkCircle" size={13} stroke={2.4} />
-                    <span>همه انجام شدند</span>
+                    <span>{tx('همه انجام شدند')}</span>
                   </span>
                 ) : (
-                  `${fa(doneCount)} از ${fa(totalCount)} کار`
+                  tx('{a1} از {a2} کار', { a1: fa(doneCount), a2: fa(totalCount) })
                 )}
               </span>
             </div>
@@ -298,7 +280,7 @@ export function TodayWidget({
         {/* Task Rows or Empty State */}
         {totalCount === 0 ? (
           <div className="tw-empty-state">
-            <p className="hint">کاری برای امروز ثبت نشده است. از کادر بالا سریع اضافه کنید!</p>
+            <p className="hint">{tx('کاری برای امروز ثبت نشده است. از کادر بالا سریع اضافه کنید!')}</p>
           </div>
         ) : (
           <div className="tw-task-list">
@@ -307,7 +289,7 @@ export function TodayWidget({
                 <span className="tile green" aria-hidden="true" style={{ width: 28, height: 28, borderRadius: 8 }}>
                   <Icon name="check" size={16} stroke={2.5} />
                 </span>
-                <span>عالیه! همه کارهای امروز انجام شدند.</span>
+                <span>{tx('عالیه! همه کارهای امروز انجام شدند.')}</span>
               </div>
             ) : (
               openToday.map(({ task, done }) => (
@@ -332,8 +314,8 @@ export function TodayWidget({
                   onClick={() => setShowDone(!showDone)}
                   aria-expanded={showDone}
                 >
-                  <span>{fa(doneCount)} کار انجام‌شده</span>
-                  <Icon name={showDone ? 'chevronDown' : 'chevronLeft'} size={15} stroke={2} />
+                  <span>{tn('{n} کار انجام‌شده', doneCount)}</span>
+                  <Icon name="chevronDown" size={15} stroke={2} className={showDone ? 'rot' : undefined} />
                 </button>
 
                 {showDone && (
@@ -356,6 +338,7 @@ export function TodayWidget({
           </div>
         )}
       </div>
-    </section>
+      </section>
+    </div>
   );
 }

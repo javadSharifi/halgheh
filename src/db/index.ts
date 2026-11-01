@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 import { SEEDED_KEY, SEED_CATEGORIES } from '../domain/rules/constants';
 import type {
-  Birthday, CompareCheck, CompareItem, CompareSession, Done, Exchange, ExchangeSettlement, Interaction, Outbox, Person,
+  Birthday, CompareCheck, CompareItem, CompareSession, Done, Exchange, ExchangeSettlement, Interaction, Occasion, Outbox, Person,
   PersonNote, PersonSkill, PersonTag, Photo, PhotoFile, Rating, Relationship, Rule, RuleBreak, RuleCategory, RuleCheck,
   RuleCheckItem, RuleReview, Skill, TableName, Tag, Task,
 } from './types';
@@ -35,6 +35,7 @@ export const TABLES: TableName[] = [
   'ruleCheckItems',
   'exchanges',
   'exchangeSettlements',
+  'occasions',
 ];
 
 export const db = new Dexie('halgheh') as Dexie & {
@@ -63,6 +64,7 @@ export const db = new Dexie('halgheh') as Dexie & {
   ruleCheckItems: Dexie.Table<RuleCheckItem, string>;
   exchanges: Dexie.Table<Exchange, string>;
   exchangeSettlements: Dexie.Table<ExchangeSettlement, string>;
+  occasions: Dexie.Table<Occasion, string>;
   outbox: Dexie.Table<Outbox, string>;
 };
 db.version(1).stores({ notes: 'id', tasks: 'id', done: 'id,date', birthdays: 'id' });
@@ -155,6 +157,9 @@ db.version(12)
       await outbox.put({ key: `ruleBreaks|${id}`, t: 'ruleBreaks', id, deleted: 0, updatedAt: now, op: 'create' });
     }
   });
+
+// v13: yearly occasions that are not birthdays (Nowruz, Mother's Day). Same 3-calendar date; `tagId` groups it.
+db.version(13).stores({ occasions: 'id, cal, month, updatedAt' });
 
 /** Every user write goes through put/del so sync sees it. Sync's own writes bypass them. */
 export async function put(t: TableName, row: { id: string; updatedAt: number } & Record<string, unknown>) {

@@ -2,8 +2,11 @@ import { useMemo, useState } from 'react';
 import { type Person, type Relationship, del, put } from './db';
 import { ask } from './confirm';
 import { Icon } from './Icon';
+import { FormPage, FormSection, InputField, Select } from './ui';
 import { CONFIDENCE_LABEL, REL_LABEL, REL_TYPES, findLink, isSymmetric, linkId, linkIds } from './relationships';
 import type { RelType } from './db';
+import { locale, tx } from './i18n';
+import { personLabel } from './format';
 
 /**
  * Add or edit one link from a person's profile (R3). A symmetric link is saved once with the pair in sorted order, so
@@ -17,7 +20,7 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
   onClose: () => void;
 }) {
   const others = useMemo(
-    () => people.filter((p) => !p.isSelf && !p.archivedAt && p.id !== personId).sort((a, b) => a.displayName.localeCompare(b.displayName, 'fa')),
+    () => people.filter((p) => !p.isSelf && !p.archivedAt && p.id !== personId).sort((a, b) => a.displayName.localeCompare(b.displayName, locale())),
     [people, personId],
   );
   const [otherId, setOtherId] = useState(() => {
@@ -52,7 +55,7 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
       try {
         ids = linkIds(personId, otherId, type);
       } catch {
-        setErr('یک نفر نمی‌تواند با خودش رابطه داشته باشد.');
+        setErr(tx('یک نفر نمی‌تواند با خودش رابطه داشته باشد.'));
         setBusy(false);
         return;
       }
@@ -73,92 +76,92 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
       if (editing && editing.id !== row.id) await del('relationships', editing.id);
       onClose();
     } catch {
-      setErr('ذخیره نشد؛ دوباره تلاش کن.');
+      setErr(tx('ذخیره نشد؛ دوباره تلاش کن.'));
       setBusy(false);
     }
   };
 
   const remove = async () => {
     if (!editing) return;
-    if (!(await ask({ title: 'این رابطه حذف شود؟', message: 'فقط همین پیوند پاک می‌شود؛ خود افراد می‌مانند.', confirm: 'حذف' }))) return;
+    if (!(await ask({ title: tx('این رابطه حذف شود؟'), message: tx('فقط همین پیوند پاک می‌شود؛ خود افراد می‌مانند.'), confirm: tx('حذف') }))) return;
     await del('relationships', editing.id);
     onClose();
   };
 
   return (
     <>
-      <div className="scrim dim" onClick={onClose} />
-      <section className="sheet rel-sheet" role="dialog" aria-modal="true" aria-labelledby="rel-title">
-        <div className="bf-head">
-          <span id="rel-title">{editing ? 'ویرایش رابطه' : 'رابطهٔ تازه'}</span>
-          <button className="text-btn" onClick={onClose}>بستن</button>
-        </div>
-
-        <div className="pe-scroll">
+      <FormPage
+        title={editing ? tx('ویرایش رابطه') : tx('رابطهٔ تازه')}
+        icon={editing ? 'edit' : 'plus'}
+        onClose={onClose}
+        onSave={() => void save()}
+        saveLabel={editing ? tx('ذخیره') : tx('ثبت')}
+        saveDisabled={!valid}
+        busy={busy}
+        error={err}
+        onDelete={editing ? () => void remove() : undefined}
+        deleteLabel={tx('حذف این رابطه')}
+      >
+        <FormSection>
           {!editing && (
             <>
-              <label className="bf-name">
-                <span>طرف دیگر</span>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="جستجوی نام…" />
-              </label>
-              {others.length === 0 && <p className="hint pe-hint">برای ساختن رابطه دست‌کم دو نفر لازم است.</p>}
+              <InputField label={tx('طرف دیگر')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('جستجوی نام…')} />
+              {others.length === 0 && <p className="hint pe-hint">{tx('برای ساختن رابطه دست‌کم دو نفر لازم است.')}</p>}
               <div className="rel-people">
                 {shown.slice(0, 40).map((p) => (
                   <button key={p.id} type="button" className={`tag-chip${otherId === p.id ? ' on c1' : ''}`} onClick={() => setOtherId(p.id)}>
-                    {p.displayName}
+                    {personLabel(p)}
                   </button>
                 ))}
-                {shown.length === 0 && others.length > 0 && <p className="hint pe-hint">کسی با این نام پیدا نشد.</p>}
+                {shown.length === 0 && others.length > 0 && <p className="hint pe-hint">{tx('کسی با این نام پیدا نشد.')}</p>}
               </div>
             </>
           )}
 
-          <div className="radios rel-types" role="radiogroup" aria-label="نوع رابطه">
+          <div className="radios rel-types" role="radiogroup" aria-label={tx('نوع رابطه')}>
             {REL_TYPES.map((k) => (
               <button key={k} type="button" role="radio" aria-checked={type === k} className={type === k ? 'on' : ''} onClick={() => setType(k)}>
-                {REL_LABEL[k]}
+                {tx(REL_LABEL[k])}
               </button>
             ))}
           </div>
           <p className="hint pe-hint">
-            {isSymmetric(type) ? 'این رابطه دوطرفه است؛ یک بار ثبت می‌شود و برای هر دو نفر دیده می‌شود.' : '«معرفی‌شده» یک‌طرفه است: یعنی این فرد، آن یکی را به تو معرفی کرده.'}
+            {isSymmetric(type) ? tx('این رابطه دوطرفه است؛ یک بار ثبت می‌شود و برای هر دو نفر دیده می‌شود.') : tx('«معرفی‌شده» یک‌طرفه است: یعنی این فرد، آن یکی را به تو معرفی کرده.')}
           </p>
-          {duplicate && <p className="form-error" role="alert">این رابطه از قبل ثبت شده است.</p>}
+          {duplicate && <p className="form-error" role="alert">{tx('این رابطه از قبل ثبت شده است.')}</p>}
 
-          <div className="pe-grid">
-            <label className="bf-tile"><span>نزدیکی (۱–۵)</span><input inputMode="numeric" value={closeness} onChange={(e) => setCloseness(e.target.value)} /></label>
-            <div className="bf-tile">
-              <span>اطمینان</span>
-              <button type="button" className="as-value" onClick={() => setConfidence(confidence === 'sure' ? 'maybe' : 'sure')}>
-                {CONFIDENCE_LABEL[confidence]}
-              </button>
-            </div>
-          </div>
-          {!closenessOk && <p className="form-error">نزدیکی باید عددی بین ۱ و ۵ باشد.</p>}
+          <InputField
+            label={tx('نزدیکی (۱–۵)')}
+            inputMode="numeric"
+            value={closeness}
+            onChange={(e) => setCloseness(e.target.value)}
+            error={!closenessOk ? tx('نزدیکی باید عددی بین ۱ و ۵ باشد.') : undefined}
+          />
+          <Select
+            label={tx('اطمینان')}
+            value={confidence}
+            onChange={(e) => setConfidence(e.target.value as 'sure' | 'maybe')}
+            options={(['sure', 'maybe'] as const).map((k) => ({ value: k, label: tx(CONFIDENCE_LABEL[k]) }))}
+          />
 
-          <label className="bf-name"><span>از کجا می‌شناسیشان (اختیاری)</span><input value={howMet} maxLength={200} onChange={(e) => setHowMet(e.target.value)} /></label>
-          <div className="rf-row">
-            <span className="tile green" aria-hidden="true"><Icon name="users" size={17} stroke={1.9} /></span>
-            <span className="rf-name">معرف</span>
-            <select className="as-value" aria-label="معرف" value={introducedBy} onChange={(e) => setIntroducedBy(e.target.value)}>
-              <option value="">مشخص نیست</option>
-              {others.map((p) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
-            </select>
-          </div>
-          <label className="bf-name bf-name-top">
-            <span>یادداشت (اختیاری)</span>
-            <textarea className="rf-text" value={note} onChange={(e) => setNote(e.target.value)} maxLength={400} />
-          </label>
+          <InputField label={tx('از کجا می‌شناسیشان (اختیاری)')} value={howMet} maxLength={200} onChange={(e) => setHowMet(e.target.value)} />
+          <Select
+            label={tx('معرف')}
+            value={introducedBy}
+            onChange={(e) => setIntroducedBy(e.target.value)}
+            options={[{ value: '', label: tx('مشخص نیست') }, ...others.map((p) => ({ value: p.id, label: personLabel(p) }))]}
+          />
+          <InputField
+            multiline
+            rows={3}
+            label={tx('یادداشت (اختیاری)')}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={400}
+          />
 
-          {err && <p className="form-error" role="alert">{err}</p>}
-        </div>
-
-        <button className="primary" disabled={!valid || busy} onClick={() => void save()}>
-          <Icon name="check" size={18} stroke={2.4} />
-          {busy ? 'در حال ذخیره…' : editing ? 'ذخیره' : 'افزودن رابطه'}
-        </button>
-        {editing && <button className="danger-btn" onClick={() => void remove()}><Icon name="trash" size={16} stroke={2} />حذف این رابطه</button>}
-      </section>
+        </FormSection>
+      </FormPage>
     </>
   );
 }

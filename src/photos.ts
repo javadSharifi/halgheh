@@ -9,6 +9,8 @@ export const MAX_PHOTOS = 300; // hard cap (G1)
 export const WARN_PHOTOS = 250; // start warning here, so the cap never arrives as a surprise
 export const MAX_LONG_SIDE = 1600; // px, longest side after compression
 export const JPEG_QUALITY = 0.8;
+export const THUMB_LONG_SIDE = 320; // px, longest side of the grid thumbnail
+export const THUMB_QUALITY = 0.7;
 
 /** The size a picked image is scaled to, never upscaling a smaller one. */
 export function targetSize(width: number, height: number, max = MAX_LONG_SIDE) {
@@ -32,6 +34,12 @@ export function capacity(count: number) {
 
 /** A stable file name inside the app data directory. Uses the photo id, so a rename cannot collide. */
 export const fileNameFor = (photoId: string) => `photos/${photoId}.jpg`;
+
+/**
+ * The grid thumbnail that sits next to a stored photo. Missing thumbs are normal (a restored phone only gets the full
+ * files back, and older installs never made one), so every reader falls back to the full file.
+ */
+export const thumbPathFor = (path: string) => path.replace(/(\.[^./]+)?$/, '-thumb.jpg');
 
 /** Today, as the default "taken on" date for a newly added photo. */
 export const defaultTakenAt = () => today();
