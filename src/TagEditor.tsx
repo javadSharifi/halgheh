@@ -24,11 +24,13 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
     .filter((t) => !chosen.has(t.id))
     .sort((a, b) => a.name.localeCompare(b.name, locale()));
   const query = text.replace(/\s+/g, ' ').trim();
+  const nq = query ? normalize(query).n : '';
   // compare through the Persian normalizer (ي/ك variants, ZWNJ, digits), or "همكار" would become a second "همکار"
-  const exists = query ? allTags.find((t) => normalize(t.name).n === normalize(query).n) : undefined;
+  const exists = nq ? allTags.find((t) => normalize(t.name).n === nq) : undefined;
   const already = !!exists && chosen.has(exists.id); // typed a tag this person already has
   const canCreate = query !== '' && query.length <= MAX_TAG && !exists;
   const canReuse = !!exists && !already;
+  const suggestions = (nq ? known.filter((t) => normalize(t.name).n.includes(nq)) : known).slice(0, 12);
 
   const add = async (tag: Tag) => {
     if (busy || chosen.has(tag.id)) return;
@@ -42,19 +44,29 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
     }
   };
   const create = async () => {
-    if (!canCreate) return;
+    if (busy || !canCreate) return;
     setBusy(true);
     try {
-      const tag: Tag = { id: uid(), name: query, updatedAt: Date.now() };
+      const now = Date.now();
+      const tag: Tag = { id: uid(), name: query, updatedAt: now };
       await put('tags', tag);
-      await add(tag);
+      await put('personTags', { id: `${personId}|${tag.id}`, personId, tagId: tag.id, updatedAt: now });
+      setText('');
+      setOpen(false);
     } finally {
       setBusy(false);
     }
   };
   const remove = async (tagId: string) => {
+    if (busy) return;
     const link = links.find((l) => l.tagId === tagId);
-    if (link) await del('personTags', link.id);
+    if (!link) return;
+    setBusy(true);
+    try {
+      await del('personTags', link.id);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -64,14 +76,28 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
           const t = tags.find((x) => x.id === l.tagId) ?? allTags.find((x) => x.id === l.tagId);
           if (!t) return null;
           return (
-            <button key={l.id} className="tag-chip on c1" onClick={() => remove(l.tagId)} aria-label={tx('برداشتن برچسب {a1}', { a1: t.name })}>
+            <button
+              key={l.id}
+              type="button"
+              disabled={busy}
+              className="tag-chip on c1"
+              onClick={() => remove(l.tagId)}
+              aria-label={tx('برداشتن برچسب {a1}', { a1: t.name })}
+            >
               <bdi>{t.name}</bdi>
               <Icon name="close" size={13} stroke={2.4} />
             </button>
           );
         })}
-        <button className="tag-chip" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          <Icon name="plus" size={14} stroke={2.4} />{tx('برچسب')}</button>
+        <button
+          type="button"
+          className="tag-chip tag-chip-add"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
+          <Icon name="plus" size={14} stroke={2.4} />
+          {tx('برچسب')}
+        </button>
       </div>
 
       {open && (
@@ -82,15 +108,35 @@ export function TagEditor({ personId, links, tags }: { personId: string; links: 
             value={text}
             maxLength={MAX_TAG}
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (canCreate) void create();
+                else if (canReuse && exists) void add(exists);
+              } else if (e.key === 'Escape') {
+                e.preventDefault();
+                setOpen(false);
+              }
+            }}
             placeholder={tx('مثلاً همکار')}
           />
-          {canCreate && <button className="mini-btn primary" disabled={busy} onClick={create}><Icon name="plus" size={14} stroke={2.4} />{tx('ساختن «')}{query}»</button>}
-          {canReuse && <button className="mini-btn primary" disabled={busy} onClick={() => add(exists)}><Icon name="check" size={14} stroke={2.4} />{tx('افزودن «')}{exists.name}»</button>}
+          {canCreate && (
+            <Button variant="primary" size="sm" icon="plus" disabled={busy} onClick={create}>
+              {tx('ساختن «')}{query}»
+            </Button>
+          )}
+          {canReuse && (
+            <Button variant="primary" size="sm" icon="check" disabled={busy} onClick={() => add(exists)}>
+              {tx('افزودن «')}{exists.name}»
+            </Button>
+          )}
           {already && <p className="hint pe-hint">{tx('این برچسب از قبل روی این فرد هست.')}</p>}
-          {known.length > 0 && (
+          {suggestions.length > 0 && (
             <div className="tag-chips">
-              {known.slice(0, 12).map((t) => (
-                <button key={t.id} className="tag-chip" disabled={busy} onClick={() => add(t)}><bdi>{t.name}</bdi></button>
+              {suggestions.map((t) => (
+                <button key={t.id} type="button" className="tag-chip" disabled={busy} onClick={() => add(t)}>
+                  <bdi>{t.name}</bdi>
+                </button>
               ))}
             </div>
           )}

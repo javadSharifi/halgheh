@@ -1,5 +1,6 @@
 import type { PersonSkill, Skill } from './db';
 import { fa, today } from './cal';
+import { toLatinDigits } from './format';
 import { normalize } from './search';
 import { locale, tx, tk } from './i18n';
 
@@ -100,8 +101,10 @@ export function orderPersonSkills(rows: PersonSkill[], skills: Skill[]) {
 
 /** Parse and check the numeric fields the form collects as text, so the form and the model agree. */
 export function readSkillNumbers(level: string, years: string) {
-  const lv = level.trim() === '' ? undefined : Number(level);
-  const yr = years.trim() === '' ? undefined : Number(years);
+  const lvRaw = toLatinDigits(level).trim();
+  const yrRaw = toLatinDigits(years).trim();
+  const lv = lvRaw === '' ? undefined : Number(lvRaw);
+  const yr = yrRaw === '' ? undefined : Number(yrRaw);
   const levelOk = lv === undefined || (Number.isInteger(lv) && lv >= 1 && lv <= 5);
   const yearsOk = yr === undefined || (Number.isInteger(yr) && yr >= 0 && yr <= 70);
   return { level: lv, years: yr, levelOk, yearsOk, valid: levelOk && yearsOk };

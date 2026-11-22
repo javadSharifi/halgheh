@@ -43,7 +43,8 @@ export function BirthdaysPage({ focusId, onFocused, openSearch, startAdd, onStar
     [occs, t, off],
   );
   const tagName = (id?: string) => (id ? tags.find((x) => x.id === id)?.name : undefined);
-  const occDay = Number(toLatinDigits(of.day));
+  const occDayRaw = toLatinDigits(of.day).trim();
+  const occDay = occDayRaw === '' ? NaN : Number(occDayRaw);
   const occValid = of.title.trim() !== '' && Number.isInteger(occDay) && occDay >= 1 && occDay <= maxDay(of.cal, of.month);
   const resetOcc = () => {
     setForm(null);
@@ -257,7 +258,7 @@ export function BirthdaysPage({ focusId, onFocused, openSearch, startAdd, onStar
               inputMode="numeric"
               value={of.day}
               onChange={(e) => setOF({ ...of, day: e.target.value })}
-              error={of.day && !(occDay >= 1 && occDay <= maxDay(of.cal, of.month)) ? tx('روز این ماه باید بین ۱ و {a1} باشد.', { a1: fa(maxDay(of.cal, of.month)) }) : undefined}
+              error={of.day && (!Number.isInteger(occDay) || occDay < 1 || occDay > maxDay(of.cal, of.month)) ? tx('روز این ماه باید بین ۱ و {a1} باشد.', { a1: fa(maxDay(of.cal, of.month)) }) : undefined}
             />
             <Select
               label={tx('ماه')}

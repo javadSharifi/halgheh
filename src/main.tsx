@@ -5,14 +5,21 @@ import '@fontsource/vazirmatn/700.css';
 import '@fontsource/vazirmatn/800.css';
 import './style.css';
 import { createRoot } from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import { ensureRuleCategories, ensureSelf } from './db';
 import { repairBrokenCounts } from './ruleData';
 import { ErrorBoundary } from './ErrorBoundary';
 import { isNative } from './native';
+import { initPwa } from './pwa';
 
-if (!isNative) registerSW({ immediate: true }); // the APK already bundles the assets; a service worker would only serve stale copies after an update
+if (!isNative) initPwa(); // the APK already bundles the assets; a service worker would only serve stale copies after an update
+if (!isNative && typeof document !== 'undefined') {
+  // Block iOS Safari / standalone PWA pinch-zoom gestures without blocking PhotoViewer's touch-based image zoom.
+  const preventGesture = (e: Event) => e.preventDefault();
+  document.addEventListener('gesturestart', preventGesture, { passive: false });
+  document.addEventListener('gesturechange', preventGesture, { passive: false });
+  document.addEventListener('gestureend', preventGesture, { passive: false });
+}
 navigator.storage?.persist?.(); // ask the browser not to evict our data
 void ensureSelf().catch(console.error);
 // the rulebook's default categories: Dexie does not run a version upgrade on a brand-new database, so first run seeds here

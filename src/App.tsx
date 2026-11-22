@@ -21,6 +21,7 @@ import { downloadMissingPhotos, uploadPendingPhotos } from './photoSync';
 import { useSettings } from './settings';
 import { applyLang, tx, tk } from './i18n';
 import { useTheme } from './theme';
+import { PwaUpdateBanner } from './PwaBanner';
 
 // Every screen that is not one of the five tabs loads on first visit, so start-up parses only the tab screens.
 const BirthdaysPage = lazy(() => import('./BirthdaysPage').then((m) => ({ default: m.BirthdaysPage })));
@@ -401,6 +402,7 @@ function AppShell() {
         )}
       </Suspense></main>
       <ConfirmHost />
+      <PwaUpdateBanner hidden={locked && !!lock} />
       {locked && lock && <LockScreen onUnlock={() => setLocked(false)} />}
       {importingContacts && <ContactsImport onClose={() => setImportingContacts(false)} />}
       {taskCtx && <TodoSheet key={taskCtx.id ?? 'new'} id={taskCtx.id} onClose={() => setTaskCtx(null)} />}

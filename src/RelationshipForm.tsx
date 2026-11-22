@@ -6,7 +6,8 @@ import { FormPage, FormSection, InputField, Select } from './ui';
 import { CONFIDENCE_LABEL, REL_LABEL, REL_TYPES, findLink, isSymmetric, linkId, linkIds } from './relationships';
 import type { RelType } from './db';
 import { locale, tx } from './i18n';
-import { personLabel } from './format';
+import { personLabel, toLatinDigits } from './format';
+import { normalize } from './search';
 
 /**
  * Add or edit one link from a person's profile (R3). A symmetric link is saved once with the pair in sorted order, so
@@ -37,13 +38,15 @@ export function RelationshipForm({ personId, people, links, editing, onClose }: 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const closenessNum = closeness.trim() === '' ? undefined : Number(closeness);
+  const closenessRaw = toLatinDigits(closeness).trim();
+  const closenessNum = closenessRaw === '' ? undefined : Number(closenessRaw);
   const closenessOk = closenessNum === undefined || (Number.isInteger(closenessNum) && closenessNum >= 1 && closenessNum <= 5);
   const duplicate = !!otherId && !editing ? findLink(links, personId, otherId, type) : undefined;
   const valid = otherId !== '' && closenessOk && !duplicate;
 
-  const shown = query.trim()
-    ? others.filter((p) => p.displayName.includes(query.trim()) || p.nickname?.includes(query.trim()))
+  const q = normalize(query).n.trim();
+  const shown = q
+    ? others.filter((p) => normalize(p.displayName).n.includes(q) || (p.nickname ? normalize(p.nickname).n.includes(q) : false))
     : others;
 
   const save = async () => {

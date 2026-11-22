@@ -18,7 +18,8 @@ import { LedgerHero } from './ledger/LedgerHero';
 import { BalanceChips, ExchangeItem } from './ledger/ExchangeItem';
 import { SettleSheet } from './ledger/SettleSheet';
 import { locale, tn, tx } from './i18n';
-import { personLabel } from './format';
+import { personLabel, toLatinDigits } from './format';
+import { normalize } from './search';
 
 export { money, BalanceChips };
 
@@ -113,14 +114,15 @@ export function LedgerPage({
     }
 
     // Filter by search query
-    const q = search.trim().toLowerCase();
+    const q = normalize(search).n.trim();
+    const qDigits = toLatinDigits(search).replace(/[,،٬\s]/g, '');
     if (q) {
       list = list.filter((e) => {
-        const personName = (nameOf.get(e.personId) ?? '').toLowerCase();
-        const title = (e.title ?? '').toLowerCase();
-        const note = (e.note ?? '').toLowerCase();
+        const personName = normalize(nameOf.get(e.personId) ?? '').n;
+        const title = normalize(e.title ?? '').n;
+        const note = normalize(e.note ?? '').n;
         const amountStr = e.amount !== undefined ? String(e.amount) : '';
-        return personName.includes(q) || title.includes(q) || note.includes(q) || amountStr.includes(q);
+        return personName.includes(q) || title.includes(q) || note.includes(q) || (qDigits !== '' && amountStr.includes(qDigits));
       });
     }
 

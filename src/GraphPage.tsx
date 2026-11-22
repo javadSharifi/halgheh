@@ -13,7 +13,18 @@ import { Button, Card, Select } from './ui';
 const COLOR: Record<RelType, string> = {
   family: '#e8875c', friend: '#3e63dd', colleague: '#7a5bda', neighbor: '#2b7352', classmate: '#c2850c', acquaintance: '#8d92b0', introduced: '#d64545',
 };
-const CIRCLE_COLOR: Record<string, string> = { close: '#d64545', friend: '#3e63dd', acquaintance: '#8d92b0', distant: '#c3c7da', '': '#b8bcd0' };
+const CIRCLE_COLOR: Record<string, string> = {
+  family: '#e8875c',
+  close: '#d64545',
+  friend: '#3e63dd',
+  colleague: '#7a5bda',
+  classmate: '#c2850c',
+  neighbor: '#2b7352',
+  acquaintance: '#8d92b0',
+  introduced: '#d64545',
+  distant: '#c3c7da',
+  '': '#b8bcd0',
+};
 const ME = 'me';
 /** `me` edges link the user to every person, so someone nobody introduced still has a place in the graph. */
 type Edge = { a: string; b: string; type: RelType | 'me'; color: string; dashed?: boolean; arrow?: boolean };

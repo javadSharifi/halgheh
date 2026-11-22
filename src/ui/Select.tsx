@@ -1,6 +1,7 @@
 import { type ChangeEvent, type SelectHTMLAttributes, useId, useState } from 'react';
 import { Icon, type IconName } from '../Icon';
 import { tx } from '../i18n';
+import { normalize } from '../search';
 import { InputField } from './InputField';
 import { Sheet } from './Sheet';
 
@@ -47,7 +48,8 @@ export function Select({
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const current = options.find((o) => String(o.value) === String(value ?? ''));
-  const shown = q.trim() ? options.filter((o) => o.label.toLocaleLowerCase('fa').includes(q.trim().toLocaleLowerCase('fa'))) : options;
+  const nq = normalize(q).n.trim();
+  const shown = nq ? options.filter((o) => normalize(o.label).n.includes(nq)) : options;
 
   const close = () => {
     setOpen(false);

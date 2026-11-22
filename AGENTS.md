@@ -9,6 +9,7 @@ React 19 + Capacitor + Dexie. All data lives on the device; cloud sync (Cloudfla
 - `src/*.tsx` — screens. `src/App.tsx` is the whole router: a `page` state machine, no react-router. Add a screen = add a `page` value + branch there.
 - `src/cal.ts` — three calendars (Jalali/Gregorian/Hijri). `src/format.ts` — display helpers. `src/skills.ts`, `src/search.ts`, `src/relationships.ts` — per-feature logic.
 - `src/native.ts`, `src/photoStore.ts`, `src/contacts.ts`, `src/reminders.ts` — Capacitor bridges, each guarded so the web build still runs.
+- `src/pwa.ts`, `src/PwaBanner.tsx` — web-only PWA update detection, cache-busting SW refresh, and install prompt store (no-op on native).
 - `src/sync.ts`, `src/online.ts`, `src/photoSync.ts` — sync client. `worker/index.ts` — sync backend (D1), `migrations/` — SQL.
 - `src/taskKinds.ts` personal-task modes (`Task.kind`); `src/ShoppingSection.tsx` = shopping task rules + product comparison, built on the rulebook compare feature (shared «خرید» category).
 - `src/GraphPage.tsx` relationship graph (layout in `domain/graph`); `src/TouchPage.tsx` keep-in-touch overview; `src/circles.ts` closeness groups (`Person.circle`) and their suggested rhythm (`cadenceDays`).

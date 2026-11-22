@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, exportAll, importAll } from './db';
 import { fa } from './cal';
-import { formatBytes } from './format';
+import { faDigits, formatBytes } from './format';
 import { Icon, type IconName } from './Icon';
 import { askNotifications, biometric, isNative, restoreBackupZip, shareBackup, shareBackupZip } from './native';
 import { type Theme, type WeekStart, updateSettings, useSettings } from './settings';
@@ -12,8 +12,9 @@ import { PinFlow } from './Lock';
 import { setBio, useLock } from './lockStore';
 import { Toggle as Switch } from './Toggle';
 import { LANGS, tx, tk } from './i18n';
+import { APP_VERSION, applyUpdate, checkForUpdate, usePwaInstall, usePwaUpdate } from './pwa';
 
-import { Card, Button } from './ui';
+import { Card, Button, Sheet } from './ui';
 
 const WEEK_STARTS: [WeekStart, string][] = [[6, tk('شنبه')], [0, tk('یکشنبه')], [1, tk('دوشنبه')]];
 const THEMES: [Theme, string, IconName][] = [['light', tk('روشن'), 'sun'], ['dark', tk('تیره'), 'moon'], ['auto', tk('خودکار'), 'contrast']];
@@ -35,6 +36,9 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
   const [canBio, setCanBio] = useState(false);
   useEffect(() => { biometric.available().then(setCanBio); }, []);
   const [msg, setMsg] = useState('');
+  const [iosGuide, setIosGuide] = useState(false);
+  const pwa = usePwaUpdate();
+  const { isInstallable, isInstalled, isIOS, install } = usePwaInstall();
   const pending = useLiveQuery(() => db.outbox.count(), []) ?? 0;
   const cfg = getCfg();
   const online = navigator.onLine;
@@ -168,7 +172,71 @@ export function SettingsPage({ openSync }: { openSync: () => void }) {
         {msg && <p className="hint set-msg" role="status">{msg}</p>}
       </section>
 
+      {!isNative && (
+        <section>
+          <h2 className="sec-title">{tx('نسخه و به‌روزرسانی')}</h2>
+          <Card variant="glass" className="set-list">
+            <div className="set-row">
+              <span className={`tile ${pwa.needRefresh ? 'purple' : 'blue'}`} aria-hidden="true">
+                <Icon name="refresh" size={17} stroke={1.9} />
+              </span>
+              <div className="set-name-col">
+                <span className="set-name">{tx('به‌روزرسانی برنامه')}</span>
+                <span className="set-sub" role="status">
+                  {pwa.needRefresh
+                    ? tx('نسخهٔ جدید آماده است')
+                    : pwa.checking
+                      ? tx('در حال بررسی…')
+                      : pwa.status === 'upToDate'
+                        ? tx('برنامه به‌روز است')
+                        : pwa.status === 'offline'
+                          ? tx('دستگاه آفلاین است')
+                          : pwa.status === 'error'
+                            ? tx('خطا در بررسی به‌روزرسانی')
+                            : tx('نسخه {a1}', { a1: faDigits(APP_VERSION) })}
+                </span>
+              </div>
+              {pwa.needRefresh ? (
+                <Button variant="primary" size="sm" onClick={() => void applyUpdate()} disabled={pwa.updating}>
+                  {pwa.updating ? tx('در حال به‌روزرسانی…') : tx('نصب نسخهٔ جدید')}
+                </Button>
+              ) : (
+                <Button variant="secondary" size="sm" onClick={() => void checkForUpdate()} disabled={pwa.checking || !pwa.supported}>
+                  {pwa.checking ? tx('در حال بررسی…') : tx('بررسی به‌روزرسانی')}
+                </Button>
+              )}
+            </div>
+            {!isInstalled && (isInstallable || isIOS) && (
+              <div className="set-row">
+                <span className="tile green" aria-hidden="true">
+                  <Icon name="download" size={17} stroke={1.9} />
+                </span>
+                <span className="set-name">{tx('نصب روی صفحهٔ اصلی')}</span>
+                {isInstallable ? (
+                  <Button variant="secondary" size="sm" onClick={() => void install()}>
+                    {tx('نصب برنامه')}
+                  </Button>
+                ) : (
+                  <Button variant="secondary" size="sm" onClick={() => setIosGuide(true)}>
+                    {tx('راهنمای نصب')}
+                  </Button>
+                )}
+              </div>
+            )}
+          </Card>
+        </section>
+      )}
+
       {pinFlow && <PinFlow mode={pinFlow} onClose={() => setPinFlow(null)} />}
+      <Sheet open={iosGuide} onClose={() => setIosGuide(false)} title={tx('نصب در آیفون و آیپد')}>
+        <div className="ios-install-steps">
+          <p>{tx('۱. دکمهٔ اشتراک‌گذاری (Share) را در نوار پایین سافاری بزنید.')}</p>
+          <p>{tx('۲. گزینهٔ Add to Home Screen را انتخاب کنید.')}</p>
+        </div>
+        <Button variant="primary" block onClick={() => setIosGuide(false)}>
+          {tx('بستن')}
+        </Button>
+      </Sheet>
     </>
   );
 }

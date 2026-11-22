@@ -3,6 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Exchange, type Person, db } from './db';
 import { today, addDays, wd, parts, label } from './cal';
 import { formatToman, formatNumberFa, tomanWords, toLatinDigits, personLabel } from './format';
+import { normPhone } from './phone';
+import { normalize } from './search';
 import { Icon } from './Icon';
 import { Button, FormPage, FormSection, InputField } from './ui';
 import { DatePicker } from './DatePicker';
@@ -101,11 +103,12 @@ function ExchangeForm({
 
   // Filter contacts in picker
   const filteredPeople = useMemo(() => {
-    const q = personSearch.trim().toLowerCase();
+    const q = normalize(personSearch).n.trim();
+    const phoneQ = toLatinDigits(personSearch).replace(/[\s\-().\u200c-\u200f\u202a-\u202e\u2066-\u2069]/g, '');
     if (!q) return people;
     return people.filter((p) => {
-      const nameMatch = p.displayName.toLowerCase().includes(q);
-      const phoneMatch = p.phones?.some((ph) => ph.includes(q));
+      const nameMatch = normalize(p.displayName).n.includes(q);
+      const phoneMatch = phoneQ ? p.phones?.some((ph) => normPhone(ph).includes(phoneQ) || toLatinDigits(ph).includes(phoneQ)) : false;
       return nameMatch || phoneMatch;
     });
   }, [people, personSearch]);

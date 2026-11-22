@@ -12,7 +12,7 @@ import { CIRCLES, circleDays, type Circle } from './circles';
 import { Button, FormField, FormPage, FormSection, InputField, Select } from './ui';
 
 const GENDERS: [Gender, string][] = [['f', tk('زن')], ['m', tk('مرد')], ['o', tk('دیگر')]];
-const CADENCES = [7, 14, 30, 90, 180, 365];
+const CADENCES = [3, 7, 14, 21, 30, 45, 60, 90, 120, 180, 365];
 
 
 export type PersonEdit = {

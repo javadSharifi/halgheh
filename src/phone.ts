@@ -6,7 +6,7 @@ import { toLatinDigits } from './format';
  * exactly this so Iranian numbers written four ways still match one another.
  */
 export function normPhone(raw: string) {
-  let s = toLatinDigits(raw).replace(/[\s\-().]/g, '');
+  let s = toLatinDigits(raw).replace(/[\s\-().\u200c-\u200f\u202a-\u202e\u2066-\u2069]/g, '');
   if (s.startsWith('+98')) s = `0${s.slice(3)}`;
   else if (s.startsWith('0098')) s = `0${s.slice(4)}`;
   else if (s.startsWith('98') && s.length === 12) s = `0${s.slice(2)}`; // 98912… without the plus

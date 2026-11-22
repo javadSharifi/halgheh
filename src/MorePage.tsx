@@ -1,5 +1,7 @@
 import { Icon, type IconName } from './Icon';
 import { tx } from './i18n';
+import { isNative } from './native';
+import { usePwaUpdate } from './pwa';
 import { Card, PageHead } from './ui';
 
 type Props = {
@@ -12,17 +14,33 @@ type Props = {
   openGallery: () => void;
 };
 
-function Row({ icon, tone, name, onClick }: { icon: IconName; tone: 'blue' | 'purple' | 'green'; name: string; onClick: () => void }) {
+function Row({
+  icon,
+  tone,
+  name,
+  badge,
+  onClick,
+}: {
+  icon: IconName;
+  tone: 'blue' | 'purple' | 'green';
+  name: string;
+  badge?: string;
+  onClick: () => void;
+}) {
   return (
     <button className="set-row as-btn" onClick={onClick}>
       <span className={`tile ${tone}`} aria-hidden="true"><Icon name={icon} size={17} stroke={1.9} /></span>
       <span className="set-name">{name}</span>
+      {badge && <span className="sync-state warn"><i />{badge}</span>}
       <Icon name="chevronLeft" size={16} stroke={2} />
     </button>
   );
 }
 
 export function MorePage({ openSettings, openSync, openArchive, openAbout, openSearch, openWeekly, openGallery }: Props) {
+  const { needRefresh } = usePwaUpdate();
+  const updateBadge = !isNative && needRefresh ? tx('نسخهٔ جدید') : undefined;
+
   return (
     <>
       <PageHead title={tx('بیشتر')} tools={[{ icon: 'search', label: tx('جستجو'), onClick: openSearch }]} />
@@ -31,7 +49,7 @@ export function MorePage({ openSettings, openSync, openArchive, openAbout, openS
         <Card variant="glass" className="set-list">
           <Row icon="history" tone="green" name={tx('مرور هفتگی')} onClick={openWeekly} />
           <Row icon="image" tone="purple" name={tx('گالری')} onClick={openGallery} />
-          <Row icon="settings" tone="blue" name={tx('تنظیمات')} onClick={openSettings} />
+          <Row icon="settings" tone="blue" name={tx('تنظیمات')} badge={updateBadge} onClick={openSettings} />
           <Row icon="cloudCheck" tone="purple" name={tx('حساب و پشتیبان')} onClick={openSync} />
           <Row icon="archive" tone="green" name={tx('افراد بایگانی‌شده')} onClick={openArchive} />
           <Row icon="info" tone="blue" name={tx('دربارهٔ حلقه')} onClick={openAbout} />

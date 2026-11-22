@@ -17,19 +17,21 @@ export const draftOf = (b: Birthday): BirthdayDraft => ({
   cal: b.cal,
   month: b.month,
   day: fa(b.day),
-  year: b.year ? fa(b.year).replace(/٬/g, '') : '',
+  year: b.year ? fa(b.year).replace(/[,،٬]/g, '') : '',
   phone: b.phone ?? '',
 });
 
-const cleanPhone = (s: string) => toLatinDigits(s).replace(/[\s\-()]/g, '');
+const cleanPhone = (s: string) => toLatinDigits(s).replace(/[\s\-().\u200c-\u200f\u202a-\u202e\u2066-\u2069]/g, '');
 
 /**
  * Parses and checks the draft once. Every caller shows the same errors and saves the same values, so the profile and
  * the birthdays page can never disagree about what a valid birthday is.
  */
 export function readDraft(d: BirthdayDraft) {
-  const day = Number(toLatinDigits(d.day));
-  const year = d.year.trim() === '' ? undefined : Number(toLatinDigits(d.year));
+  const dayRaw = toLatinDigits(d.day).trim();
+  const yearRaw = toLatinDigits(d.year).replace(/[,،٬\s]/g, '');
+  const day = dayRaw === '' ? NaN : Number(dayRaw);
+  const year = yearRaw === '' ? undefined : Number(yearRaw);
   const dayOk = Number.isInteger(day) && day >= 1 && day <= maxDay(d.cal, d.month);
   const yearOk = year === undefined || (Number.isInteger(year) && year >= YEAR_RANGE[d.cal][0] && year <= YEAR_RANGE[d.cal][1]);
   const phone = cleanPhone(d.phone);

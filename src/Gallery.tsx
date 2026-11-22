@@ -12,6 +12,7 @@ import { usePhotoUrls } from './usePhotoUrls';
 import { PhotoEdit } from './PhotoEdit';
 import { locale, tn, tx } from './i18n';
 import { personLabel } from './format';
+import { normalize } from './search';
 import { Card, Button, InputField } from './ui';
 
 /** The gallery tab (G1): grid of stored photos, add from the system picker, full-screen viewer, cap at 300. */
@@ -34,11 +35,11 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
   const tagName = useMemo(() => new Map(tags.map((t) => [t.id, t.name])), [tags]);
   // search covers what the user typed about the photo plus the person's name and the tag names
   const shown = useMemo(() => {
-    const needle = q.trim().toLocaleLowerCase('fa');
+    const needle = normalize(q).n.trim();
     if (!needle) return all;
     return all.filter((p) =>
       [p.title, p.note, p.personId && nameOf.get(p.personId), ...p.tagIds.map((t) => tagName.get(t))]
-        .some((f) => f?.toLocaleLowerCase('fa').includes(needle)),
+        .some((f) => f && normalize(f).n.includes(needle)),
     );
   }, [all, q, nameOf, tagName]);
   const groups = useMemo(() => {

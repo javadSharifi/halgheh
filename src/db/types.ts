@@ -49,7 +49,7 @@ export type Person = {
   /** 'Keep in touch' ring: remind me when this many days passed since the last interaction. Missing = no ring. */
   cadenceDays?: number;
   /** Closeness group; it only suggests a `cadenceDays` and groups the people list. Missing = not sorted yet. */
-  circle?: 'close' | 'friend' | 'acquaintance' | 'distant';
+  circle?: 'family' | 'close' | 'friend' | 'colleague' | 'classmate' | 'neighbor' | 'acquaintance' | 'introduced' | 'distant';
   /** Epoch ms; while in the future this person is hidden from the due list. */
   dueSnoozeUntil?: number;
   createdAt: number;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { type CompareCheck, type CompareItem, type CompareSession, type Rule, db } from './db';
 import { fa, label, today } from './cal';
+import { formatNumberFa } from './format';
 import { ask } from './confirm';
 import { Icon } from './Icon';
 import { DatePicker } from './DatePicker';
@@ -215,7 +216,7 @@ function ItemSheet({ item, session, rules, checks, onCheck, onDelete, onClose }:
   const [v, setV] = useState(() => ({
     name: item?.name ?? '',
     shopName: item?.shopName ?? '',
-    price: item?.price !== undefined ? String(item.price) : '',
+    price: item?.price !== undefined ? formatNumberFa(item.price) : '',
     seenOn: item?.seenOn ?? today(),
     note: item?.note ?? '',
   }));
@@ -279,7 +280,7 @@ function ItemSheet({ item, session, rules, checks, onCheck, onDelete, onClose }:
             inputMode="numeric"
             value={v.price}
             onChange={(e) => set({ price: e.target.value })}
-            placeholder="0"
+            placeholder={tx('۰')}
           />
 
           <div className="rf-row">

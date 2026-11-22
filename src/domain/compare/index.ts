@@ -1,4 +1,5 @@
 import type { CompareCheck, CompareItem, Rule } from '../../db';
+import { toLatinDigits } from '../../format';
 import type { CheckState } from '../rules/constants';
 
 /**
@@ -71,10 +72,10 @@ export function differences(aId: string, bId: string, rules: Rule[], checks: Com
 /** How many of the item's rules are still unchecked: what the "quick check" button offers to finish. */
 export const uncheckedCount = (itemId: string, rules: Rule[], checks: CompareCheck[]) => statsFor(itemId, rules, checks).unknown;
 
-/** French-free formatting input: the price as a plain number, or undefined when the user left it empty. */
+/** Converts Persian/Arabic-Indic/Latin digits and separators into a rounded non-negative integer price, or undefined if empty/invalid. */
 export function parsePrice(raw: string): number | undefined {
-  const digits = raw.replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0)).replace(/[^\d.]/g, '');
-  if (!digits) return undefined;
+  const digits = toLatinDigits(raw).replace(/٫/g, '.').replace(/[^\d.]/g, '');
+  if (!digits || !/^\d+(\.\d+)?$/.test(digits)) return undefined;
   const n = Number(digits);
   return Number.isFinite(n) && n >= 0 ? Math.round(n) : undefined;
 }
