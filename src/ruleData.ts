@@ -383,13 +383,28 @@ export async function deletePersonCheck(check: RuleCheck) {
 
 /** The one rule category shopping tasks compare against. Created on first use, and switched to comparison mode if it was not. */
 export const SHOPPING_CATEGORY = 'خرید';
-export async function ensureShoppingCategory(): Promise<RuleCategory> {
-  const cats = await db.ruleCategories.toArray();
-  const found = cats.find((c) => c.name === SHOPPING_CATEGORY);
-  if (!found) {
-    const made = await addCategory(cats, SHOPPING_CATEGORY);
-    return setCompareEnabled(made, true).then(() => ({ ...made, compareEnabled: true }));
-  }
-  if (!found.compareEnabled) await setCompareEnabled(found, true);
-  return { ...found, compareEnabled: true };
+const SHOPPING_CATEGORY_ID = '00000000-0000-4000-8000-000000000007';
+let shoppingCatInflight: Promise<RuleCategory> | null = null;
+export function ensureShoppingCategory(): Promise<RuleCategory> {
+  if (shoppingCatInflight) return shoppingCatInflight;
+  shoppingCatInflight = (async () => {
+    const cats = await db.ruleCategories.toArray();
+    const found = cats.find((c) => c.name.trim() === SHOPPING_CATEGORY);
+    if (!found) {
+      const made: RuleCategory = {
+        id: SHOPPING_CATEGORY_ID,
+        name: SHOPPING_CATEGORY,
+        sortOrder: nextOrder(cats),
+        compareEnabled: true,
+        updatedAt: Date.now(),
+      };
+      await put('ruleCategories', made);
+      return made;
+    }
+    if (!found.compareEnabled) await setCompareEnabled(found, true);
+    return { ...found, compareEnabled: true };
+  })().finally(() => {
+    shoppingCatInflight = null;
+  });
+  return shoppingCatInflight;
 }

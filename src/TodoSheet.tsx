@@ -1,13 +1,24 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Task } from './db';
 import { TodoForm } from './TodoForm';
+import type { TaskKind } from './taskKinds';
 import { tx } from './i18n';
 
 /**
  * Loads the task once and hands it to the form. The form reads its row only at mount, so a live update cannot overwrite
  * what is being typed; `key` on the parent makes a different task start from a clean state.
  */
-export function TodoSheet({ id, seedPersonId, onClose }: { id: string | null; seedPersonId?: string; onClose: () => void }) {
+export function TodoSheet({
+  id,
+  seedPersonId,
+  seedKind,
+  onClose,
+}: {
+  id: string | null;
+  seedPersonId?: string;
+  seedKind?: TaskKind;
+  onClose: () => void;
+}) {
   const loaded = useLiveQuery(async (): Promise<Task | null | undefined> => (id ? ((await db.tasks.get(id)) ?? null) : null), [id]);
   if (loaded === undefined) return null; // still loading
   if (id && loaded === null) {
@@ -21,5 +32,5 @@ export function TodoSheet({ id, seedPersonId, onClose }: { id: string | null; se
       </>
     );
   }
-  return <TodoForm initial={loaded} seedPersonId={seedPersonId} onClose={onClose} />;
+  return <TodoForm initial={loaded} seedPersonId={seedPersonId} seedKind={seedKind} onClose={onClose} />;
 }

@@ -1,3 +1,6 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from './db';
+import { fa } from './cal';
 import { Icon, type IconName } from './Icon';
 import { tx } from './i18n';
 import { isNative } from './native';
@@ -5,6 +8,7 @@ import { usePwaUpdate } from './pwa';
 import { Card, PageHead } from './ui';
 
 type Props = {
+  openShopping: () => void;
   openSettings: () => void;
   openSync: () => void;
   openArchive: () => void;
@@ -37,9 +41,10 @@ function Row({
   );
 }
 
-export function MorePage({ openSettings, openSync, openArchive, openAbout, openSearch, openWeekly, openGallery }: Props) {
+export function MorePage({ openShopping, openSettings, openSync, openArchive, openAbout, openSearch, openWeekly, openGallery }: Props) {
   const { needRefresh } = usePwaUpdate();
   const updateBadge = !isNative && needRefresh ? tx('نسخهٔ جدید') : undefined;
+  const openCompareCount = useLiveQuery(() => db.compareSessions.where('status').equals('open').count(), []) ?? 0;
 
   return (
     <>
@@ -47,6 +52,13 @@ export function MorePage({ openSettings, openSync, openArchive, openAbout, openS
 
       <section>
         <Card variant="glass" className="set-list">
+          <Row
+            icon="contrast"
+            tone="blue"
+            name={tx('خرید و مقایسه')}
+            badge={openCompareCount > 0 ? tx('{a1} باز', { a1: fa(openCompareCount) }) : undefined}
+            onClick={openShopping}
+          />
           <Row icon="history" tone="green" name={tx('مرور هفتگی')} onClick={openWeekly} />
           <Row icon="image" tone="purple" name={tx('گالری')} onClick={openGallery} />
           <Row icon="settings" tone="blue" name={tx('تنظیمات')} badge={updateBadge} onClick={openSettings} />

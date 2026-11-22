@@ -25,6 +25,7 @@ export function RulebookPage({
   onFocused,
   openReview,
   openReadThrough,
+  openShopping,
   startAdd,
   onStarted,
   openSearch,
@@ -36,9 +37,11 @@ export function RulebookPage({
   onFocused?: () => void;
   openReview?: () => void;
   openReadThrough?: (categoryId?: string, name?: string) => void;
+  openShopping?: () => void;
 } = {}) {
   const categories = useLiveQuery(() => db.ruleCategories.toArray(), []) ?? [];
   const rules = useLiveQuery(() => db.rules.toArray(), []) ?? [];
+  const compareSessions = useLiveQuery(() => db.compareSessions.toArray(), []) ?? [];
   const [cat, setCat] = useState<string | 'all'>('all');
   const [quick, setQuick] = useState('');
   const [editing, setEditing] = useState<Rule | null | 'new'>(null);
@@ -145,6 +148,8 @@ export function RulebookPage({
   // Phase 5: a session (and the check mode) is a full-screen page. The rulebook stays mounted underneath so returning is
   // instant, but its content is hidden while the overlay is open — otherwise two scrollable screens would be stacked.
   const overlay = !!sessionId || !!checking;
+  const openSessionsInCat = activeCategory ? compareSessions.filter((s) => s.categoryId === activeCategory.id).length : 0;
+  const openSessionsAll = compareSessions.filter((s) => s.status === 'open').length;
 
   return (
     <>
@@ -176,13 +181,37 @@ export function RulebookPage({
         </Button>
       </Card>
 
-      {activeCategory?.compareEnabled && (
-        <div className="compare-invite">
-          <button className="text-btn" onClick={() => setCompareHome(activeCategory.id)}>
-            <Icon name="contrast" size={14} stroke={1.9} />{tx(STR.compare.title)}
-          </button>
-        </div>
-      )}
+      {activeCategory?.compareEnabled ? (
+        <Card className="review-invite">
+          <span className="tile blue" aria-hidden="true"><Icon name="contrast" size={18} stroke={1.9} /></span>
+          <span className="review-invite-body">
+            <b>{tx(STR.compare.title)} · <bdi>{tx(activeCategory.name)}</bdi></b>
+            <span className="hint tabular-nums">
+              {openSessionsInCat > 0
+                ? tx('{a1} مقایسه در این دسته', { a1: fa(openSessionsInCat) })
+                : tx('کالاها را با قانون‌های این دسته بسنج و مقایسه کن.')}
+            </span>
+          </span>
+          <Button variant="secondary" size="sm" icon="contrast" onClick={() => setCompareHome(activeCategory.id)}>
+            {tx('باز کردن مقایسه')}
+          </Button>
+        </Card>
+      ) : active === 'all' && openShopping ? (
+        <Card className="review-invite">
+          <span className="tile blue" aria-hidden="true"><Icon name="contrast" size={18} stroke={1.9} /></span>
+          <span className="review-invite-body">
+            <b>{tx('خرید و مقایسه')}</b>
+            <span className="hint tabular-nums">
+              {openSessionsAll > 0
+                ? tx('{a1} مقایسهٔ باز برای خرید داری', { a1: fa(openSessionsAll) })
+                : tx('مقایسهٔ کالاها بر اساس معیارهای خرید و خط قرمزها')}
+            </span>
+          </span>
+          <Button variant="secondary" size="sm" icon="contrast" onClick={openShopping}>
+            {tx('ورود به بخش خرید')}
+          </Button>
+        </Card>
+      ) : null}
 
       {categories.length > 0 && (
         <div className="tabs rule-cats" role="tablist" aria-label={tx(STR.feature.category)}>

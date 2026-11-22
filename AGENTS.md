@@ -11,10 +11,10 @@ React 19 + Capacitor + Dexie. All data lives on the device; cloud sync (Cloudfla
 - `src/native.ts`, `src/photoStore.ts`, `src/contacts.ts`, `src/reminders.ts` — Capacitor bridges, each guarded so the web build still runs.
 - `src/pwa.ts`, `src/PwaBanner.tsx` — web-only PWA update detection, cache-busting SW refresh, and install prompt store (no-op on native).
 - `src/sync.ts`, `src/online.ts`, `src/photoSync.ts` — sync client. `worker/index.ts` — sync backend (D1), `migrations/` — SQL.
-- `src/taskKinds.ts` personal-task modes (`Task.kind`); `src/ShoppingSection.tsx` = shopping task rules + product comparison, built on the rulebook compare feature (shared «خرید» category).
+- `src/taskKinds.ts` personal-task modes (`Task.kind`); `src/ShoppingPage.tsx` = unified shopping & comparison hub (`page === 'shopping'`); `src/ShoppingSection.tsx` = shopping task rules + product comparison, built on the rulebook compare feature (shared «خرید» category).
 - `src/GraphPage.tsx` relationship graph (layout in `domain/graph`); `src/TouchPage.tsx` keep-in-touch overview; `src/circles.ts` closeness groups (`Person.circle`) and their suggested rhythm (`cadenceDays`).
 - `src/WeeklyPage.tsx` weekly review (numbers in `domain/weekly`); recurring tasks = `Task.mask` weekday bits with no `on`, resolved by `dueOf`/`isRecurring` in `src/todoFilters.ts`, ticked per occurrence day.
-- `src/AddMenu.tsx` global "+" (add task/person/exchange/birthday/rule); `src/TodayTabs.tsx` امروز|کارها|تولدها switch shown by App on those three pages.
+- `src/AddMenu.tsx` global "+" (add task/person/exchange/birthday/rule); `src/TodayTabs.tsx` امروز|کارها|خرید|تولدها switch shown by App on those four pages.
 - `src/ui/` — design system base components (`Button`, `InputField`, `Select`, `Card`, `Sheet`, `Chip`, `FormPage`, `PageHead`). Every add/edit screen is a `FormPage` (+ `FormSection`/`FormField`) built from `InputField`/`Select`; `Sheet` is only for pickers and menus.
 - `src/i18n/` — `tx('متن فارسی')` everywhere in the UI; Persian text is the key, `en.ts` holds the English copy. `src/settings.ts` `lang` picks it and remounts the app.
 

@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { ConfirmHost } from './confirm';
-import { AddMenu, type AddKind } from './AddMenu';
 import { TodayTabs } from './TodayTabs';
 import { TodoSheet } from './TodoSheet';
 import { TodayPage } from './TodayPage';
@@ -41,6 +40,7 @@ const BriefPage = lazy(() => import('./BriefPage').then((m) => ({ default: m.Bri
 const AboutPage = lazy(() => import('./AboutPage').then((m) => ({ default: m.AboutPage })));
 const PersonEditor = lazy(() => import('./PersonEditor').then((m) => ({ default: m.PersonEditor })));
 const ExchangePage = lazy(() => import('./ExchangePage').then((m) => ({ default: m.ExchangePage })));
+const ShoppingPage = lazy(() => import('./ShoppingPage').then((m) => ({ default: m.ShoppingPage })));
 
 type Page =
   | 'today'
@@ -54,6 +54,7 @@ type Page =
   | 'gallery'
   | 'more'
   | 'tasks'
+  | 'shopping'
   | 'birthdays'
   | 'settings'
   | 'sync'
@@ -68,7 +69,7 @@ type Page =
   | 'brief'
   | 'search';
 type Filter = 'all' | 'people' | 'notes' | 'todos' | 'photos' | 'birthdays' | 'rules' | 'exchanges';
-type TaskCtx = { id: string | null; from: Page };
+type TaskCtx = { id: string | null; from: Page; seedKind?: import('./taskKinds').TaskKind };
 
 const TABS: { page: Page; label: string; icon: IconName }[] = [
   { page: 'today', label: tk('امروز'), icon: 'home' },
@@ -95,8 +96,7 @@ function AppShell() {
   const [taskCtx, setTaskCtx] = useState<TaskCtx | null>(null);
   const [searchCtx, setSearchCtx] = useState<{ from: Page; filter?: Filter }>({ from: 'today' });
   const [bdayFocus, setBdayFocus] = useState<string | null>(null);
-  /** Set by the global + so the target screen opens its own add page as soon as it mounts. */
-  const [startAdd, setStartAdd] = useState<'birthday' | 'rule' | null>(null);
+  const [shoppingFocus, setShoppingFocus] = useState<string | null>(null);
   const [exchangeCtx, setExchangeCtx] = useState<{
     exchangeId?: string | null;
     seedPersonId?: string;
@@ -242,17 +242,12 @@ function AppShell() {
     if (personFrom.page === 'search') setSearchCtx(personFrom.search ?? { from: 'today' });
     go(personFrom.page);
   };
-  const openTask = (id: string | null) => {
-    setTaskCtx({ id, from: page === 'search' ? 'search' : page });
+  const openTask = (id: string | null, seedKind?: import('./taskKinds').TaskKind) => {
+    setTaskCtx({ id, from: page === 'search' ? 'search' : page, seedKind });
   };
-  const addFromMenu = (k: AddKind) => {
-    if (k === 'task') openTask(null);
-    else if (k === 'person') go('personnew');
-    else if (k === 'exchange') openExchange();
-    else {
-      setStartAdd(k);
-      go(k === 'birthday' ? 'birthdays' : 'rulebook');
-    }
+  const openShopping = (sessionId?: string) => {
+    setShoppingFocus(sessionId ?? null);
+    go('shopping');
   };
   const openSearch = (filter?: Filter) => {
     setSearchCtx({ from: page === 'search' ? 'today' : page, filter });
@@ -262,7 +257,7 @@ function AppShell() {
   const tabOf = (p: Page): Page => {
     if (p === 'person' || p === 'personnew' || p === 'whocan' || p === 'graph' || p === 'touch') return 'people';
     if (p === 'review' || p === 'readthrough') return 'rulebook';
-    if (p === 'tasks' || p === 'birthdays' || p === 'weekly') return 'today';
+    if (p === 'tasks' || p === 'shopping' || p === 'birthdays' || p === 'weekly') return 'today';
     if (p === 'exchange') return tabOf(exchangeCtx?.from ?? 'ledger');
     if (p === 'search') return tabOf(searchCtx.from);
     return MORE.includes(p) ? 'more' : p;
@@ -289,7 +284,7 @@ function AppShell() {
   return (
     <>
       <main inert={locked && !!lock}><Suspense fallback={null}>
-        {(page === 'today' || page === 'tasks' || page === 'birthdays') && <TodayTabs current={page} go={go} />}
+        {(page === 'today' || page === 'tasks' || page === 'shopping' || page === 'birthdays') && <TodayTabs current={page} go={go} />}
         {page === 'today' && (
           <TodayPage
             openSearch={() => openSearch()}
@@ -337,6 +332,7 @@ function AppShell() {
         {page === 'gallery' && <Gallery onBack={() => go('more')} />}
         {page === 'more' && (
           <MorePage
+            openShopping={() => openShopping()}
             openWeekly={() => go('weekly')}
             openSearch={() => openSearch()}
             openSettings={() => go('settings')}
@@ -346,16 +342,23 @@ function AppShell() {
             openGallery={() => go('gallery')}
           />
         )}
-        {page === 'tasks' && <Todos openForm={openTask} openPerson={openPerson} openSearch={() => openSearch('todos')} />}
+        {page === 'tasks' && <Todos openForm={openTask} openPerson={openPerson} openSearch={() => openSearch('todos')} openShopping={openShopping} />}
+        {page === 'shopping' && (
+          <ShoppingPage
+            openSearch={() => openSearch()}
+            openTask={openTask}
+            focusSessionId={shoppingFocus}
+            onSessionFocused={() => setShoppingFocus(null)}
+          />
+        )}
         {page === 'rulebook' && (
           <RulebookPage
-            startAdd={startAdd === 'rule'}
-            onStarted={() => setStartAdd(null)}
             openSearch={() => openSearch('rules')}
             focusId={ruleFocus}
             onFocused={() => setRuleFocus(null)}
             openReview={() => openReview('rulebook')}
             openReadThrough={openReadThrough}
+            openShopping={() => openShopping()}
           />
         )}
         {page === 'readthrough' && <ReadThrough categoryId={readCtx.categoryId} categoryName={readCtx.name} onClose={() => go('rulebook')} />}
@@ -385,7 +388,7 @@ function AppShell() {
             openExchange={(seedPersonId, exchangeId) => openExchange(seedPersonId, exchangeId, 'brief')}
           />
         )}
-        {page === 'birthdays' && <BirthdaysPage focusId={bdayFocus} onFocused={() => setBdayFocus(null)} startAdd={startAdd === 'birthday'} onStarted={() => setStartAdd(null)} openSearch={() => openSearch('birthdays')} />}
+        {page === 'birthdays' && <BirthdaysPage focusId={bdayFocus} onFocused={() => setBdayFocus(null)} openSearch={() => openSearch('birthdays')} />}
         {page === 'settings' && <SettingsPage openSync={() => go('sync')} />}
         {page === 'sync' && <SyncPage onBack={() => go('more')} />}
         {page === 'archive' && <ArchivePage />}
@@ -405,8 +408,7 @@ function AppShell() {
       <PwaUpdateBanner hidden={locked && !!lock} />
       {locked && lock && <LockScreen onUnlock={() => setLocked(false)} />}
       {importingContacts && <ContactsImport onClose={() => setImportingContacts(false)} />}
-      {taskCtx && <TodoSheet key={taskCtx.id ?? 'new'} id={taskCtx.id} onClose={() => setTaskCtx(null)} />}
-      {!full && !locked && <AddMenu onPick={addFromMenu} />}
+      {taskCtx && <TodoSheet key={taskCtx.id ?? (taskCtx.seedKind ?? 'new')} id={taskCtx.id} seedKind={taskCtx.seedKind} onClose={() => setTaskCtx(null)} />}
       {!full && (
       <div className="dock" inert={locked && !!lock}>
         <div className="bar">

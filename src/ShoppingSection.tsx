@@ -12,7 +12,15 @@ import { tx } from './i18n';
  * them. It reuses the rulebook's purchase comparison, so a task only keeps `compareSessionId`; the rules live in the
  * shared «خرید» rule category.
  */
-export function ShoppingSection({ task }: { task: Task }) {
+export function ShoppingSection({
+  task,
+  autoOpen = false,
+  onAutoOpened,
+}: {
+  task: Task;
+  autoOpen?: boolean;
+  onAutoOpened?: () => void;
+}) {
   const rules = useLiveQuery(() => db.rules.toArray(), []) ?? [];
   const cats = useLiveQuery(() => db.ruleCategories.toArray(), []) ?? [];
   const items = useLiveQuery(() => db.compareItems.toArray(), []) ?? [];
@@ -27,6 +35,21 @@ export function ShoppingSection({ task }: { task: Task }) {
   useEffect(() => {
     void ensureShoppingCategory().then((c) => setCatId(c.id));
   }, []);
+
+  useEffect(() => {
+    if (!autoOpen || !catId) return;
+    let alive = true;
+    const run = async () => {
+      const s = session ?? (await addSession(catId, task.title));
+      if (!session) await put('tasks', { ...task, compareSessionId: s.id, updatedAt: Date.now() });
+      if (alive) {
+        setOpen(true);
+        onAutoOpened?.();
+      }
+    };
+    void run();
+    return () => { alive = false; };
+  }, [autoOpen, catId, session, task, onAutoOpened]);
 
   // the comparison screens are overlays, so the Android back button reaches them through this hook (App asks it first)
   useEffect(() => {
@@ -84,20 +107,20 @@ export function ShoppingSection({ task }: { task: Task }) {
       </FormSection>
 
       {open && session && cat && (
-                    <CompareSessionPage
-              sessionId={session.id}
-              rules={rules}
-              onCategory={() => {}}
-              onBack={() => { setOpen(false); setChecking(null); }}
-              onOpenCheck={(itemId) => setChecking({ itemId, categoryId: cat.id })}
-            />
+        <CompareSessionPage
+          sessionId={session.id}
+          rules={rules}
+          onCategory={() => {}}
+          onBack={() => { setOpen(false); setChecking(null); }}
+          onOpenCheck={(itemId) => setChecking({ itemId, categoryId: cat.id })}
+        />
       )}
       {checking && (
-                    <CompareCheckMode
-              itemId={checking.itemId}
-              rules={rules.filter((r) => !r.archivedAt && r.categoryId === checking.categoryId)}
-              onClose={() => setChecking(null)}
-            />
+        <CompareCheckMode
+          itemId={checking.itemId}
+          rules={rules.filter((r) => !r.archivedAt && r.categoryId === checking.categoryId)}
+          onClose={() => setChecking(null)}
+        />
       )}
     </>
   );

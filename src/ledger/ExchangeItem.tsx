@@ -93,7 +93,6 @@ export function ExchangeItem({
             {exchange.dueOn && !settled && (
               <span className={`ledger-item-due-badge ${overdue ? 'overdue' : ''}`}>
                 <Icon name="clock" size={12} stroke={2.2} />
-                {due}
                 {overdue ? tx('{a1} (سررسید گذشته)', { a1: due }) : due}
               </span>
             )}

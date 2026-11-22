@@ -7,7 +7,7 @@ import { ask } from './confirm';
 import { Icon } from './Icon';
 import { DatePicker } from './DatePicker';
 import { STR } from './strings/rulebook';
-import { addItem, deleteItem, deleteSession, itemsOf, saveItem, setCheck } from './ruleData';
+import { addItem, addRule, deleteItem, deleteRule, deleteSession, itemsOf, saveItem, saveRule, setCheck } from './ruleData';
 import { differences as differencesOf, orderItems as orderByRules, parsePrice, statsFor, strictFailures, uncheckedCount } from './domain/compare';
 import { Toggle } from './Toggle';
 import type { CheckState } from './domain/rules/constants';
@@ -18,8 +18,8 @@ import { InputField, Button, Select, FormPage, FormSection } from './ui';
 export const priceText = (price: number | undefined) => (price === undefined ? '' : `${fa(price)} ${tx(STR.compare.priceUnit)}`);
 
 /**
- * Phase 5: the comparison session. Items, their counts, the quick-check walk, the matrix, the two-item comparison and the
- * decision all live here; the pure counting and ordering are in `domain/compare`.
+ * Phase 5: the comparison session. Items, their counts, inline criteria management, quick-check walk, matrix,
+ * two-item comparison and decision all live here; pure counting and ordering are in `domain/compare`.
  */
 export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCategory }: {
   sessionId: string;
@@ -30,9 +30,11 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
   onCategory: (categoryId: string) => void;
 }) {
   const sessions = useLiveQuery(() => db.compareSessions.toArray(), []) ?? [];
+  const categories = useLiveQuery(() => db.ruleCategories.toArray(), []) ?? [];
   const items = useLiveQuery(() => db.compareItems.toArray(), []) ?? [];
   const checks = useLiveQuery(() => db.compareChecks.toArray(), []) ?? [];
   const session = sessions.find((s) => s.id === sessionId);
+  const category = session ? categories.find((c) => c.id === session.categoryId) : undefined;
   const categoryRules = useMemo(() => rules.filter((r) => !r.archivedAt), [rules]);
   const rulesOf = useMemo(
     () => (session ? categoryRules.filter((r) => r.categoryId === session.categoryId) : []),
@@ -47,8 +49,11 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
   }, [session, onCategory]);
 
   const [quickName, setQuickName] = useState('');
+  const [quickPrice, setQuickPrice] = useState('');
+  const [newRuleTitle, setNewRuleTitle] = useState('');
+  const [newRuleStrict, setNewRuleStrict] = useState(false);
+  const [showCriteria, setShowCriteria] = useState<boolean | null>(null);
   const [editing, setEditing] = useState<CompareItem | 'new' | null>(null);
-  const [checking, setChecking] = useState<string | null>(null);
   const [matrix, setMatrix] = useState(false);
   const [two, setTwo] = useState(false);
   const [decideFor, setDecideFor] = useState<CompareItem | null>(null);
@@ -67,14 +72,24 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
   }
 
   const chosen = mine.find((i) => i.id === session.chosenItemId);
+  const criteriaOpen = showCriteria ?? (rulesOf.length === 0);
 
   const addQuick = async () => {
     const name = quickName.trim();
     if (!name) return;
+    const price = parsePrice(quickPrice);
     setQuickName('');
-    // Adding an item does not jump into the check mode: the user may be adding several items first. The card's own
-    // button opens it, and the sheet's "quick check" link does too.
-    await addItem(session, { name });
+    setQuickPrice('');
+    await addItem(session, { name, ...(price !== undefined ? { price } : {}) });
+  };
+
+  const addCriterion = async () => {
+    const clean = newRuleTitle.trim();
+    if (!clean) return;
+    setNewRuleTitle('');
+    const row = await addRule(session.categoryId, clean);
+    if (newRuleStrict) await saveRule(row, { strict: true });
+    setNewRuleStrict(false);
   };
 
   const removeItem = async (item: CompareItem) => {
@@ -91,6 +106,16 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
   return (
     <>
       <FormPage title={session.title} icon="contrast" onClose={onBack}>
+        {category && (
+          <div className="cmp-session-sub">
+            <span>{tx('دسته: {a1}', { a1: tx(category.name) })}</span>
+            <span aria-hidden="true">·</span>
+            <span>{tx('{a1} معیار', { a1: fa(rulesOf.length) })}</span>
+            <span aria-hidden="true">·</span>
+            <span>{tx('{a1} کالا', { a1: fa(ordered.length) })}</span>
+          </div>
+        )}
+
         {decided && chosen && (
           <section className="cmp-decided">
             <span className="cmp-decided-icon" aria-hidden="true"><Icon name="checkCircle" size={24} stroke={1.9} /></span>
@@ -102,18 +127,28 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
           </section>
         )}
 
-        {rulesOf.length === 0 && <p className="cmp-warn"><Icon name="info" size={16} stroke={2} />{tx(STR.compare.noRules)}</p>}
-
         <FormSection title={tx(STR.compare.addItem)} icon="plus">
-          <InputField
-            value={quickName}
-            maxLength={120}
-            placeholder={tx(STR.compare.itemNamePlaceholder)}
-            aria-label={tx(STR.compare.addItem)}
-            onChange={(e) => setQuickName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void addQuick(); }}
-            enterKeyHint="done"
-          />
+          <div className="shop-item-quick-grid">
+            <InputField
+              value={quickName}
+              maxLength={120}
+              placeholder={tx(STR.compare.itemNamePlaceholder)}
+              aria-label={tx(STR.compare.addItem)}
+              onChange={(e) => setQuickName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void addQuick(); } }}
+              enterKeyHint="done"
+            />
+            <InputField
+              value={quickPrice}
+              dir="ltr"
+              inputMode="numeric"
+              placeholder={`${tx(STR.compare.price)} (${tx(STR.compare.optional)})`}
+              aria-label={tx(STR.compare.price)}
+              onChange={(e) => setQuickPrice(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void addQuick(); } }}
+              enterKeyHint="done"
+            />
+          </div>
           <Button variant="primary" block icon="plus" disabled={!quickName.trim()} onClick={() => void addQuick()}>{tx(STR.compare.addItem)}</Button>
         </FormSection>
 
@@ -138,7 +173,7 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
                     <span className="cmp-rank" aria-hidden="true">{fa(idx + 1)}</span>
                     <span className="cmp-card-text">
                       <span className="cmp-name">{item.name}</span>
-                      {meta && <span className="cmp-meta">{meta}</span>}
+                      {meta && <span className="cmp-meta tabular-nums">{meta}</span>}
                     </span>
                     {item.id === topId && <span className="cmp-best">{tx('بهترین فعلی')}</span>}
                     <Icon name="chevronLeft" size={16} stroke={2} />
@@ -149,7 +184,7 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
                     <i className="fail" style={{ width: pct(st.fail) }} />
                     <i className="unknown" style={{ width: pct(st.unknown) }} />
                   </div>
-                  <div className="cmp-counts">
+                  <div className="cmp-counts tabular-nums">
                     <span className="pass"><Icon name="check" size={12} stroke={3} />{fa(st.pass)}</span>
                     <span className="fail"><Icon name="close" size={12} stroke={3} />{fa(st.fail)}</span>
                     <span className="unknown"><Icon name="info" size={12} stroke={2.4} />{fa(st.unknown)}</span>
@@ -157,7 +192,7 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
                   </div>
 
                   <div className="cmp-card-actions">
-                    <Button size="sm" variant={st.unknown > 0 ? 'primary' : 'secondary'} icon="listChecks" onClick={() => onOpenCheck(item.id)}>
+                    <Button size="sm" variant={rulesOf.length > 0 && st.unknown > 0 ? 'primary' : 'secondary'} icon="listChecks" disabled={rulesOf.length === 0} onClick={() => onOpenCheck(item.id)}>
                       {st.unknown > 0 ? tx(STR.compare.checkMode) : tx('بازبینی')}
                     </Button>
                     <Button size="sm" variant="secondary" icon="target" onClick={() => setDecideFor(item)}>{tx(STR.compare.decide)}</Button>
@@ -167,11 +202,75 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
             })}
 
             <FormSection title={tx('مقایسهٔ کامل')} icon="contrast">
+              {ordered.length < 2 && <p className="hint">{tx('یک کالای دیگر اضافه کن تا بتوانی دو کالا را کنار هم مقایسه کنی.')}</p>}
               <Button block icon="toolbox" disabled={rulesOf.length === 0} onClick={() => setMatrix(true)}>{tx(STR.compare.matrixTitle)}</Button>
               <Button block icon="contrast" disabled={ordered.length < 2} onClick={() => setTwo(true)}>{tx(STR.compare.compareTwo)}</Button>
             </FormSection>
           </>
         )}
+
+        <section className="shop-crit-card">
+          <button
+            type="button"
+            className="shop-crit-toggle"
+            aria-expanded={criteriaOpen}
+            onClick={() => setShowCriteria((v) => !(v ?? (rulesOf.length === 0)))}
+          >
+            <span className="tile purple" aria-hidden="true"><Icon name="listChecks" size={17} stroke={1.9} /></span>
+            <span className="shop-crit-head-text">
+              <b>{tx('معیارهای مقایسه ({a1})', { a1: fa(rulesOf.length) })}</b>
+              <span>{rulesOf.length === 0 ? tx('اول چند معیار اضافه کن تا کالاها را با آن بسنجی') : tx('تنظیم معیارها و خط قرمزهای این دسته')}</span>
+            </span>
+            <Icon name={criteriaOpen ? 'chevronDown' : 'chevronLeft'} size={16} stroke={2} />
+          </button>
+
+          {criteriaOpen && (
+            <div className="shop-crit-body">
+              {rulesOf.map((r) => (
+                <div key={r.id} className="shop-crit-row">
+                  <span className="shop-crit-title">
+                    <bdi>{r.title}</bdi>
+                    {r.strict && <em className="rule-chip strict">{tx(STR.feature.strict)}</em>}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void saveRule(r, { strict: !r.strict })}
+                    aria-pressed={!!r.strict}
+                  >
+                    {r.strict ? tx('خط قرمز روشن') : tx('خط قرمز')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    icon="trash"
+                    className="danger"
+                    aria-label={`${tx(STR.feature.delete)} ${r.title}`}
+                    onClick={() => void deleteRule(r)}
+                  />
+                </div>
+              ))}
+              <div className="shop-inline-add">
+                <InputField
+                  value={newRuleTitle}
+                  maxLength={200}
+                  placeholder={tx('معیار تازه، مثلاً گارانتی معتبر یا زیر ۵۰ میلیون')}
+                  aria-label={tx('معیار تازه')}
+                  onChange={(e) => setNewRuleTitle(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void addCriterion(); } }}
+                  enterKeyHint="done"
+                />
+                <Button variant="secondary" icon="plus" disabled={!newRuleTitle.trim()} onClick={() => void addCriterion()}>
+                  {tx('افزودن')}
+                </Button>
+              </div>
+              <div className="rf-row">
+                <span className="rf-name">{tx('معیار تازه «خط قرمز» باشد')}</span>
+                <Toggle on={newRuleStrict} label={tx(STR.feature.strict)} onChange={setNewRuleStrict} />
+              </div>
+            </div>
+          )}
+        </section>
 
         <Button variant="danger" block icon="trash" onClick={async () => {
           const ok = await ask({ title: tx(STR.compare.deleteSessionTitle(session.title)), message: tx(STR.compare.deleteSessionBody), confirm: tx(STR.feature.delete), icon: 'trash' });
@@ -196,11 +295,6 @@ export function CompareSessionPage({ sessionId, rules, onBack, onOpenCheck, onCa
       {decideFor && <DecideSheet session={session} item={decideFor} onClose={() => setDecideFor(null)} />}
     </>
   );
-}
-
-function changesHint(ruleCount: number) {
-  if (ruleCount > 0) return null;
-  return <p className="hint">{tx(STR.compare.noRules)}</p>;
 }
 
 /** Item details: name, shop, price, seen-on date and note. The quick-check entry lives here too. */

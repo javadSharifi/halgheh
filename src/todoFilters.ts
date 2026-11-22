@@ -2,13 +2,14 @@ import { type Task, type Done } from './db';
 import { addDays, taskOn, today } from './cal';
 import { locale, tx, tk } from './i18n';
 
-export type TodoFilter = 'today' | 'upcoming' | 'nodate' | 'done' | 'personal' | 'all';
+export type TodoFilter = 'today' | 'upcoming' | 'nodate' | 'done' | 'shopping' | 'personal' | 'all';
 
 export const FILTERS: [TodoFilter, string][] = [
   ['today', tk('امروز')],
   ['upcoming', tk('پیش‌رو')],
   ['nodate', tk('بدون موعد')],
   ['done', tk('انجام‌شده')],
+  ['shopping', tk('خرید')],
   ['personal', tk('شخصی')],
   ['all', tk('همه')],
 ];
@@ -83,6 +84,9 @@ export function listTodos(tasks: Task[], dones: Done[], filter: TodoFilter, t = 
       return open.filter((r) => isDateless(r.task)).sort(bySort);
     case 'done':
       return finished.sort((a, b) => (b.due ?? '').localeCompare(a.due ?? '') || bySort(a, b));
+    case 'shopping':
+      // shopping tasks, open ones first
+      return rows.filter((r) => r.task.kind === 'shopping').sort((a, b) => Number(a.done) - Number(b.done) || bySort(a, b));
     case 'personal':
       // every task with a mode (shopping, errand, ...), open ones first
       return rows.filter((r) => r.task.kind).sort((a, b) => Number(a.done) - Number(b.done) || bySort(a, b));
@@ -107,6 +111,7 @@ export function counts(tasks: Task[], dones: Done[], t = today()) {
     upcoming: listTodos(tasks, dones, 'upcoming', t).length,
     nodate: listTodos(tasks, dones, 'nodate', t).length,
     done: listTodos(tasks, dones, 'done', t).length,
+    shopping: listTodos(tasks, dones, 'shopping', t).length,
     personal: listTodos(tasks, dones, 'personal', t).length,
     all: tasks.length,
   } satisfies Record<TodoFilter, number>;

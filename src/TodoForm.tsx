@@ -5,9 +5,10 @@ import { LEADS, MASK_ALL, MASK_SAT_TO_WED, MASK_WEEKEND, SAT_FIRST, daysText, fa
 import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { Icon } from './Icon';
-import { FormField, FormPage, FormSection, InputField, Select } from './ui';
+import { Button, FormField, FormPage, FormSection, InputField, Select } from './ui';
 import { ShoppingSection } from './ShoppingSection';
 import { TASK_KINDS, type TaskKind } from './taskKinds';
+import { addSession, ensureShoppingCategory } from './ruleData';
 import { askNotifications, isNative } from './native';
 import { getSettings, updateSettings } from './settings';
 import { removeTask } from './Todos';
@@ -18,7 +19,19 @@ import { locale, tx } from './i18n';
  * Elegant iOS/Apple style bottom sheet with unified InputField,
  * segmented deadline control, touch-friendly assignee selector, and primary action bar.
  */
-export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | null; seedPersonId?: string; onClose: () => void }) {
+export function TodoForm({
+  initial,
+  seedPersonId,
+  seedKind,
+  onClose,
+}: {
+  initial: Task | null;
+  seedPersonId?: string;
+  seedKind?: TaskKind;
+  onClose: () => void;
+}) {
+  const [savedTask, setSavedTask] = useState<Task | null>(initial);
+  const [autoCompare, setAutoCompare] = useState(false);
   const [v, setV] = useState(() => ({
     title: initial?.title ?? '',
     note: initial?.description ?? '',
@@ -30,7 +43,7 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
     lead: initial ? (initial.remindLead ?? -1) : 10,
     before: initial?.before ?? ([] as number[]),
     fromPersonId: initial?.fromPersonId ?? seedPersonId ?? '',
-    kind: initial?.kind ?? ('' as TaskKind | ''),
+    kind: initial?.kind ?? seedKind ?? ('' as TaskKind | ''),
   }));
 
   const [picking, setPicking] = useState(false);
@@ -42,18 +55,26 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
   const once = v.when === 'date';
   const repeat = v.when === 'repeat';
 
-  const save = async () => {
+  const save = async (openComparisonAfter = false) => {
     if (!valid || busy) return;
     setBusy(true);
     setErr('');
     try {
       const now = Date.now();
+      const base = savedTask;
       // the shopping section may have linked a comparison since this form opened, so build on the stored row, not the opened one
-      const stored = initial ? await db.tasks.get(initial.id) : undefined;
+      const stored = base ? await db.tasks.get(base.id) : undefined;
+      const cleanTitle = v.title.replace(/\s+/g, ' ').trim();
+      let compareSessionId = stored?.compareSessionId ?? base?.compareSessionId;
+      if (openComparisonAfter && !compareSessionId) {
+        const cat = await ensureShoppingCategory();
+        const session = await addSession(cat.id, cleanTitle);
+        compareSessionId = session.id;
+      }
       const row: Task = {
-        ...(stored ?? initial),
-        id: initial?.id ?? uid(),
-        title: v.title.replace(/\s+/g, ' ').trim(),
+        ...(stored ?? base),
+        id: base?.id ?? uid(),
+        title: cleanTitle,
         description: v.note.trim() || undefined,
         mask: repeat ? v.mask : 0,
         on: once ? v.date : undefined,
@@ -63,7 +84,8 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
         remindLead: v.when !== 'none' && v.time && v.lead >= 0 ? v.lead : undefined,
         fromPersonId: v.fromPersonId || undefined,
         kind: v.kind || undefined,
-        active: initial?.active !== false,
+        ...(compareSessionId ? { compareSessionId } : {}),
+        active: base?.active !== false,
         updatedAt: now,
       };
 
@@ -79,6 +101,12 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
       if (isNative && row.remindLead !== undefined && !getSettings().remind && (await askNotifications())) {
         updateSettings({ remind: true });
       }
+      if (openComparisonAfter) {
+        setSavedTask(row);
+        setAutoCompare(true);
+        setBusy(false);
+        return;
+      }
       onClose();
     } catch {
       setErr(tx('ذخیره نشد؛ لطفاً دوباره تلاش کنید.'));
@@ -89,15 +117,15 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
   return (
     <>
       <FormPage
-        title={initial ? tx('ویرایش کار') : tx('کار تازه')}
-        icon={initial ? 'edit' : 'plus'}
+        title={savedTask ? tx('ویرایش کار') : tx('کار تازه')}
+        icon={savedTask ? 'edit' : 'plus'}
         onClose={onClose}
-        onSave={() => void save()}
-        saveLabel={initial ? tx('ذخیره') : tx('ثبت')}
+        onSave={() => void save(false)}
+        saveLabel={savedTask ? tx('ذخیره') : tx('ثبت')}
         saveDisabled={!valid}
         busy={busy}
         error={err && valid ? err : undefined}
-        onDelete={initial ? async () => { if (await removeTask(initial.id)) onClose(); } : undefined}
+        onDelete={savedTask ? async () => { if (await removeTask(savedTask.id)) onClose(); } : undefined}
         deleteLabel={tx('حذف این کار')}
       >
         <FormSection>
@@ -278,9 +306,16 @@ export function TodoForm({ initial, seedPersonId, onClose }: { initial: Task | n
 
         </FormSection>
 
-        {v.kind === 'shopping' && (initial
-          ? <ShoppingSection task={initial} />
-          : <p className="hint">{tx('بعد از ثبت کار، قوانین خرید و مقایسهٔ محصولات همین‌جا باز می‌شود.')}</p>)}
+        {v.kind === 'shopping' && (savedTask ? (
+          <ShoppingSection task={savedTask} autoOpen={autoCompare} onAutoOpened={() => setAutoCompare(false)} />
+        ) : (
+          <FormSection title={tx('مقایسهٔ محصولات')} icon="contrast">
+            <p className="hint">{tx('می‌توانی همین الان این کار خرید را ثبت کنی و بلافاصله مقایسهٔ کالاها را شروع کنی.')}</p>
+            <Button variant="secondary" block icon="contrast" disabled={!valid || busy} onClick={() => void save(true)}>
+              {tx('ثبت کار و باز کردن مقایسهٔ خرید')}
+            </Button>
+          </FormSection>
+        ))}
       </FormPage>
 
       {/* Date Picker Modal */}
