@@ -46,7 +46,7 @@ pnpm android:live # debug APK on the emulator/phone + hot reload: every save rel
 ```
 
 - Do not run `pnpm android:apk` / `pnpm android:release` in an edit/test loop: gradle is slow. Only on an explicit request, once, at the end.
-- `pnpm exec wrangler deploy` publishes the Worker; it needs the D1 database from `wrangler.jsonc`.
+- `pnpm exec wrangler deploy` publishes the Worker by hand; a push to `master` publishes it too via `.github/workflows/deploy.yml` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` repo secrets). Both need the D1 database from `wrangler.jsonc`.
 
 ## Definition of done
 
