@@ -3,7 +3,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { type Photo, db } from './db';
 import { fa } from './cal';
 import { Icon } from './Icon';
-import { isNative } from './native';
 import { orderPhotos } from './photos';
 import { removePhoto } from './storePhoto';
 import { usePhotoAdd } from './photoAdd';
@@ -72,32 +71,22 @@ export function Gallery({ onBack }: { onBack?: () => void } = {}) {
           )}
           <h1>{tx('گالری')}</h1>
         </div>
-        {isNative && (
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={!!busy || cap.full}
-            onClick={() => void adder.start()}
-            icon="plus"
-          >
-            {tx('افزودن عکس')}
-          </Button>
-        )}
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={!!busy || cap.full}
+          onClick={() => void adder.start()}
+          icon="plus"
+        >
+          {tx('افزودن عکس')}
+        </Button>
       </div>
-
-      {!isNative && (
-        <Card variant="glass" className="empty-state">
-          <span className="tile purple" aria-hidden="true"><Icon name="image" size={24} stroke={1.7} /></span>
-          <b>{tx('گالری روی گوشی کار می‌کند')}</b>
-          <p className="hint">{tx('افزودن عکس از گالری گوشی تنها در نسخهٔ اندرویدی در دسترس است.')}</p>
-        </Card>
-      )}
 
       {err && <p className="form-error gallery-err" role="alert">{err}</p>}
       {cap.warning && !err && <p className="hint gallery-err">{tx('{a1} از {a2} عکس پر شده است.', { a1: fa(cap.count), a2: fa(cap.max) })}</p>}
       {absent > 0 && <p className="hint gallery-err">{tn('{n} عکس پرونده‌اش روی این گوشی نیست؛ با همگام‌سازی بعدی می‌آید.', absent)}</p>}
 
-      {isNative && photos.length === 0 && !busy && (
+      {photos.length === 0 && !busy && (
         <Card variant="glass" className="empty-state">
           <span className="tile purple" aria-hidden="true"><Icon name="image" size={24} stroke={1.7} /></span>
           <b>{tx('عکسی نیست')}</b>

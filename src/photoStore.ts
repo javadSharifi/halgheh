@@ -3,6 +3,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { JPEG_QUALITY, MAX_LONG_SIDE, THUMB_LONG_SIDE, THUMB_QUALITY, fileNameFor, targetSize, thumbPathFor } from './photos';
 import { isNative } from './native';
+import { base64ToBytes } from './zip';
 
 /**
  * G1 file pipeline. The picker is the Android system photo picker (no permission needed; the OS shows the sheet), then
@@ -73,7 +74,13 @@ export async function saveThumb(path: string, base64: string) {
 
 /** A source that works in an <img src>: the stored file, converted to a URL the web view can render. */
 export async function fileSrc(path: string) {
-  if (!isNative) return path;
+  if (!isNative) {
+    const file = await Filesystem.readFile({ path, directory: Directory.Data });
+    if (file.data instanceof Blob) return URL.createObjectURL(file.data);
+    const b64 = typeof file.data === 'string' ? file.data : '';
+    const bytes = base64ToBytes(b64.replace(/^data:[^;]+;base64,/, ''));
+    return URL.createObjectURL(new Blob([bytes as unknown as BlobPart], { type: 'image/jpeg' }));
+  }
   const { uri } = await Filesystem.getUri({ path, directory: Directory.Data });
   // the web view cannot load file:// URLs; Capacitor maps them to its own scheme
   return Capacitor.convertFileSrc(uri);

@@ -111,8 +111,8 @@ button, a, label, summary, [role='button'] { touch-action: manipulation; }
 :root[lang='en'] body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 /* two blurred colour blobs behind everything, as in the design */
 body::before, body::after { content: ''; position: fixed; z-index: -1; border-radius: 50%; pointer-events: none; }
-body::before { top: 150px; left: -70px; width: 230px; height: 230px; background: var(--blob-a); filter: blur(var(--blob-a-blur)); opacity: var(--blob-a-o); }
-body::after { top: 520px; right: -80px; width: 240px; height: 240px; background: var(--blob-b); filter: blur(var(--blob-b-blur)); opacity: var(--blob-b-o); }
+body::before { top: 70px; left: -150px; width: 390px; height: 390px; background: radial-gradient(circle, var(--blob-a) 0%, transparent 68%); opacity: var(--blob-a-o); }
+body::after { top: 440px; right: -160px; width: 400px; height: 400px; background: radial-gradient(circle, var(--blob-b) 0%, transparent 68%); opacity: var(--blob-b-o); }
 main { max-width: 560px; margin: 0 auto; padding: calc(14px + env(safe-area-inset-top)) 18px 120px; }
 h1 { margin: 0; font-size: 27px; font-weight: 800; color: var(--ink-strong); }
 h2 { font-size: 17px; font-weight: 700; margin: 22px 6px 8px; }
@@ -120,14 +120,13 @@ h2 { font-size: 17px; font-weight: 700; margin: 22px 6px 8px; }
 /* ---- primitives ---- */
 .glass, .day, .form-card {
   background: var(--glass); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
   border-radius: 26px;
 }
 button, select, input:not([type='checkbox']), textarea, .btn {
   font: inherit; color: inherit; background: var(--field); border: 1px solid var(--edge);
   border-radius: 14px; padding: 10px 14px; box-shadow: inset 0 1px 0 var(--hi);
 }
-button, .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; min-height: 44px; font-weight: 600; font-size: 14px; border-radius: 22px; background: var(--glass); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border-color: var(--glass-border); }
+button, .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; min-height: 44px; font-weight: 600; font-size: 14px; border-radius: 22px; background: var(--glass); border-color: var(--glass-border); }
 button.primary, .btn.primary { color: #fff; background: var(--primary); border: 1px solid rgba(255, 255, 255, 0.35); box-shadow: var(--primary-shadow); font-weight: 700; }
 button:disabled { opacity: 0.5; cursor: default; }
 button.on { color: #fff; background: var(--select); border-color: rgba(255, 255, 255, 0.35); box-shadow: 0 8px 14px -8px rgba(62, 99, 221, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
@@ -226,7 +225,7 @@ u.n { background: var(--purple); } u.t { background: #4466e6; } u.b { background
 .day .sub { color: var(--muted); font-size: 12px; }
 .bd { margin: 8px 0 0; }
 textarea { width: 100%; min-height: 140px; margin-top: 12px; resize: vertical; line-height: 1.8; background: var(--glass-strong); }
-.form { display: grid; gap: 10px; padding: 16px; border-radius: 26px; background: var(--glass); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); }
+.form { display: grid; gap: 10px; padding: 16px; border-radius: 26px; background: var(--glass); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }
 .form input { width: 100%; }
 .inline { display: flex; gap: 8px; flex-wrap: wrap; }
 .inline > * { flex: 1; min-width: 80px; }
@@ -243,7 +242,7 @@ textarea { width: 100%; min-height: 140px; margin-top: 12px; resize: vertical; l
 .head-tools .icon-btn { margin: 0; }
 .today-head span { font-size: 12px; color: var(--muted); line-height: 1.4; }
 .today-head b { font-size: 21px; font-weight: 800; line-height: 1.3; color: var(--ink-strong); }
-.status { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 16px; font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--glass); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); }
+.status { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 16px; font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--glass); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }
 .today-head .status { line-height: 1; }
 .date-card { padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 14px; border-radius: 28px; }
 .dc-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; padding: 0 6px; gap: 8px; }
@@ -372,13 +371,13 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .text-btn.big { font-size: 15px; font-weight: 500; height: 44px; min-height: 44px; padding: 0 8px; }
 .save-btn { height: 44px; padding: 0 20px; border-radius: 22px; font-size: 15px; }
 .ne-status { display: flex; justify-content: center; margin-bottom: 14px; }
-.autosave { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 14px; font-size: 12px; font-weight: 600; color: var(--ok); background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.autosave { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 14px; font-size: 12px; font-weight: 600; color: var(--ok); background: var(--glass); border: 1px solid var(--glass-border); }
 .date-btn { width: 100%; height: 58px; padding: 0 12px; margin-bottom: 14px; border-radius: 20px; justify-content: flex-start; gap: 12px; text-align: start; font-weight: 400; color: var(--ink); }
 .date-icon { width: 36px; height: 36px; border-radius: 11px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--blue-ink); background: var(--blue-tint); }
 .date-text { flex: 1; display: flex; flex-direction: column; min-width: 0; align-items: flex-start; }
 .date-text b { font-size: 15px; font-weight: 600; }
 .date-text small { font-size: 11.5px; color: var(--muted); }
-.ne-card { border-radius: 28px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; background: var(--card2); border: 1px solid var(--edge); box-shadow: 0 18px 40px -20px var(--sh), inset 0 1px 0 var(--hi); backdrop-filter: blur(26px) saturate(170%); -webkit-backdrop-filter: blur(26px) saturate(170%); }
+.ne-card { border-radius: 28px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; background: var(--card2); border: 1px solid var(--edge); box-shadow: 0 18px 40px -20px var(--sh), inset 0 1px 0 var(--hi); }
 .ne-card label { display: flex; flex-direction: column; gap: 4px; }
 .field-label { font-size: 12px; font-weight: 600; color: var(--muted); }
 .ne-card input, .ne-card textarea { border: 0; background: transparent; box-shadow: none; padding: 0; min-height: 0; border-radius: 0; width: 100%; }
@@ -438,7 +437,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 
 /* ---- birthdays page ---- */
 .sec-title { margin: 18px 6px 8px; }
-.bday-today { margin-bottom: 4px; padding: 14px; display: flex; align-items: center; gap: 12px; border-radius: 26px; background: var(--bday-bg); border: 1px solid var(--edge); box-shadow: var(--glass-shadow); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); }
+.bday-today { margin-bottom: 4px; padding: 14px; display: flex; align-items: center; gap: 12px; border-radius: 26px; background: var(--bday-bg); border: 1px solid var(--edge); box-shadow: var(--glass-shadow); }
 .bday-today > div { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .bday-today em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--peach-ink); }
 .bday-today b { font-size: 16px; font-weight: 700; }
@@ -529,6 +528,16 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .about-card > b { font-size: 22px; font-weight: 800; color: var(--ink-strong); }
 .about-card p { margin: 0; max-width: 330px; line-height: 1.95; }
 .about-version { margin-top: 4px; font-size: 11.5px; font-weight: 600; color: var(--faint); }
+
+/* ---- iOS install guide sheet ---- */
+.ios-install-steps { display: flex; flex-direction: column; gap: 14px; padding: 4px 6px; }
+.ios-step { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: var(--field); border: 1px solid var(--line-2); }
+.ios-step-num { width: 26px; height: 26px; border-radius: 13px; background: var(--select); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none; }
+.ios-step-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.ios-step-content b { font-size: 14px; color: var(--ink-strong); }
+.ios-step-content p { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+.ios-step > .tile { width: 40px; height: 40px; border-radius: 14px; flex: none; }
+.ios-step-close { width: 100%; margin-top: 6px; }
 
 /* ---- Redesigned Today Dashboard (T3) ---- */
 .today-container { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
@@ -879,7 +888,6 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
   display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px;
   border-radius: 24px; background: var(--bday-bg); border: 1px solid rgba(232, 135, 92, 0.35);
   box-shadow: 0 10px 24px -10px rgba(232, 135, 92, 0.4); cursor: pointer; text-align: start;
-  backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
   transition: transform 100ms ease-out;
 }
 .bday-celebrate-card:active { transform: scale(0.985); }
@@ -902,7 +910,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
   display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px;
   border-radius: 20px; background: linear-gradient(135deg, rgba(180, 74, 46, 0.12) 0%, rgba(232, 135, 92, 0.08) 100%);
   border: 1px solid rgba(180, 74, 46, 0.25); box-shadow: 0 4px 12px -4px rgba(180, 74, 46, 0.15);
-  color: var(--ink); text-align: start; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  color: var(--ink); text-align: start;
   cursor: pointer; transition: transform 100ms ease-out;
 }
 .overdue-banner:active { transform: scale(0.985); }
@@ -922,7 +930,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
   display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px;
   border-radius: 22px; background: linear-gradient(135deg, rgba(62, 99, 221, 0.12) 0%, rgba(122, 91, 218, 0.14) 100%);
   border: 1px solid rgba(122, 91, 218, 0.25); box-shadow: 0 6px 18px -6px rgba(122, 91, 218, 0.2);
-  cursor: pointer; text-align: start; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  cursor: pointer; text-align: start;
   transition: transform 100ms ease-out;
 }
 .rule-ritual-card:active { transform: scale(0.985); }
@@ -943,7 +951,6 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
   display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px;
   border-radius: 20px; background: var(--glass); border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow); cursor: pointer; text-align: start;
-  backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
   transition: transform 100ms ease-out;
 }
 .ledger-alert-card:active { transform: scale(0.985); }
@@ -1005,7 +1012,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .ub-chip {
   display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 16px; background: var(--glass);
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); cursor: pointer; white-space: nowrap;
-  flex: none; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: transform 100ms ease-out;
+  flex: none; transition: transform 100ms ease-out;
 }
 .ub-chip:active { transform: scale(0.97); }
 .ub-chip .avatar { width: 28px; height: 28px; border-radius: 14px; font-size: 12px; }
@@ -1034,7 +1041,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 .fresh-person-item {
   display: flex; flex-direction: column; align-items: center; gap: 6px; width: 64px; flex: none; padding: 6px 4px;
   border: 0; border-radius: 18px; background: var(--glass); border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
   cursor: pointer; transition: transform 100ms ease-out;
 }
 .fresh-person-item:active { transform: scale(0.95); }
@@ -1111,7 +1118,6 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
   padding: 10px 4px; min-height: 64px; border-radius: 18px; text-decoration: none;
   font-size: 12px; font-weight: 600; color: var(--ink-2);
   background: var(--glass); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
   transition: transform 0.1s ease;
 }
 .qa-btn:active { transform: scale(0.96); }
@@ -1498,7 +1504,7 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0 6px; width: calc
 /* ---- search page ---- */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .search-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.search-field { flex: 1; height: 50px; border-radius: 25px; padding: 0 14px; display: flex; align-items: center; gap: 8px; color: var(--muted); background: var(--card2); border: 1px solid var(--edge); box-shadow: 0 10px 26px -16px var(--sh), inset 0 1px 0 var(--hi); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); }
+.search-field { flex: 1; height: 50px; border-radius: 25px; padding: 0 14px; display: flex; align-items: center; gap: 8px; color: var(--muted); background: var(--card2); border: 1px solid var(--edge); box-shadow: 0 10px 26px -16px var(--sh), inset 0 1px 0 var(--hi); }
 .search-field input { flex: 1; min-width: 0; min-height: 0; height: 100%; border: 0; background: transparent; box-shadow: none; padding: 0; border-radius: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
 .search-field input:focus { border: 0; box-shadow: none; }
 .search-field input::-webkit-search-cancel-button { display: none; }
@@ -2654,8 +2660,6 @@ button.ledger-due-badge-card { width: 100%; font: inherit; text-align: start; }
   background: var(--glass);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(20px) saturate(170%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
   border-radius: 22px;
   padding: 16px;
   display: flex;
@@ -3353,8 +3357,6 @@ button.ledger-due-badge-card { width: 100%; font: inherit; text-align: start; }
 }
 .ui-card-glass {
   background: var(--glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   box-shadow: var(--shadow-md);
 }
 .ui-card-solid {

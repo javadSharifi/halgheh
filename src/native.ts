@@ -15,6 +15,19 @@ import { tx } from './i18n';
 
 export const isNative = Capacitor.isNativePlatform();
 
+/** True when running inside Safari or an iOS web browser. */
+export const isIosWeb =
+  !isNative &&
+  typeof navigator !== 'undefined' &&
+  (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+/** True when the app is installed and running in fullscreen/standalone mode (PWA or Native). */
+export const isStandalone =
+  isNative ||
+  (typeof window !== 'undefined' &&
+    (window.matchMedia('(display-mode: standalone)').matches ||
+      ('standalone' in navigator && !!(navigator as unknown as { standalone: boolean }).standalone)));
+
 // Java plugin (android/.../TodayPlugin.java): system bars, biometric unlock, FLAG_SECURE, and home screen widget.
 const Today = registerPlugin<{
   setBars(o: { bg: string; dark: boolean }): Promise<void>;

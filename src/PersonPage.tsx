@@ -12,7 +12,6 @@ import { usePhotoAdd } from './photoAdd';
 import { PhotoViewer } from './PhotoViewer';
 import { PhotoEdit } from './PhotoEdit';
 import { removePhoto } from './storePhoto';
-import { isNative } from './native';
 import { SkillForm } from './SkillForm';
 import { RatingForm } from './RatingForm';
 import { RelationshipForm } from './RelationshipForm';
@@ -211,7 +210,7 @@ export function PersonPage({ id, onBack, openCheck, openBrief, openLedger, openE
           photos={photos}
           photoUrls={photoUrls}
           onOpenPhoto={setViewingPhoto}
-          onAddPhoto={isNative ? () => void photoAdd.start() : undefined}
+          onAddPhoto={() => void photoAdd.start()}
           openLedger={openLedger}
           openBrief={openBrief}
           onExchange={(ex) => openExchange(p.id, ex === 'new' ? null : ex.id)}
