@@ -106,12 +106,12 @@ jobs:
           fi
           mkdir -p android
           echo "$KEYSTORE_BASE64" | base64 --decode > android/release.keystore
-          cat <<EOF > android/keystore.properties
-storeFile=release.keystore
-storePassword=${STORE_PASS}
-keyAlias=${KEY_ALIAS}
-keyPassword=${KEY_PASS}
-EOF
+          {
+            echo "storeFile=release.keystore"
+            echo "storePassword=${STORE_PASS}"
+            echo "keyAlias=${KEY_ALIAS}"
+            echo "keyPassword=${KEY_PASS}"
+          } > android/keystore.properties
 
       - name: Build Release APK with Gradle
         run: |
