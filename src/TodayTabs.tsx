@@ -1,9 +1,9 @@
 import { tx } from './i18n';
 
-export type TodayTab = 'today' | 'tasks' | 'shopping' | 'birthdays';
-const TABS: [TodayTab, string][] = [['today', 'امروز'], ['tasks', 'کارها'], ['shopping', 'خرید'], ['birthdays', 'تولدها']];
+export type TodayTab = 'today' | 'tasks' | 'birthdays';
+const TABS: [TodayTab, string][] = [['today', 'امروز'], ['tasks', 'کارها'], ['birthdays', 'تولدها']];
 
-/** Switch shared by the daily screens, so tasks, shopping/comparison and birthdays are one tap from Today instead of buried in More. */
+/** Switch shared by the three daily screens, so tasks and birthdays are one tap from Today instead of buried in More. */
 export function TodayTabs({ current, go }: { current: TodayTab; go: (p: TodayTab) => void }) {
   return (
     <div className="tabs today-tabs" role="tablist" aria-label={tx('بخش‌های روزانه')}>

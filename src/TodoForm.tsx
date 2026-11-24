@@ -6,9 +6,7 @@ import { Choice } from './Choice';
 import { DatePicker } from './DatePicker';
 import { Icon } from './Icon';
 import { Button, FormField, FormPage, FormSection, InputField, Select } from './ui';
-import { ShoppingSection } from './ShoppingSection';
 import { TASK_KINDS, type TaskKind } from './taskKinds';
-import { addSession, ensureShoppingCategory } from './ruleData';
 import { askNotifications, isNative } from './native';
 import { getSettings, updateSettings } from './settings';
 import { removeTask } from './Todos';
@@ -30,8 +28,7 @@ export function TodoForm({
   seedKind?: TaskKind;
   onClose: () => void;
 }) {
-  const [savedTask, setSavedTask] = useState<Task | null>(initial);
-  const [autoCompare, setAutoCompare] = useState(false);
+  const savedTask = initial;
   const [v, setV] = useState(() => ({
     title: initial?.title ?? '',
     note: initial?.description ?? '',
@@ -55,22 +52,15 @@ export function TodoForm({
   const once = v.when === 'date';
   const repeat = v.when === 'repeat';
 
-  const save = async (openComparisonAfter = false) => {
+  const save = async () => {
     if (!valid || busy) return;
     setBusy(true);
     setErr('');
     try {
       const now = Date.now();
       const base = savedTask;
-      // the shopping section may have linked a comparison since this form opened, so build on the stored row, not the opened one
       const stored = base ? await db.tasks.get(base.id) : undefined;
       const cleanTitle = v.title.replace(/\s+/g, ' ').trim();
-      let compareSessionId = stored?.compareSessionId ?? base?.compareSessionId;
-      if (openComparisonAfter && !compareSessionId) {
-        const cat = await ensureShoppingCategory();
-        const session = await addSession(cat.id, cleanTitle);
-        compareSessionId = session.id;
-      }
       const row: Task = {
         ...(stored ?? base),
         id: base?.id ?? uid(),
@@ -84,7 +74,6 @@ export function TodoForm({
         remindLead: v.when !== 'none' && v.time && v.lead >= 0 ? v.lead : undefined,
         fromPersonId: v.fromPersonId || undefined,
         kind: v.kind || undefined,
-        ...(compareSessionId ? { compareSessionId } : {}),
         active: base?.active !== false,
         updatedAt: now,
       };
@@ -101,12 +90,6 @@ export function TodoForm({
       if (isNative && row.remindLead !== undefined && !getSettings().remind && (await askNotifications())) {
         updateSettings({ remind: true });
       }
-      if (openComparisonAfter) {
-        setSavedTask(row);
-        setAutoCompare(true);
-        setBusy(false);
-        return;
-      }
       onClose();
     } catch {
       setErr(tx('ذخیره نشد؛ لطفاً دوباره تلاش کنید.'));
@@ -120,7 +103,7 @@ export function TodoForm({
         title={savedTask ? tx('ویرایش کار') : tx('کار تازه')}
         icon={savedTask ? 'edit' : 'plus'}
         onClose={onClose}
-        onSave={() => void save(false)}
+        onSave={() => void save()}
         saveLabel={savedTask ? tx('ذخیره') : tx('ثبت')}
         saveDisabled={!valid}
         busy={busy}
@@ -305,17 +288,6 @@ export function TodoForm({
           />
 
         </FormSection>
-
-        {v.kind === 'shopping' && (savedTask ? (
-          <ShoppingSection task={savedTask} autoOpen={autoCompare} onAutoOpened={() => setAutoCompare(false)} />
-        ) : (
-          <FormSection title={tx('مقایسهٔ محصولات')} icon="contrast">
-            <p className="hint">{tx('می‌توانی همین الان این کار خرید را ثبت کنی و بلافاصله مقایسهٔ کالاها را شروع کنی.')}</p>
-            <Button variant="secondary" block icon="contrast" disabled={!valid || busy} onClick={() => void save(true)}>
-              {tx('ثبت کار و باز کردن مقایسهٔ خرید')}
-            </Button>
-          </FormSection>
-        ))}
       </FormPage>
 
       {/* Date Picker Modal */}

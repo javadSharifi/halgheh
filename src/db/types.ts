@@ -17,7 +17,6 @@ export type Task = {
   before?: number[]; // one-off task: also remind this many days ahead (at `time`, or 09:00)
   fromPersonId?: string; // T1: the person who asked for this todo ("چه کسی خواسته")
   kind?: 'personal' | 'shopping' | 'errand' | 'health'; // personal-task mode; missing = an ordinary task
-  compareSessionId?: string; // shopping tasks: the product comparison that belongs to this task
   snoozeUntil?: number; // T1: epoch ms; while in the future this replaces the normal reminder time (survives re-planning)
 };
 export type Done = { id: string; taskId: string; date: string; updatedAt: number; doneAt?: number }; // id = `${taskId}|${date}`; doneAt = when it was ticked (ms), missing on old rows
@@ -146,21 +145,19 @@ export type PhotoFile = {
 };
 
 /**
- * A category of the personal rulebook (phase 1). `compareEnabled` turns on purchase comparison for this category only,
- * which is why it sits on the category rather than on the rule.
+ * A category of the personal rulebook (phase 1).
  */
 export type RuleCategory = {
   id: string;
   name: string;
   sortOrder: number;
-  compareEnabled?: boolean;
   updatedAt: number;
 };
 
 /**
  * One rule the user wrote for themselves. `box`/`nextReviewOn` are a cache of the review history (see
  * `domain/rules/schedule.ts`), never the source of truth. `nextReviewOn` is a `YYYY-MM-DD` date, never a timezone-shifted
- * instant; `lastReviewedAt` is an ISO UTC instant. `strict` marks a deal-breaker used by the purchase comparison.
+ * instant; `lastReviewedAt` is an ISO UTC instant. `strict` marks a deal-breaker rule.
  */
 export type Rule = {
   id: string;
@@ -190,40 +187,6 @@ export type RuleReview = {
   reviewedAt: string; // ISO UTC
   reviewedOn: string; // YYYY-MM-DD, the review's own day
   result: 'remembered' | 'forgot' | 'broke';
-  note?: string;
-  updatedAt: number;
-};
-
-/** A purchase-comparison session (phase 5). `open` sessions are listed first; `decided` ones stay readable. */
-export type CompareSession = {
-  id: string;
-  categoryId: string;
-  title: string;
-  status: 'open' | 'decided';
-  chosenItemId?: string;
-  decisionNote?: string;
-  createdAt: number;
-  updatedAt: number;
-};
-
-/** One item seen in one shop. The same model seen in two shops is two items on purpose. */
-export type CompareItem = {
-  id: string;
-  sessionId: string;
-  name: string;
-  shopName?: string;
-  price?: number; // Toman, shown with Persian digits by the existing format helpers
-  seenOn: string; // YYYY-MM-DD
-  note?: string;
-  updatedAt: number;
-};
-
-/** One rule checked against one item. A missing row means `unknown`, so `unknown` rows are never written. */
-export type CompareCheck = {
-  id: string; // `${itemId}|${ruleId}`, so the same pair cannot be stored twice
-  itemId: string;
-  ruleId: string;
-  state: 'pass' | 'fail' | 'unknown';
   note?: string;
   updatedAt: number;
 };
@@ -333,9 +296,6 @@ export type TableName =
   | 'ruleCategories'
   | 'rules'
   | 'ruleReviews'
-  | 'compareSessions'
-  | 'compareItems'
-  | 'compareChecks'
   | 'ruleBreaks'
   | 'ruleChecks'
   | 'ruleCheckItems'

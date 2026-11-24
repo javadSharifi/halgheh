@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 import { SEEDED_KEY, SEED_CATEGORIES } from '../domain/rules/constants';
 import type {
-  Birthday, CompareCheck, CompareItem, CompareSession, Done, Exchange, ExchangeSettlement, Interaction, Occasion, Outbox, Person,
+  Birthday, Done, Exchange, ExchangeSettlement, Interaction, Occasion, Outbox, Person,
   PersonNote, PersonSkill, PersonTag, Photo, PhotoFile, Rating, Relationship, Rule, RuleBreak, RuleCategory, RuleCheck,
   RuleCheckItem, RuleReview, Skill, TableName, Tag, Task,
 } from './types';
@@ -27,9 +27,6 @@ export const TABLES: TableName[] = [
   'ruleCategories',
   'rules',
   'ruleReviews',
-  'compareSessions',
-  'compareItems',
-  'compareChecks',
   'ruleBreaks',
   'ruleChecks',
   'ruleCheckItems',
@@ -56,9 +53,6 @@ export const db = new Dexie('halgheh') as Dexie & {
   ruleCategories: Dexie.Table<RuleCategory, string>;
   rules: Dexie.Table<Rule, string>;
   ruleReviews: Dexie.Table<RuleReview, string>;
-  compareSessions: Dexie.Table<CompareSession, string>;
-  compareItems: Dexie.Table<CompareItem, string>;
-  compareChecks: Dexie.Table<CompareCheck, string>;
   ruleBreaks: Dexie.Table<RuleBreak, string>;
   ruleChecks: Dexie.Table<RuleCheck, string>;
   ruleCheckItems: Dexie.Table<RuleCheckItem, string>;
@@ -125,7 +119,7 @@ db.version(11)
     const now = Date.now();
     for (const [i, seed] of SEED_CATEGORIES.entries()) {
       const id = crypto.randomUUID();
-      const row: RuleCategory = { id, name: seed.name, sortOrder: i, updatedAt: now, ...(seed.compareEnabled && { compareEnabled: true }) };
+      const row: RuleCategory = { id, name: seed.name, sortOrder: i, updatedAt: now };
       await categories.put(row);
       await outbox.put({ key: `ruleCategories|${id}`, t: 'ruleCategories', id, deleted: 0, updatedAt: now, op: 'create' });
     }
@@ -161,6 +155,13 @@ db.version(12)
 // v13: yearly occasions that are not birthdays (Nowruz, Mother's Day). Same 3-calendar date; `tagId` groups it.
 db.version(13).stores({ occasions: 'id, cal, month, updatedAt' });
 
+// v14: remove product/shopping comparison tables (moved to jibeman)
+db.version(14).stores({
+  compareSessions: null,
+  compareItems: null,
+  compareChecks: null,
+});
+
 /** Every user write goes through put/del so sync sees it. Sync's own writes bypass them. */
 export async function put(t: TableName, row: { id: string; updatedAt: number } & Record<string, unknown>) {
   await db.transaction('rw', db[t], db.outbox, async () => {
@@ -186,7 +187,7 @@ const seedCategoryId = (index: number) => `00000000-0000-4000-8000-${String(inde
 
 /**
  * Merges duplicate ruleCategories that share the exact same trimmed name (which can happen when two installs/tabs
- * seed independently and later sync or restore a backup). Reassigns any rules/sessions before removing duplicates.
+ * seed independently and later sync or restore a backup). Reassigns any rules before removing duplicates.
  */
 export async function deduplicateRuleCategories() {
   const cats = await db.ruleCategories.toArray();
@@ -200,10 +201,9 @@ export async function deduplicateRuleCategories() {
   const dupGroups = [...byName.values()].filter((g) => g.length > 1);
   if (dupGroups.length === 0) return;
 
-  const [rules, sessions] = await Promise.all([db.rules.toArray(), db.compareSessions.toArray()]);
+  const rules = await db.rules.toArray();
   const refCount = new Map<string, number>();
   for (const r of rules) refCount.set(r.categoryId, (refCount.get(r.categoryId) ?? 0) + 1);
-  for (const s of sessions) refCount.set(s.categoryId, (refCount.get(s.categoryId) ?? 0) + 1);
 
   for (const group of dupGroups) {
     const sorted = [...group].sort(
@@ -218,9 +218,6 @@ export async function deduplicateRuleCategories() {
     const now = Date.now();
     for (const r of rules) {
       if (dupIds.has(r.categoryId)) await put('rules', { ...r, categoryId: keep.id, updatedAt: now });
-    }
-    for (const s of sessions) {
-      if (dupIds.has(s.categoryId)) await put('compareSessions', { ...s, categoryId: keep.id, updatedAt: now });
     }
     for (const dup of sorted.slice(1)) await del('ruleCategories', dup.id);
   }
@@ -247,7 +244,6 @@ async function seedRuleCategories() {
           name: seed.name,
           sortOrder: i,
           updatedAt: now,
-          ...(seed.compareEnabled && { compareEnabled: true }),
         } as RuleCategory & { id: string; updatedAt: number });
       }
       localStorage.setItem(SEEDED_KEY, String(now));

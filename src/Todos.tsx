@@ -7,7 +7,6 @@ import { ask } from './confirm';
 import { Icon } from './Icon';
 import { Button, PageHead } from './ui';
 import { counts, doneDateFor, doneKey, FILTERS, isOverdue, isRecurring, listTodos, overdue, type TodoFilter } from './todoFilters';
-import { addSession, ensureShoppingCategory } from './ruleData';
 import { tn, tx } from './i18n';
 import { TASK_KINDS } from './taskKinds';
 
@@ -48,36 +47,21 @@ export function Todos({
   openForm,
   openPerson,
   openSearch,
-  openShopping,
 }: {
   openForm: (id: string | null) => void;
   openPerson: (id: string) => void;
   openSearch: () => void;
-  openShopping?: (sessionId?: string) => void;
 }) {
   const [filter, setFilter] = useState<TodoFilter>('today');
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
   const dones = useLiveQuery(() => db.done.toArray(), []) ?? [];
   const people = useLiveQuery(() => db.people.toArray(), []) ?? [];
-  const sessions = useLiveQuery(() => db.compareSessions.toArray(), []) ?? [];
   const t = today();
 
   const n = useMemo(() => counts(tasks, dones, t), [tasks, dones, t]);
   const list = useMemo(() => listTodos(tasks, dones, filter, t), [tasks, dones, filter, t]);
   const late = useMemo(() => (filter === 'upcoming' ? overdue(tasks, dones, t) : []), [filter, tasks, dones, t]);
   const nameOf = useMemo(() => new Map(people.map((p) => [p.id, personLabel(p)])), [people]);
-
-  const jumpToCompare = async (task: Task) => {
-    if (!openShopping) return openForm(task.id);
-    if (task.compareSessionId && sessions.some((s) => s.id === task.compareSessionId)) {
-      openShopping(task.compareSessionId);
-      return;
-    }
-    const cat = await ensureShoppingCategory();
-    const s = await addSession(cat.id, task.title);
-    await put('tasks', { ...task, compareSessionId: s.id, updatedAt: Date.now() });
-    openShopping(s.id);
-  };
 
   const sub = (task: Task, done: boolean) => {
     const bits: string[] = [];
@@ -115,17 +99,6 @@ export function Todos({
           {sub(task, done)}
         </span>
       </button>
-      {task.kind === 'shopping' && openShopping && (
-        <Button
-          variant="secondary"
-          size="sm"
-          icon="contrast"
-          className="shop-task-compare-btn"
-          onClick={() => void jumpToCompare(task)}
-        >
-          {tx('مقایسه')}
-        </Button>
-      )}
       {task.fromPersonId && (
         <button className="icon-btn small" aria-label={tx('پروفایل {a1}', { a1: nameOf.get(task.fromPersonId) ?? '' })} onClick={() => openPerson(task.fromPersonId!)}>
           <Icon name="users" size={17} stroke={1.9} />

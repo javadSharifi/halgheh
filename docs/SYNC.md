@@ -16,7 +16,6 @@
 | `skills`, `personSkills`, `ratings`, `relationships` | بله |
 | `photos` (فقط متادیتا) | بله |
 | `ruleCategories`, `rules`, `ruleReviews` | بله (قوانین من) |
-| `compareSessions`, `compareItems`, `compareChecks` | بله (مقایسهٔ خرید) |
 | `ruleBreaks`, `ruleChecks`, `ruleCheckItems` | بله (ثبت شکستن و بررسی قوانین برای یک آدم) |
 | `exchanges`, `exchangeSettlements` | بله (دادوستد) |
 | `photoFiles` | **هرگز** — فایل عکس روی دستگاه می‌ماند (آپلود آن کار B2b است) |

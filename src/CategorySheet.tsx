@@ -3,10 +3,9 @@ import { type Rule, type RuleCategory } from './db';
 import { fa } from './cal';
 import { ask } from './confirm';
 import { Icon } from './Icon';
-import { Toggle } from './Toggle';
 import { Choice } from './Choice';
 import { STR } from './strings/rulebook';
-import { addCategory, deleteCategory, deleteCategory as removeCategory, moveCategory, renameCategory, setCompareEnabled } from './ruleData';
+import { addCategory, deleteCategory, deleteCategory as removeCategory, moveCategory, renameCategory } from './ruleData';
 import { tn, tx } from './i18n';
 import { Button, FormPage, FormSection, InputField } from './ui';
 
@@ -107,9 +106,6 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
                       <small className="set-sub">{tn('{n} قانون', countIn(cat.id))}</small>
                     </button>
                   )}
-                  <span className="cat-compare" title={tx(STR.categories.compareToggle)}>
-                    <Toggle on={!!cat.compareEnabled} label={`${tx(STR.categories.compareToggle)} ${tx(cat.name)}`} onChange={(on) => void setCompareEnabled(cat, on)} />
-                  </span>
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -139,8 +135,6 @@ export function CategorySheet({ categories, rules, onClose }: { categories: Rule
                 </div>
               ))}
             </div>
-
-            <p className="hint cat-hint">{tx(STR.categories.compareHint)}</p>
           </>
         )}
 

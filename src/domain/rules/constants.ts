@@ -20,20 +20,15 @@ export const MAX_REVIEWS_PER_SESSION = 10;
 export const REVIEW_RESULTS = ['remembered', 'forgot', 'broke'] as const;
 export type ReviewResult = (typeof REVIEW_RESULTS)[number];
 
-/** The three states a rule can have for one item. A missing row means `unknown`, so this is also the default. */
-export const CHECK_STATES = ['pass', 'fail', 'unknown'] as const;
-export type CheckState = (typeof CHECK_STATES)[number];
-
 /**
- * What the seed writes on a fresh install (or an upgrade with no categories). The last two compare purchases. The names
+ * What the seed writes on a fresh install (or an upgrade with no categories). The names
  * are here, not in the strings file, because they are content rows written by the data layer; screens show them
  * through tx(), so a renamed category falls back to its own name.
  */
-export const SEED_CATEGORY_NAMES = [tk('زندگی'), tk('ارتباط'), tk('رابطه'), tk('پول'), tk('خرید ماشین'), tk('خرید موبایل')] as const;
+export const SEED_CATEGORY_NAMES = [tk('زندگی'), tk('ارتباط'), tk('رابطه'), tk('پول')] as const;
 /** Marks the one-time seed, so deleting every category does not bring the defaults back on the next start. */
 export const SEEDED_KEY = 'halgheh:rulebook-seeded';
 
-export const SEED_CATEGORIES: { name: string; compareEnabled: boolean }[] = SEED_CATEGORY_NAMES.map((name) => ({
+export const SEED_CATEGORIES: { name: string }[] = SEED_CATEGORY_NAMES.map((name) => ({
   name,
-  compareEnabled: name === 'خرید ماشین' || name === 'خرید موبایل',
 }));

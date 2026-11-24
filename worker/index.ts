@@ -19,13 +19,10 @@ const TABLES = new Set([
   'ratings',
   'relationships',
   'photos',
-  // Rulebook phase 1: categories, rules, append-only reviews and the purchase comparison
+  // Rulebook phase 1: categories, rules, append-only reviews
   'ruleCategories',
   'rules',
   'ruleReviews',
-  'compareSessions',
-  'compareItems',
-  'compareChecks',
   // Rulebook parts 1-3: the broken-rule log, the per-person rule check, and the back-and-forth ledger
   'ruleBreaks',
   'ruleChecks',

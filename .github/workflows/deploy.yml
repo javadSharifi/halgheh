@@ -33,6 +33,13 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Verify Cloudflare Token
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN secret is not set in GitHub repository. Please create an API Token in Cloudflare dashboard and add it to repository secrets."
+            exit 1
+          fi
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:

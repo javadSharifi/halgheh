@@ -26,7 +26,7 @@
 
 **حلقه** یک **دفترچهٔ هوشمند آدم‌ها** (Personal CRM / مدیریت روابط شخصی) برای **اندروید** است؛ فارسی، راست‌به‌چپ، و **کاملاً آفلاین**. هر آدمی را که می‌شناسی، هر قولی که داده‌ای، هر کاری که کسی از تو خواسته، و هر قاعده‌ای که برای خودت گذاشته‌ای، یک‌جا نگه می‌دارد و به‌موقع یادت می‌اندازد.
 
-برای کسی ساخته شده که می‌خواهد **رابطه‌هایش را فراموش نکند**: «آخرین بار کِی با مینا حرف زدم؟»، «چه کسی لوله‌کشی بلد است؟»، «رضا چقدر به من بدهکار است؟»، «کدام گوشی با قانون‌های خریدم می‌خواند؟»
+برای کسی ساخته شده که می‌خواهد **رابطه‌هایش را فراموش نکند**: «آخرین بار کِی با مینا حرف زدم؟»، «چه کسی لوله‌کشی بلد است؟»، «رضا چقدر به من بدهکار است؟»
 
 > **همهٔ داده‌ها روی گوشی خودت می‌مانند.** بدون حساب کاربری، بدون تبلیغ، بدون ردیاب. همگام‌سازی ابری فقط اگر خودت روشنش کنی.
 
@@ -49,10 +49,6 @@
 - **دکمهٔ «+» سراسری** برای افزودن سریع کار، فرد، دادوستد، تولد یا قانون از هر صفحه.
 - **ویجت‌های صفحهٔ اصلی اندروید** برای کارهای امروز و رویدادهای پیش‌رو.
 - **مرور هفتگی**: این هفته با چه کسانی حرف زدی، چند کار انجام دادی، چه قانونی را بیشتر شکستی، و هفتهٔ بعد چه خبر است.
-
-### 🛒 خرید هوشمند و مقایسهٔ محصول
-- برای یک کار «خرید» **قوانین خرید** بنویس («حداقل ۸ گیگ رم»، «گارانتی دارد») و **چند محصول** (مثلاً چند گوشی) وارد کن.
-- هر محصول با قوانین سنجیده می‌شود: نوار رنگی رعایت‌شده/نقض‌شده/بررسی‌نشده، **«بهترین فعلی»**، هشدار **خط قرمز**، ماتریس کامل، و **مقایسهٔ رودررو** دو محصول. در پایان یکی را با دلیلش انتخاب کن.
 
 ### 📜 قوانین من
 - قاعده‌های شخصی‌ات را بنویس و در **مرور با فاصله‌گذاری** (Spaced Repetition) هر چند وقت یک بار مرورشان کن.
@@ -193,13 +189,12 @@ pnpm build && pnpm exec wrangler deploy
 
 ## English
 
-**Halgheh (حلقه, “the ring”)** is an **offline-first personal CRM for Android with a Persian (Farsi, right-to-left) interface** and an English UI option. It keeps everyone you know, the favours you owe and are owed, the rules you set for yourself, and your shopping decisions in one place — **entirely on your phone**.
+**Halgheh (حلقه, “the ring”)** is an **offline-first personal CRM for Android with a Persian (Farsi, right-to-left) interface** and an English UI option. It keeps everyone you know, the favours you owe and are owed, and the rules you set for yourself in one place — **entirely on your phone**.
 
 **Highlights**
 
 - **People & relationships** — profiles, closeness groups (close / friend / acquaintance / distant) with a *keep-in-touch* rhythm, a **relationship graph** with you at the centre and optional “who introduced whom”, skills with evidence, and a *who can do this?* search.
 - **Tasks** — one-off and **recurring** tasks, reminders, task types, a global “+” button, home-screen widgets and a **weekly review**.
-- **Smart shopping** — write shopping rules, add several products (e.g. phones) and compare them against the rules, with a “best so far” pick, hard-fail rules and a head-to-head view.
 - **My rules** — personal rules with spaced-repetition review and a broken-rule log.
 - **Ledger** — money, items and favours, with partial settlement and balances.
 - **Birthdays & occasions** in the **Jalali (Persian), Gregorian and Hijri calendars**, with ready wish texts you can send by SMS, WhatsApp, Telegram or email.
@@ -209,4 +204,4 @@ pnpm build && pnpm exec wrangler deploy
 **Install:** download the APK from [Releases](https://github.com/javadSharifi/halgheh/releases) (Android 7+), then follow [docs/INSTALL.md](docs/INSTALL.md).
 **Build:** `pnpm install && pnpm dev` (Node 22, pnpm 9). Stack: React 19, TypeScript, Vite, Dexie, Capacitor, Cloudflare Workers + D1.
 
-<sub>Keywords: personal CRM, offline-first, Android app, Persian, Farsi, RTL, Jalali calendar, Shamsi, Hijri, contacts manager, relationship manager, keep in touch reminders, relationship graph, task manager, recurring tasks, shopping comparison, spaced repetition, ledger, debt tracker, birthday reminders, private, no tracking, Capacitor, React, Dexie, Cloudflare Workers.</sub>
+<sub>Keywords: personal CRM, offline-first, Android app, Persian, Farsi, RTL, Jalali calendar, Shamsi, Hijri, contacts manager, relationship manager, keep in touch reminders, relationship graph, task manager, recurring tasks, spaced repetition, ledger, debt tracker, birthday reminders, private, no tracking, Capacitor, React, Dexie, Cloudflare Workers.</sub>

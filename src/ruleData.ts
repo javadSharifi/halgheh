@@ -1,7 +1,4 @@
 import {
-  type CompareCheck,
-  type CompareItem,
-  type CompareSession,
   type Rule,
   type RuleBreak,
   type RuleCategory,
@@ -97,12 +94,11 @@ export async function restoreRule(rule: Rule) {
 }
 
 /**
- * Confirmed hard delete plus tombstone (the existing convention). The rule's reviews and its comparison checks go with it:
+ * Confirmed hard delete plus tombstone (the existing convention). The rule's reviews go with it:
  * leaving them behind would keep personal history for a rule the user asked to erase.
  */
 export async function deleteRule(rule: Rule) {
   for (const r of await db.ruleReviews.where('ruleId').equals(rule.id).toArray()) await del('ruleReviews', r.id);
-  for (const c of await db.compareChecks.where('ruleId').equals(rule.id).toArray()) await del('compareChecks', c.id);
   await del('rules', rule.id);
 }
 
@@ -158,110 +154,16 @@ export async function moveCategory(cats: RuleCategory[], id: string, dir: -1 | 1
   }
 }
 
-export const setCompareEnabled = (cat: RuleCategory, on: boolean) => {
-  const row: RuleCategory = { ...cat, updatedAt: Date.now() };
-  if (on) row.compareEnabled = true;
-  else delete row.compareEnabled;
-  return put('ruleCategories', row);
-};
-
 /**
  * Deletes a category. A non-empty category must say where its rules go first (`moveTo`), which is what the screen asks;
- * `deleteRules` is the explicit other answer. Sessions of that category go too, with their items and checks.
+ * `deleteRules` is the explicit other answer.
  */
 export async function deleteCategory(cat: RuleCategory, rules: Rule[], choice: { moveTo: string } | { deleteRules: true }) {
   for (const rule of rules) {
     if ('deleteRules' in choice) await deleteRule(rule);
     else await saveRule(rule, { categoryId: choice.moveTo });
   }
-  for (const s of await db.compareSessions.where('categoryId').equals(cat.id).toArray()) await deleteSession(s);
   await del('ruleCategories', cat.id);
-}
-
-// ---- comparison sessions ----
-
-export async function addSession(categoryId: string, title: string) {
-  const now = Date.now();
-  const row: CompareSession = { id: uid(), categoryId, title: title.trim() || tx('مقایسه'), status: 'open', createdAt: now, updatedAt: now };
-  await put('compareSessions', row);
-  return row;
-}
-
-/** Open sessions first, then the newest. */
-export const orderSessions = (sessions: CompareSession[]) =>
-  [...sessions].sort((a, b) => Number(a.status === 'decided') - Number(b.status === 'decided') || b.updatedAt - a.updatedAt);
-
-export async function addItem(session: CompareSession, patch: Pick<CompareItem, 'name'> & Partial<Pick<CompareItem, 'shopName' | 'price' | 'seenOn' | 'note'>>) {
-  const now = Date.now();
-  const row: CompareItem = {
-    id: uid(),
-    sessionId: session.id,
-    name: patch.name.replace(/\s+/g, ' ').trim(),
-    seenOn: patch.seenOn ?? today(),
-    ...(patch.shopName?.trim() ? { shopName: patch.shopName.trim() } : {}),
-    ...(patch.price !== undefined ? { price: patch.price } : {}),
-    ...(patch.note?.trim() ? { note: patch.note.trim() } : {}),
-    updatedAt: now,
-  };
-  await put('compareItems', row);
-  await touchSession(session);
-  return row;
-}
-
-export async function saveItem(item: CompareItem, patch: Partial<Pick<CompareItem, 'name' | 'shopName' | 'price' | 'seenOn' | 'note'>>) {
-  const next: CompareItem = { ...item, ...patch, name: (patch.name ?? item.name).trim(), updatedAt: Date.now() };
-  if (!next.shopName?.trim()) delete next.shopName;
-  if (!next.note?.trim()) delete next.note;
-  if (next.price === undefined) delete next.price;
-  await put('compareItems', next);
-  return next;
-}
-
-export const itemsOf = (items: CompareItem[], sessionId: string) => items.filter((i) => i.sessionId === sessionId);
-
-export const checksOf = (checks: CompareCheck[], itemIds: string[]) => {
-  const ids = new Set(itemIds);
-  return checks.filter((c) => ids.has(c.itemId));
-};
-
-/** Writes one check. `unknown` is never stored: the row is removed so a missing row keeps meaning unknown. */
-export async function setCheck(itemId: string, ruleId: string, state: CompareCheck['state'], note?: string) {
-  const id = `${itemId}|${ruleId}`;
-  if (state === 'unknown') return del('compareChecks', id);
-  const row: CompareCheck = { id, itemId, ruleId, state, updatedAt: Date.now() };
-  const clean = note?.trim();
-  if (clean) row.note = clean;
-  await put('compareChecks', row);
-}
-
-export const touchSession = (session: CompareSession) => put('compareSessions', { ...session, updatedAt: Date.now() });
-
-/** Marks one item as chosen and the session decided; the note is why it was chosen. */
-export async function decide(session: CompareSession, itemId: string, reason?: string) {
-  const now = Date.now();
-  const next: CompareSession = { ...session, status: 'decided', chosenItemId: itemId, updatedAt: now };
-  const clean = reason?.trim();
-  if (clean) next.decisionNote = clean;
-  else delete next.decisionNote;
-  await put('compareSessions', next);
-}
-
-/** Reopening keeps the checks and the items; only the decision is cleared, so it can be decided again. */
-export async function reopen(session: CompareSession) {
-  const next: CompareSession = { ...session, status: 'open', updatedAt: Date.now() };
-  delete next.chosenItemId;
-  delete next.decisionNote;
-  await put('compareSessions', next);
-}
-
-export async function deleteItem(item: CompareItem) {
-  for (const c of await db.compareChecks.where('itemId').equals(item.id).toArray()) await del('compareChecks', c.id);
-  await del('compareItems', item.id);
-}
-
-export async function deleteSession(session: CompareSession) {
-  for (const item of await db.compareItems.where('sessionId').equals(session.id).toArray()) await deleteItem(item);
-  await del('compareSessions', session.id);
 }
 
 /** "مرور بعدی" line for a rule; the archived case is spelled out rather than shown as a date that never comes. */
@@ -379,32 +281,4 @@ export const itemsOfCheck = async (checkId: string) => db.ruleCheckItems.where('
 export async function deletePersonCheck(check: RuleCheck) {
   for (const i of await db.ruleCheckItems.where('checkId').equals(check.id).toArray()) await del('ruleCheckItems', i.id);
   await del('ruleChecks', check.id);
-}
-
-/** The one rule category shopping tasks compare against. Created on first use, and switched to comparison mode if it was not. */
-export const SHOPPING_CATEGORY = 'خرید';
-const SHOPPING_CATEGORY_ID = '00000000-0000-4000-8000-000000000007';
-let shoppingCatInflight: Promise<RuleCategory> | null = null;
-export function ensureShoppingCategory(): Promise<RuleCategory> {
-  if (shoppingCatInflight) return shoppingCatInflight;
-  shoppingCatInflight = (async () => {
-    const cats = await db.ruleCategories.toArray();
-    const found = cats.find((c) => c.name.trim() === SHOPPING_CATEGORY);
-    if (!found) {
-      const made: RuleCategory = {
-        id: SHOPPING_CATEGORY_ID,
-        name: SHOPPING_CATEGORY,
-        sortOrder: nextOrder(cats),
-        compareEnabled: true,
-        updatedAt: Date.now(),
-      };
-      await put('ruleCategories', made);
-      return made;
-    }
-    if (!found.compareEnabled) await setCompareEnabled(found, true);
-    return { ...found, compareEnabled: true };
-  })().finally(() => {
-    shoppingCatInflight = null;
-  });
-  return shoppingCatInflight;
 }

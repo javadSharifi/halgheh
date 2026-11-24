@@ -40,7 +40,6 @@ const BriefPage = lazy(() => import('./BriefPage').then((m) => ({ default: m.Bri
 const AboutPage = lazy(() => import('./AboutPage').then((m) => ({ default: m.AboutPage })));
 const PersonEditor = lazy(() => import('./PersonEditor').then((m) => ({ default: m.PersonEditor })));
 const ExchangePage = lazy(() => import('./ExchangePage').then((m) => ({ default: m.ExchangePage })));
-const ShoppingPage = lazy(() => import('./ShoppingPage').then((m) => ({ default: m.ShoppingPage })));
 
 type Page =
   | 'today'
@@ -54,7 +53,6 @@ type Page =
   | 'gallery'
   | 'more'
   | 'tasks'
-  | 'shopping'
   | 'birthdays'
   | 'settings'
   | 'sync'
@@ -96,7 +94,6 @@ function AppShell() {
   const [taskCtx, setTaskCtx] = useState<TaskCtx | null>(null);
   const [searchCtx, setSearchCtx] = useState<{ from: Page; filter?: Filter }>({ from: 'today' });
   const [bdayFocus, setBdayFocus] = useState<string | null>(null);
-  const [shoppingFocus, setShoppingFocus] = useState<string | null>(null);
   const [exchangeCtx, setExchangeCtx] = useState<{
     exchangeId?: string | null;
     seedPersonId?: string;
@@ -245,10 +242,6 @@ function AppShell() {
   const openTask = (id: string | null, seedKind?: import('./taskKinds').TaskKind) => {
     setTaskCtx({ id, from: page === 'search' ? 'search' : page, seedKind });
   };
-  const openShopping = (sessionId?: string) => {
-    setShoppingFocus(sessionId ?? null);
-    go('shopping');
-  };
   const openSearch = (filter?: Filter) => {
     setSearchCtx({ from: page === 'search' ? 'today' : page, filter });
     setPage('search');
@@ -257,7 +250,7 @@ function AppShell() {
   const tabOf = (p: Page): Page => {
     if (p === 'person' || p === 'personnew' || p === 'whocan' || p === 'graph' || p === 'touch') return 'people';
     if (p === 'review' || p === 'readthrough') return 'rulebook';
-    if (p === 'tasks' || p === 'shopping' || p === 'birthdays' || p === 'weekly') return 'today';
+    if (p === 'tasks' || p === 'birthdays' || p === 'weekly') return 'today';
     if (p === 'exchange') return tabOf(exchangeCtx?.from ?? 'ledger');
     if (p === 'search') return tabOf(searchCtx.from);
     return MORE.includes(p) ? 'more' : p;
@@ -284,7 +277,7 @@ function AppShell() {
   return (
     <>
       <main inert={locked && !!lock}><Suspense fallback={null}>
-        {(page === 'today' || page === 'tasks' || page === 'shopping' || page === 'birthdays') && <TodayTabs current={page} go={go} />}
+        {(page === 'today' || page === 'tasks' || page === 'birthdays') && <TodayTabs current={page} go={go} />}
         {page === 'today' && (
           <TodayPage
             openSearch={() => openSearch()}
@@ -332,7 +325,6 @@ function AppShell() {
         {page === 'gallery' && <Gallery onBack={() => go('more')} />}
         {page === 'more' && (
           <MorePage
-            openShopping={() => openShopping()}
             openWeekly={() => go('weekly')}
             openSearch={() => openSearch()}
             openSettings={() => go('settings')}
@@ -342,15 +334,7 @@ function AppShell() {
             openGallery={() => go('gallery')}
           />
         )}
-        {page === 'tasks' && <Todos openForm={openTask} openPerson={openPerson} openSearch={() => openSearch('todos')} openShopping={openShopping} />}
-        {page === 'shopping' && (
-          <ShoppingPage
-            openSearch={() => openSearch()}
-            openTask={openTask}
-            focusSessionId={shoppingFocus}
-            onSessionFocused={() => setShoppingFocus(null)}
-          />
-        )}
+        {page === 'tasks' && <Todos openForm={openTask} openPerson={openPerson} openSearch={() => openSearch('todos')} />}
         {page === 'rulebook' && (
           <RulebookPage
             openSearch={() => openSearch('rules')}
@@ -358,7 +342,6 @@ function AppShell() {
             onFocused={() => setRuleFocus(null)}
             openReview={() => openReview('rulebook')}
             openReadThrough={openReadThrough}
-            openShopping={() => openShopping()}
           />
         )}
         {page === 'readthrough' && <ReadThrough categoryId={readCtx.categoryId} categoryName={readCtx.name} onClose={() => go('rulebook')} />}

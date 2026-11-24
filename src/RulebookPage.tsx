@@ -11,9 +11,6 @@ import { dueCount, isDue } from './domain/rules/schedule';
 import { RuleSheet } from './RuleSheet';
 import { CategorySheet } from './CategorySheet';
 import { ReviewSession } from './ReviewSession';
-import { CompareHome } from './CompareHome';
-import { CompareSessionPage } from './CompareSessionPage';
-import { CompareCheckMode } from './CompareCheck';
 import { tx } from './i18n';
 
 /**
@@ -25,7 +22,6 @@ export function RulebookPage({
   onFocused,
   openReview,
   openReadThrough,
-  openShopping,
   startAdd,
   onStarted,
   openSearch,
@@ -37,23 +33,15 @@ export function RulebookPage({
   onFocused?: () => void;
   openReview?: () => void;
   openReadThrough?: (categoryId?: string, name?: string) => void;
-  openShopping?: () => void;
 } = {}) {
   const categories = useLiveQuery(() => db.ruleCategories.toArray(), []) ?? [];
   const rules = useLiveQuery(() => db.rules.toArray(), []) ?? [];
-  const compareSessions = useLiveQuery(() => db.compareSessions.toArray(), []) ?? [];
   const [cat, setCat] = useState<string | 'all'>('all');
   const [quick, setQuick] = useState('');
   const [editing, setEditing] = useState<Rule | null | 'new'>(null);
   const [managing, setManaging] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [reviewing, setReviewing] = useState(false);
-  /** Phase 5: the category whose comparison entry is open, the session being read, and the item being checked. */
-  const [compareHome, setCompareHome] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  /** The category of the open session, reported by the session page so the check mode knows which rules to walk. */
-  const [sessionCategoryId, setSessionCategoryId] = useState<string | null>(null);
-  const [checking, setChecking] = useState<{ itemId: string; categoryId: string } | null>(null);
   /** Part 1: "بیشترین شکست" ordering, and hiding rules that were never broken. */
   const [mostBroken, setMostBroken] = useState(false);
   const [onlyBroken, setOnlyBroken] = useState(false);
@@ -88,31 +76,6 @@ export function RulebookPage({
     onFocused?.();
   }, [focusId, rules, onFocused]);
 
-  /**
-   * Phase 5: the comparison screens are overlays inside this page, so the Android back button cannot see them through the
-   * page state. They register a closer here and `App` asks it first; without this, back from a session left the rulebook.
-   */
-  useEffect(() => {
-    const closer = () => {
-      if (checking) {
-        setChecking(null);
-        return true;
-      }
-      if (sessionId) {
-        setSessionId(null);
-        return true;
-      }
-      if (compareHome) {
-        setCompareHome(null);
-        return true;
-      }
-      return false;
-    };
-    (window as unknown as { __rulebookBack?: () => boolean }).__rulebookBack = closer;
-    return () => {
-      delete (window as unknown as { __rulebookBack?: () => boolean }).__rulebookBack;
-    };
-  }, [checking, sessionId, compareHome]);
   const due = dueCount(rules, t);
   const dueHere = dueCount(active === 'all' ? rules : rules.filter((r) => r.categoryId === active), t);
 
@@ -145,15 +108,8 @@ export function RulebookPage({
     </button>
   );
 
-  // Phase 5: a session (and the check mode) is a full-screen page. The rulebook stays mounted underneath so returning is
-  // instant, but its content is hidden while the overlay is open — otherwise two scrollable screens would be stacked.
-  const overlay = !!sessionId || !!checking;
-  const openSessionsInCat = activeCategory ? compareSessions.filter((s) => s.categoryId === activeCategory.id).length : 0;
-  const openSessionsAll = compareSessions.filter((s) => s.status === 'open').length;
-
   return (
     <>
-      <div className={overlay ? 'rulebook-under' : undefined} aria-hidden={overlay || undefined}>
       <PageHead
         title={tx(STR.feature.title)}
         tools={[
@@ -180,38 +136,6 @@ export function RulebookPage({
           {tx(STR.review.start)}
         </Button>
       </Card>
-
-      {activeCategory?.compareEnabled ? (
-        <Card className="review-invite">
-          <span className="tile blue" aria-hidden="true"><Icon name="contrast" size={18} stroke={1.9} /></span>
-          <span className="review-invite-body">
-            <b>{tx(STR.compare.title)} · <bdi>{tx(activeCategory.name)}</bdi></b>
-            <span className="hint tabular-nums">
-              {openSessionsInCat > 0
-                ? tx('{a1} مقایسه در این دسته', { a1: fa(openSessionsInCat) })
-                : tx('کالاها را با قانون‌های این دسته بسنج و مقایسه کن.')}
-            </span>
-          </span>
-          <Button variant="secondary" size="sm" icon="contrast" onClick={() => setCompareHome(activeCategory.id)}>
-            {tx('باز کردن مقایسه')}
-          </Button>
-        </Card>
-      ) : active === 'all' && openShopping ? (
-        <Card className="review-invite">
-          <span className="tile blue" aria-hidden="true"><Icon name="contrast" size={18} stroke={1.9} /></span>
-          <span className="review-invite-body">
-            <b>{tx('خرید و مقایسه')}</b>
-            <span className="hint tabular-nums">
-              {openSessionsAll > 0
-                ? tx('{a1} مقایسهٔ باز برای خرید داری', { a1: fa(openSessionsAll) })
-                : tx('مقایسهٔ کالاها بر اساس معیارهای خرید و خط قرمزها')}
-            </span>
-          </span>
-          <Button variant="secondary" size="sm" icon="contrast" onClick={openShopping}>
-            {tx('ورود به بخش خرید')}
-          </Button>
-        </Card>
-      ) : null}
 
       {categories.length > 0 && (
         <div className="tabs rule-cats" role="tablist" aria-label={tx(STR.feature.category)}>
@@ -291,9 +215,8 @@ export function RulebookPage({
       )}
 
       {managedHint(categories.length)}
-      </div>
 
-      {!overlay && editing && (
+      {editing && (
         <RuleSheet
           key={editing === 'new' ? 'new' : editing.id}
           rule={editing === 'new' ? null : editing}
@@ -302,32 +225,8 @@ export function RulebookPage({
           onClose={() => setEditing(null)}
         />
       )}
-      {!overlay && managing && <CategorySheet categories={ordered} rules={rules} onClose={() => setManaging(false)} />}
+      {managing && <CategorySheet categories={ordered} rules={rules} onClose={() => setManaging(false)} />}
       {reviewing && <ReviewSession categoryId={active === 'all' ? undefined : active} onClose={() => setReviewing(false)} />}
-      {compareHome && activeCategory && (
-        <CompareHome
-          category={activeCategory}
-          rules={rules}
-          onOpen={(id) => { setCompareHome(null); setSessionId(id); }}
-          onClose={() => setCompareHome(null)}
-        />
-      )}
-      {sessionId && (
-        <CompareSessionPage
-          sessionId={sessionId}
-          onCategory={(id) => setSessionCategoryId(id)}
-          rules={rules}
-          onBack={() => { setSessionId(null); setChecking(null); }}
-          onOpenCheck={(itemId) => setChecking({ itemId, categoryId: sessionCategoryId ?? '' })}
-        />
-      )}
-      {checking && (
-        <CompareCheckMode
-          itemId={checking.itemId}
-          rules={rules.filter((r) => !r.archivedAt && r.categoryId === checking.categoryId)}
-          onClose={() => setChecking(null)}
-        />
-      )}
     </>
   );
 }
